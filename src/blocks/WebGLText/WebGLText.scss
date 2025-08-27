@@ -1,0 +1,148 @@
+.webgl-text-block {
+  position: relative;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  
+  .webgl-text-content {
+    position: absolute;
+    width: 100%;
+    text-align: inherit;
+    pointer-events: none;
+    
+    // Font size classes
+    &.text-small {
+      font-size: clamp(1rem, 3vw, 1.5rem);
+    }
+    
+    &.text-medium {
+      font-size: clamp(1.5rem, 5vw, 3rem);
+    }
+    
+    &.text-large {
+      font-size: clamp(2rem, 7vw, 4.5rem);
+    }
+    
+    &.text-xlarge {
+      font-size: clamp(3rem, 10vw, 6rem);
+    }
+    
+    // Text alignment
+    &.text-left {
+      text-align: left;
+    }
+    
+    &.text-center {
+      text-align: center;
+    }
+    
+    &.text-right {
+      text-align: right;
+    }
+  }
+  
+  // Loading state
+  &.is-loading {
+    .webgl-text-content {
+      opacity: 1 !important;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+  }
+  
+  // Effect-specific styles
+  &[data-effect="glitch"] {
+    .webgl-text-content {
+      text-shadow: 
+        0.05em 0 0 rgba(255, 0, 0, 0.75),
+        -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
+        0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+      animation: glitch 500ms infinite;
+    }
+  }
+  
+  &[data-effect="wave"] {
+    .webgl-text-content {
+      background: linear-gradient(45deg, #fff, #00ffff, #ff00ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  }
+  
+  &[data-effect="particles"] {
+    .webgl-text-content {
+      opacity: 0.1 !important;
+      filter: blur(2px);
+    }
+  }
+}
+
+// Animations
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes glitch {
+  0% {
+    text-shadow: 
+      0.05em 0 0 rgba(255, 0, 0, 0.75),
+      -0.05em -0.025em 0 rgba(0, 255, 0, 0.75),
+      0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+  }
+  14% {
+    text-shadow: 
+      0.05em 0 0 rgba(255, 0, 0, 0.75),
+      -0.05em -0.025em 0 rgba(0, 255, 0, 0.75),
+      0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+  }
+  15% {
+    text-shadow: 
+      -0.05em -0.025em 0 rgba(255, 0, 0, 0.75),
+      0.025em 0.025em 0 rgba(0, 255, 0, 0.75),
+      -0.05em -0.05em 0 rgba(0, 0, 255, 0.75);
+  }
+  49% {
+    text-shadow: 
+      -0.05em -0.025em 0 rgba(255, 0, 0, 0.75),
+      0.025em 0.025em 0 rgba(0, 255, 0, 0.75),
+      -0.05em -0.05em 0 rgba(0, 0, 255, 0.75);
+  }
+  50% {
+    text-shadow: 
+      0.025em 0.05em 0 rgba(255, 0, 0, 0.75),
+      0.05em 0 0 rgba(0, 255, 0, 0.75),
+      0 -0.05em 0 rgba(0, 0, 255, 0.75);
+  }
+  99% {
+    text-shadow: 
+      0.025em 0.05em 0 rgba(255, 0, 0, 0.75),
+      0.05em 0 0 rgba(0, 255, 0, 0.75),
+      0 -0.05em 0 rgba(0, 0, 255, 0.75);
+  }
+  100% {
+    text-shadow: 
+      -0.025em 0 0 rgba(255, 0, 0, 0.75),
+      -0.025em -0.025em 0 rgba(0, 255, 0, 0.75),
+      -0.025em -0.05em 0 rgba(0, 0, 255, 0.75);
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .webgl-text-block {
+    min-height: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .webgl-text-block {
+    min-height: 250px;
+  }
+}

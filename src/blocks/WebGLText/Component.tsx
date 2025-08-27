@@ -9,9 +9,13 @@ export const WebGLTextBlock: React.FC<WebGLTextBlockProps> = (props) => {
     fontSize = 'large',
     textAlign = 'center',
     effect = 'distortion',
+    color,
+    font,
     glassEffect,
     fluidOverlay,
     webglEffects,
+    animationTrigger,
+    secondaryText,
   } = props
   
   return (
@@ -24,7 +28,11 @@ export const WebGLTextBlock: React.FC<WebGLTextBlockProps> = (props) => {
           text={text}
           fontSize={fontSize}
           effect={effect}
+          color={color}
+          font={font}
           webglEffects={webglEffects}
+          animationTrigger={animationTrigger}
+          secondaryText={secondaryText}
         />
       }
     >
