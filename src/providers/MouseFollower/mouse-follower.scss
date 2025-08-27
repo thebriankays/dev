@@ -1,0 +1,159 @@
+// Cuberto Mouse Follower Styles
+.mf-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  mix-blend-mode: difference;
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &.-active {
+    opacity: 1;
+  }
+  
+  &.-hidden {
+    opacity: 0 !important;
+  }
+}
+
+.mf-cursor-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  .mf-cursor.-pointer & {
+    transform: scale(1.5);
+    background: rgba(255, 255, 255, 0.8);
+  }
+  
+  .mf-cursor.-text & {
+    width: auto;
+    height: auto;
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: #fff;
+  }
+  
+  .mf-cursor.-icon & {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .mf-cursor.-media & {
+    width: 200px;
+    height: 200px;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  
+  .mf-cursor.-inverse & {
+    background: #000;
+    mix-blend-mode: exclusion;
+  }
+}
+
+.mf-cursor-text {
+  color: #000;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  
+  .mf-cursor.-inverse & {
+    color: #fff;
+  }
+}
+
+.mf-cursor-media {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  
+  img,
+  video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.mf-cursor-media-box {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+// Icon sprite styles
+.mf-svgsprite {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 24px;
+  fill: #000;
+  
+  .mf-cursor.-inverse & {
+    fill: #fff;
+  }
+}
+
+// Glass cursor variant
+.mf-cursor.-glass {
+  .mf-cursor-inner {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  &.-pointer .mf-cursor-inner {
+    background: rgba(255, 255, 255, 0.15);
+  }
+}
+
+// Magnetic effect styles
+.mf-cursor[data-cursor-stick] {
+  .mf-cursor-inner {
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+// Stretch effect on fast movement
+.mf-cursor.-stretch {
+  .mf-cursor-inner {
+    transform: scale(1, 0.8);
+  }
+}
+
+// Custom states for travel theme
+.mf-cursor.-location {
+  .mf-cursor-inner {
+    background: #ff6b6b;
+    width: 40px;
+    height: 40px;
+    
+    &::after {
+      content: '📍';
+      font-size: 20px;
+    }
+  }
+}
+
+.mf-cursor.-travel {
+  .mf-cursor-inner {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+}

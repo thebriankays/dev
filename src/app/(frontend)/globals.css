@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import glass styles */
+@import '@/providers/Glass/glass.scss';
+
+/* Import canvas styles */
+@import '@/webgl/components/canvas/canvas.scss';
+
+/* Import mouse follower styles */
+@import '@/providers/MouseFollower/mouse-follower.scss';
+
 @layer base {
   h1,
   h2,
