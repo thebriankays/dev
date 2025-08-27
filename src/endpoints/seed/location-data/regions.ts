@@ -1,0 +1,136 @@
+// Regions data - states, provinces, territories with codes
+export const regionsData = [
+  // United States
+  { name: 'Alabama', code: 'AL', countryCode: 'US', type: 'state', capital: 'Montgomery' },
+  { name: 'Alaska', code: 'AK', countryCode: 'US', type: 'state', capital: 'Juneau' },
+  { name: 'Arizona', code: 'AZ', countryCode: 'US', type: 'state', capital: 'Phoenix' },
+  { name: 'Arkansas', code: 'AR', countryCode: 'US', type: 'state', capital: 'Little Rock' },
+  { name: 'California', code: 'CA', countryCode: 'US', type: 'state', capital: 'Sacramento' },
+  { name: 'Colorado', code: 'CO', countryCode: 'US', type: 'state', capital: 'Denver' },
+  { name: 'Connecticut', code: 'CT', countryCode: 'US', type: 'state', capital: 'Hartford' },
+  { name: 'Delaware', code: 'DE', countryCode: 'US', type: 'state', capital: 'Dover' },
+  { name: 'Florida', code: 'FL', countryCode: 'US', type: 'state', capital: 'Tallahassee' },
+  { name: 'Georgia', code: 'GA', countryCode: 'US', type: 'state', capital: 'Atlanta' },
+  { name: 'Hawaii', code: 'HI', countryCode: 'US', type: 'state', capital: 'Honolulu' },
+  { name: 'Idaho', code: 'ID', countryCode: 'US', type: 'state', capital: 'Boise' },
+  { name: 'Illinois', code: 'IL', countryCode: 'US', type: 'state', capital: 'Springfield' },
+  { name: 'Indiana', code: 'IN', countryCode: 'US', type: 'state', capital: 'Indianapolis' },
+  { name: 'Iowa', code: 'IA', countryCode: 'US', type: 'state', capital: 'Des Moines' },
+  { name: 'Kansas', code: 'KS', countryCode: 'US', type: 'state', capital: 'Topeka' },
+  { name: 'Kentucky', code: 'KY', countryCode: 'US', type: 'state', capital: 'Frankfort' },
+  { name: 'Louisiana', code: 'LA', countryCode: 'US', type: 'state', capital: 'Baton Rouge' },
+  { name: 'Maine', code: 'ME', countryCode: 'US', type: 'state', capital: 'Augusta' },
+  { name: 'Maryland', code: 'MD', countryCode: 'US', type: 'state', capital: 'Annapolis' },
+  { name: 'Massachusetts', code: 'MA', countryCode: 'US', type: 'state', capital: 'Boston' },
+  { name: 'Michigan', code: 'MI', countryCode: 'US', type: 'state', capital: 'Lansing' },
+  { name: 'Minnesota', code: 'MN', countryCode: 'US', type: 'state', capital: 'Saint Paul' },
+  { name: 'Mississippi', code: 'MS', countryCode: 'US', type: 'state', capital: 'Jackson' },
+  { name: 'Missouri', code: 'MO', countryCode: 'US', type: 'state', capital: 'Jefferson City' },
+  { name: 'Montana', code: 'MT', countryCode: 'US', type: 'state', capital: 'Helena' },
+  { name: 'Nebraska', code: 'NE', countryCode: 'US', type: 'state', capital: 'Lincoln' },
+  { name: 'Nevada', code: 'NV', countryCode: 'US', type: 'state', capital: 'Carson City' },
+  { name: 'New Hampshire', code: 'NH', countryCode: 'US', type: 'state', capital: 'Concord' },
+  { name: 'New Jersey', code: 'NJ', countryCode: 'US', type: 'state', capital: 'Trenton' },
+  { name: 'New Mexico', code: 'NM', countryCode: 'US', type: 'state', capital: 'Santa Fe' },
+  { name: 'New York', code: 'NY', countryCode: 'US', type: 'state', capital: 'Albany' },
+  { name: 'North Carolina', code: 'NC', countryCode: 'US', type: 'state', capital: 'Raleigh' },
+  { name: 'North Dakota', code: 'ND', countryCode: 'US', type: 'state', capital: 'Bismarck' },
+  { name: 'Ohio', code: 'OH', countryCode: 'US', type: 'state', capital: 'Columbus' },
+  { name: 'Oklahoma', code: 'OK', countryCode: 'US', type: 'state', capital: 'Oklahoma City' },
+  { name: 'Oregon', code: 'OR', countryCode: 'US', type: 'state', capital: 'Salem' },
+  { name: 'Pennsylvania', code: 'PA', countryCode: 'US', type: 'state', capital: 'Harrisburg' },
+  { name: 'Rhode Island', code: 'RI', countryCode: 'US', type: 'state', capital: 'Providence' },
+  { name: 'South Carolina', code: 'SC', countryCode: 'US', type: 'state', capital: 'Columbia' },
+  { name: 'South Dakota', code: 'SD', countryCode: 'US', type: 'state', capital: 'Pierre' },
+  { name: 'Tennessee', code: 'TN', countryCode: 'US', type: 'state', capital: 'Nashville' },
+  { name: 'Texas', code: 'TX', countryCode: 'US', type: 'state', capital: 'Austin' },
+  { name: 'Utah', code: 'UT', countryCode: 'US', type: 'state', capital: 'Salt Lake City' },
+  { name: 'Vermont', code: 'VT', countryCode: 'US', type: 'state', capital: 'Montpelier' },
+  { name: 'Virginia', code: 'VA', countryCode: 'US', type: 'state', capital: 'Richmond' },
+  { name: 'Washington', code: 'WA', countryCode: 'US', type: 'state', capital: 'Olympia' },
+  { name: 'West Virginia', code: 'WV', countryCode: 'US', type: 'state', capital: 'Charleston' },
+  { name: 'Wisconsin', code: 'WI', countryCode: 'US', type: 'state', capital: 'Madison' },
+  { name: 'Wyoming', code: 'WY', countryCode: 'US', type: 'state', capital: 'Cheyenne' },
+  { name: 'District of Columbia', code: 'DC', countryCode: 'US', type: 'district', capital: 'Washington' },
+  
+  // Canada
+  { name: 'Alberta', code: 'AB', countryCode: 'CA', type: 'province', capital: 'Edmonton' },
+  { name: 'British Columbia', code: 'BC', countryCode: 'CA', type: 'province', capital: 'Victoria' },
+  { name: 'Manitoba', code: 'MB', countryCode: 'CA', type: 'province', capital: 'Winnipeg' },
+  { name: 'New Brunswick', code: 'NB', countryCode: 'CA', type: 'province', capital: 'Fredericton' },
+  { name: 'Newfoundland and Labrador', code: 'NL', countryCode: 'CA', type: 'province', capital: "St. John's" },
+  { name: 'Northwest Territories', code: 'NT', countryCode: 'CA', type: 'territory', capital: 'Yellowknife' },
+  { name: 'Nova Scotia', code: 'NS', countryCode: 'CA', type: 'province', capital: 'Halifax' },
+  { name: 'Nunavut', code: 'NU', countryCode: 'CA', type: 'territory', capital: 'Iqaluit' },
+  { name: 'Ontario', code: 'ON', countryCode: 'CA', type: 'province', capital: 'Toronto' },
+  { name: 'Prince Edward Island', code: 'PE', countryCode: 'CA', type: 'province', capital: 'Charlottetown' },
+  { name: 'Quebec', code: 'QC', countryCode: 'CA', type: 'province', capital: 'Quebec City' },
+  { name: 'Saskatchewan', code: 'SK', countryCode: 'CA', type: 'province', capital: 'Regina' },
+  { name: 'Yukon', code: 'YT', countryCode: 'CA', type: 'territory', capital: 'Whitehorse' },
+  
+  // Australia
+  { name: 'Australian Capital Territory', code: 'ACT', countryCode: 'AU', type: 'territory', capital: 'Canberra' },
+  { name: 'New South Wales', code: 'NSW', countryCode: 'AU', type: 'state', capital: 'Sydney' },
+  { name: 'Northern Territory', code: 'NT', countryCode: 'AU', type: 'territory', capital: 'Darwin' },
+  { name: 'Queensland', code: 'QLD', countryCode: 'AU', type: 'state', capital: 'Brisbane' },
+  { name: 'South Australia', code: 'SA', countryCode: 'AU', type: 'state', capital: 'Adelaide' },
+  { name: 'Tasmania', code: 'TAS', countryCode: 'AU', type: 'state', capital: 'Hobart' },
+  { name: 'Victoria', code: 'VIC', countryCode: 'AU', type: 'state', capital: 'Melbourne' },
+  { name: 'Western Australia', code: 'WA', countryCode: 'AU', type: 'state', capital: 'Perth' },
+  
+  // United Kingdom
+  { name: 'England', code: 'ENG', countryCode: 'GB', type: 'region', capital: 'London' },
+  { name: 'Scotland', code: 'SCT', countryCode: 'GB', type: 'region', capital: 'Edinburgh' },
+  { name: 'Wales', code: 'WLS', countryCode: 'GB', type: 'region', capital: 'Cardiff' },
+  { name: 'Northern Ireland', code: 'NIR', countryCode: 'GB', type: 'region', capital: 'Belfast' },
+  
+  // Germany
+  { name: 'Baden-Württemberg', code: 'BW', countryCode: 'DE', type: 'state', capital: 'Stuttgart' },
+  { name: 'Bavaria', code: 'BY', countryCode: 'DE', type: 'state', capital: 'Munich' },
+  { name: 'Berlin', code: 'BE', countryCode: 'DE', type: 'state', capital: 'Berlin' },
+  { name: 'Brandenburg', code: 'BB', countryCode: 'DE', type: 'state', capital: 'Potsdam' },
+  { name: 'Bremen', code: 'HB', countryCode: 'DE', type: 'state', capital: 'Bremen' },
+  { name: 'Hamburg', code: 'HH', countryCode: 'DE', type: 'state', capital: 'Hamburg' },
+  { name: 'Hesse', code: 'HE', countryCode: 'DE', type: 'state', capital: 'Wiesbaden' },
+  { name: 'Lower Saxony', code: 'NI', countryCode: 'DE', type: 'state', capital: 'Hanover' },
+  { name: 'Mecklenburg-Vorpommern', code: 'MV', countryCode: 'DE', type: 'state', capital: 'Schwerin' },
+  { name: 'North Rhine-Westphalia', code: 'NW', countryCode: 'DE', type: 'state', capital: 'Düsseldorf' },
+  { name: 'Rhineland-Palatinate', code: 'RP', countryCode: 'DE', type: 'state', capital: 'Mainz' },
+  { name: 'Saarland', code: 'SL', countryCode: 'DE', type: 'state', capital: 'Saarbrücken' },
+  { name: 'Saxony', code: 'SN', countryCode: 'DE', type: 'state', capital: 'Dresden' },
+  { name: 'Saxony-Anhalt', code: 'ST', countryCode: 'DE', type: 'state', capital: 'Magdeburg' },
+  { name: 'Schleswig-Holstein', code: 'SH', countryCode: 'DE', type: 'state', capital: 'Kiel' },
+  { name: 'Thuringia', code: 'TH', countryCode: 'DE', type: 'state', capital: 'Erfurt' },
+  
+  // France (simplified - using region codes)
+  { name: 'Île-de-France', code: 'IDF', countryCode: 'FR', type: 'region', capital: 'Paris' },
+  { name: 'Provence-Alpes-Côte d\'Azur', code: 'PAC', countryCode: 'FR', type: 'region', capital: 'Marseille' },
+  
+  // Spain (simplified - using codes)
+  { name: 'Andalusia', code: 'AN', countryCode: 'ES', type: 'region', capital: 'Seville' },
+  { name: 'Catalonia', code: 'CT', countryCode: 'ES', type: 'region', capital: 'Barcelona' },
+  { name: 'Community of Madrid', code: 'MD', countryCode: 'ES', type: 'region', capital: 'Madrid' },
+  
+  // Italy (simplified - using codes)
+  { name: 'Lazio', code: 'LAZ', countryCode: 'IT', type: 'region', capital: 'Rome' },
+  { name: 'Lombardy', code: 'LOM', countryCode: 'IT', type: 'region', capital: 'Milan' },
+  
+  // Japan (simplified - using prefecture codes)
+  { name: 'Tokyo', code: '13', countryCode: 'JP', type: 'region', capital: 'Tokyo' },
+  { name: 'Osaka', code: '27', countryCode: 'JP', type: 'region', capital: 'Osaka' },
+  { name: 'Kyoto', code: '26', countryCode: 'JP', type: 'region', capital: 'Kyoto' },
+  
+  // China (simplified)
+  { name: 'Beijing', code: 'BJ', countryCode: 'CN', type: 'region', capital: 'Beijing' },
+  { name: 'Shanghai', code: 'SH', countryCode: 'CN', type: 'region', capital: 'Shanghai' },
+  { name: 'Guangdong', code: 'GD', countryCode: 'CN', type: 'province', capital: 'Guangzhou' },
+  
+  // Brazil (simplified)
+  { name: 'São Paulo', code: 'SP', countryCode: 'BR', type: 'state', capital: 'São Paulo' },
+  { name: 'Rio de Janeiro', code: 'RJ', countryCode: 'BR', type: 'state', capital: 'Rio de Janeiro' },
+  
+  // India (simplified)
+  { name: 'Delhi', code: 'DL', countryCode: 'IN', type: 'territory', capital: 'New Delhi' },
+  { name: 'Maharashtra', code: 'MH', countryCode: 'IN', type: 'state', capital: 'Mumbai' },
+  { name: 'Karnataka', code: 'KA', countryCode: 'IN', type: 'state', capital: 'Bangalore' },
+]

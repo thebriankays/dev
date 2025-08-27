@@ -1,0 +1,123 @@
+// Common destination types
+export const destinationTypesData = [
+  {
+    name: 'Country',
+    slug: 'country',
+    description: 'An entire country as a destination',
+    hierarchyLevel: 1,
+  },
+  {
+    name: 'State/Province',
+    slug: 'state-province',
+    description: 'State, province, or major administrative region',
+    hierarchyLevel: 2,
+  },
+  {
+    name: 'Region',
+    slug: 'region',
+    description: 'Geographic or cultural region within a country',
+    hierarchyLevel: 2,
+  },
+  {
+    name: 'City',
+    slug: 'city',
+    description: 'Major city or urban area',
+    hierarchyLevel: 3,
+  },
+  {
+    name: 'Town',
+    slug: 'town',
+    description: 'Smaller town or municipality',
+    hierarchyLevel: 4,
+  },
+  {
+    name: 'Village',
+    slug: 'village',
+    description: 'Small village or hamlet',
+    hierarchyLevel: 5,
+  },
+  {
+    name: 'District/Neighborhood',
+    slug: 'district-neighborhood',
+    description: 'District or neighborhood within a city',
+    hierarchyLevel: 4,
+  },
+  {
+    name: 'Island',
+    slug: 'island',
+    description: 'Individual island or island group',
+    hierarchyLevel: 3,
+  },
+  {
+    name: 'Beach',
+    slug: 'beach',
+    description: 'Specific beach or coastal area',
+    hierarchyLevel: 5,
+  },
+  {
+    name: 'Mountain',
+    slug: 'mountain',
+    description: 'Mountain peak or mountain range',
+    hierarchyLevel: 4,
+  },
+  {
+    name: 'National Park',
+    slug: 'national-park',
+    description: 'National park or protected area',
+    hierarchyLevel: 4,
+  },
+  {
+    name: 'Lake',
+    slug: 'lake',
+    description: 'Lake or major water body',
+    hierarchyLevel: 4,
+  },
+  {
+    name: 'Resort',
+    slug: 'resort',
+    description: 'Resort complex or vacation property',
+    hierarchyLevel: 5,
+  },
+  {
+    name: 'Attraction',
+    slug: 'attraction',
+    description: 'Specific tourist attraction or landmark',
+    hierarchyLevel: 5,
+  },
+  {
+    name: 'Archaeological Site',
+    slug: 'archaeological-site',
+    description: 'Historical or archaeological site',
+    hierarchyLevel: 5,
+  },
+  {
+    name: 'Wine Region',
+    slug: 'wine-region',
+    description: 'Wine-producing region or valley',
+    hierarchyLevel: 4,
+  },
+  {
+    name: 'Ski Resort',
+    slug: 'ski-resort',
+    description: 'Ski resort or winter sports area',
+    hierarchyLevel: 5,
+  },
+  {
+    name: 'Desert',
+    slug: 'desert',
+    description: 'Desert region or area',
+    hierarchyLevel: 3,
+  },
+  {
+    name: 'Forest/Jungle',
+    slug: 'forest-jungle',
+    description: 'Forest, jungle, or rainforest area',
+    hierarchyLevel: 4,
+  },
+  {
+    name: 'Coastal Area',
+    slug: 'coastal-area',
+    description: 'Coastal region or shoreline',
+    hierarchyLevel: 4,
+  },
+]

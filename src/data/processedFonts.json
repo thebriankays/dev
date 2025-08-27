@@ -1,0 +1,137 @@
+[
+  {
+    "family": "Saira Extra Condensed",
+    "displayName": "Saira Extra Condensed",
+    "category": "sans-serif",
+    "weights": ["700", "800"],
+    "styles": ["normal"],
+    "previewText": "The quick brown fox jumps over the lazy dog",
+    "popularity": 100
+  },
+  {
+    "family": "New Order",
+    "displayName": "New Order",
+    "category": "sans-serif",
+    "weights": ["300", "700"],
+    "styles": ["normal"],
+    "previewText": "The quick brown fox jumps over the lazy dog",
+    "popularity": 95
+  },
+  {
+    "family": "Graphie",
+    "displayName": "Graphie",
+    "category": "sans-serif",
+    "weights": ["100", "200", "300", "400", "700"],
+    "styles": ["normal", "italic"],
+    "previewText": "The quick brown fox jumps over the lazy dog",
+    "popularity": 90
+  },
+  {
+    "family": "Antique Olive",
+    "displayName": "Antique Olive",
+    "category": "sans-serif",
+    "weights": ["400"],
+    "styles": ["normal"],
+    "previewText": "The quick brown fox jumps over the lazy dog",
+    "popularity": 85
+  },
+  {
+    "family": "PP Neue Corp",
+    "displayName": "PP Neue Corp",
+    "category": "sans-serif",
+    "weights": ["700"],
+    "styles": ["normal"],
+    "previewText": "The quick brown fox jumps over the lazy dog",
+    "popularity": 80
+  },
+  {
+    "family": "Oakes Grotesk",
+    "displayName": "Oakes Grotesk",
+    "category": "sans-serif",
+    "weights": ["400", "600"],
+    "styles": ["normal"],
+    "previewText": "The quick brown fox jumps over the lazy dog",
+    "popularity": 75
+  },
+  {
+    "family": "Six Caps",
+    "displayName": "Six Caps",
+    "category": "display",
+    "weights": ["400"],
+    "styles": ["normal"],
+    "previewText": "The quick brown fox jumps over the lazy dog",
+    "popularity": 70
+  },
+  {
+    "family": "Inter",
+    "displayName": "Inter",
+    "category": "sans-serif",
+    "weights": ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+    "styles": ["normal"],
+    "previewText": "The quick brown fox jumps over the lazy dog",
+    "popularity": 65
+  },
+  {
+    "family": "Roboto",
+    "displayName": "Roboto",
+    "category": "sans-serif",
+    "weights": ["100", "300", "400", "500", "700", "900"],
+    "styles": ["normal", "italic"],
+    "previewText": "The quick brown fox jumps over the lazy dog",
+    "popularity": 60
+  },
+  {
+    "family": "Open Sans",
+    "displayName": "Open Sans",
+    "category": "sans-serif",
+    "weights": ["300", "400", "500", "600", "700", "800"],
+    "styles": ["normal", "italic"],
+    "previewText": "The quick brown fox jumps over the lazy dog",
+    "popularity": 55
+  },
+  {
+    "family": "Montserrat",
+    "displayName": "Montserrat",
+    "category": "sans-serif",
+    "weights": ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+    "styles": ["normal", "italic"],
+    "previewText": "The quick brown fox jumps over the lazy dog",
+    "popularity": 50
+  },
+  {
+    "family": "Playfair Display",
+    "displayName": "Playfair Display",
+    "category": "serif",
+    "weights": ["400", "500", "600", "700", "800", "900"],
+    "styles": ["normal", "italic"],
+    "previewText": "The quick brown fox jumps over the lazy dog",
+    "popularity": 45
+  },
+  {
+    "family": "Lato",
+    "displayName": "Lato",
+    "category": "sans-serif",
+    "weights": ["100", "300", "400", "700", "900"],
+    "styles": ["normal", "italic"],
+    "previewText": "The quick brown fox jumps over the lazy dog",
+    "popularity": 40
+  },
+  {
+    "family": "Poppins",
+    "displayName": "Poppins",
+    "category": "sans-serif",
+    "weights": ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+    "styles": ["normal", "italic"],
+    "previewText": "The quick brown fox jumps over the lazy dog",
+    "popularity": 35
+  },
+  {
+    "family": "Merriweather",
+    "displayName": "Merriweather",
+    "category": "serif",
+    "weights": ["300", "400", "700", "900"],
+    "styles": ["normal", "italic"],
+    "previewText": "The quick brown fox jumps over the lazy dog",
+    "popularity": 30
+  }
+]
