@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="none" viewBox="0 0 1440 800">
+  <defs>
+    <radialGradient id="radial-gradient" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#e5c5a0"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="radial-gradient-2" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#77eef0"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="radial-gradient-3" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#de5ba2"/>
+      <stop offset="1" stop-color="#feaaf6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="radial-gradient-4" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#ce7868"/>
+      <stop offset="1" stop-color="#feaaf6" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="clip-Menu">
+      <rect width="1440" height="800"/>
+    </clipPath>
+  </defs>
+  <g id="Menu" clip-path="url(#clip-Menu)">
+    <rect id="Rechteck_833" data-name="Rechteck 833" width="1440" height="800" fill="#e56dd9"/>
+    <ellipse id="Ellipse_7" data-name="Ellipse 7" cx="907.5" cy="699" rx="907.5" ry="699" transform="translate(461 -729)" fill="url(#radial-gradient)"/>
+    <ellipse id="Ellipse_6" data-name="Ellipse 6" cx="1546" cy="699" rx="1546" ry="699" transform="translate(-1383 -653)" fill="url(#radial-gradient-2)"/>
+    <ellipse id="Ellipse_9" data-name="Ellipse 9" cx="1337.5" cy="876" rx="1337.5" ry="876" transform="translate(-197 64)" fill="url(#radial-gradient-3)"/>
+    <ellipse id="Ellipse_8" data-name="Ellipse 8" cx="1225.5" cy="524" rx="1225.5" ry="524" transform="translate(-377 257)" opacity="0.554" fill="url(#radial-gradient-4)"/>
+  </g>
+</svg>

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="none" viewBox="0 0 1440 1080">
+  <defs>
+    <radialGradient id="radial-gradient" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#50d1a6"/>
+      <stop offset="1" stop-color="#e4e4e4" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="radial-gradient-2" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#ce2690"/>
+      <stop offset="1" stop-color="#e4e4e4" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="radial-gradient-3" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#e339a4"/>
+      <stop offset="1" stop-color="#e4e4e4" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="radial-gradient-4" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#5fe2b2"/>
+      <stop offset="1" stop-color="#e4e4e4" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="radial-gradient-5" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#f7f71b"/>
+      <stop offset="1" stop-color="#e4e4e4" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="clip-footer-verlauf-xd">
+      <rect width="1440" height="1080"/>
+    </clipPath>
+  </defs>
+  <g id="footer-verlauf-xd" clip-path="url(#clip-footer-verlauf-xd)">
+    <rect width="1440" height="1080" fill="#fff"/>
+    <ellipse id="Ellipse_1" data-name="Ellipse 1" cx="2227.5" cy="491" rx="2227.5" ry="491" transform="matrix(0.998, 0.07, -0.07, 0.998, -1525.728, 395.86)" fill="url(#radial-gradient)"/>
+    <ellipse id="Ellipse_2" data-name="Ellipse 2" cx="1296.5" cy="275" rx="1296.5" ry="275" transform="matrix(0.998, 0.07, -0.07, 0.998, -977.659, 699.231)" fill="url(#radial-gradient-2)"/>
+    <ellipse id="Ellipse_4" data-name="Ellipse 4" cx="614.5" cy="275" rx="614.5" ry="275" transform="matrix(0.998, 0.07, -0.07, 0.998, 51.68, 840.805)" fill="url(#radial-gradient-3)" style="mix-blend-mode: darken;isolation: isolate"/>
+    <ellipse id="Ellipse_5" data-name="Ellipse 5" cx="614.5" cy="275" rx="614.5" ry="275" transform="matrix(0.998, 0.07, -0.07, 0.998, 558.68, 746.805)" fill="url(#radial-gradient-4)"/>
+    <ellipse id="Ellipse_3" data-name="Ellipse 3" cx="1025.5" cy="275" rx="1025.5" ry="275" transform="matrix(0.07, -0.998, 0.998, 0.07, 1055.673, 1822.865)" fill="url(#radial-gradient-5)" style="mix-blend-mode: darken;isolation: isolate"/>
+  </g>
+</svg>

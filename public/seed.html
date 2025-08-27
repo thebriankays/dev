@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Database Seeder</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .warning strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .button-container {
+            margin: 30px 0;
+        }
+        button {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        button:hover:not(:disabled) {
+            background: #c82333;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        #result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        #result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        #result.loading {
+            background: #cfe2ff;
+            color: #084298;
+            border: 1px solid #b6d4fe;
+            display: block;
+        }
+        .progress {
+            margin-top: 20px;
+            display: none;
+        }
+        .progress.active {
+            display: block;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: #007bff;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .progress-bar-indeterminate {
+            height: 100%;
+            background: linear-gradient(90deg, transparent, #007bff, transparent);
+            width: 30%;
+            position: absolute;
+            animation: indeterminate 1.5s linear infinite;
+        }
+        @keyframes indeterminate {
+            0% { left: -30%; }
+            100% { left: 100%; }
+        }
+        .info {
+            background: #e7f3ff;
+            border: 1px solid #b6d4fe;
+            color: #084298;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        ul {
+            margin: 10px 0 0 0;
+            padding-left: 20px;
+        }
+        li {
+            margin: 5px 0;
+        }
+        .checkbox-container {
+            margin: 20px 0;
+        }
+        .checkbox-container label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        .checkbox-container input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            border-top-color: #007bff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .status-message {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+            font-style: italic;
+        }
+        .progress-details {
+            margin-top: 5px;
+            font-size: 12px;
+            color: #999;
+        }
+        .log-container {
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        .log-entry {
+            margin: 2px 0;
+            color: #495057;
+        }
+        .log-entry.success {
+            color: #28a745;
+        }
+        .log-entry.warning {
+            color: #ffc107;
+        }
+        .log-entry.error {
+            color: #dc3545;
+        }
+        .collection-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            text-align: left;
+        }
+        .collection-btn:hover:not(:disabled) {
+            background: #0056b3;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .collection-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .collection-btn.loading {
+            background: #6c757d;
+            position: relative;
+        }
+        .collection-btn.loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌱 Database Seeder</h1>
+        <p>This tool will reset and seed your database with fresh data for development.</p>
+        
+        <div class="warning">
+            <strong>⚠️ WARNING: This will DELETE all existing data!</strong>
+            This action will:
+            <ul>
+                <li>Remove ALL existing records from all collections</li>
+                <li>Re-seed the database with fresh test data</li>
+                <li>This cannot be undone!</li>
+            </ul>
+        </div>
+
+        <div class="info">
+            <strong>ℹ️ What will be seeded:</strong>
+            <ul>
+                <li>Location data: Countries, regions, airports, timezones, currencies, languages</li>
+                <li>Travel data: Michelin restaurants, travel advisories, visa requirements</li>
+                <li>Content: Sample pages, posts, categories, and media</li>
+                <li>Marketing: Social media posts, leads, sales funnels</li>
+                <li>Demo users and forms</li>
+            </ul>
+        </div>
+
+        <div class="checkbox-container">
+            <label>
+                <input type="checkbox" id="confirmCheckbox">
+                <span>I understand this will DELETE all data and cannot be undone</span>
+            </label>
+        </div>
+
+        <div class="button-container">
+            <button id="seedButton" disabled>🗑️ Wipe & Seed Database</button>
+        </div>
+
+        <div class="collection-buttons" style="margin-top: 40px; border-top: 2px solid #ddd; padding-top: 30px;">
+            <h2 style="margin-bottom: 20px;">Seed Individual Collections</h2>
+            <p style="margin-bottom: 20px; color: #666;">Use these buttons to reseed specific collections without affecting others:</p>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+                <button class="collection-btn" data-collection="currencies">💰 Currencies</button>
+                <button class="collection-btn" data-collection="languages">🗣️ Languages</button>
+                <button class="collection-btn" data-collection="timezones">🕐 Timezones</button>
+                <button class="collection-btn" data-collection="countries">🌍 Countries</button>
+                <button class="collection-btn" data-collection="regions">📍 Regions</button>
+                <button class="collection-btn" data-collection="airports">✈️ Airports</button>
+                <button class="collection-btn" data-collection="destinations">🗺️ Destinations</button>
+                <button class="collection-btn" data-collection="michelin-restaurants">🍽️ Michelin Restaurants</button>
+                <button class="collection-btn" data-collection="travel-advisories">⚠️ Travel Advisories</button>
+                <button class="collection-btn" data-collection="visa-requirements">📋 Visa Requirements</button>
+                <button class="collection-btn" data-collection="media">🖼️ Media</button>
+                <button class="collection-btn" data-collection="pages">📄 Pages</button>
+                <button class="collection-btn" data-collection="posts">📝 Posts</button>
+                <button class="collection-btn" data-collection="categories">🏷️ Categories</button>
+                <button class="collection-btn" data-collection="forms">📋 Forms</button>
+            </div>
+        </div>
+
+        <div id="result"></div>
+        <div class="progress" id="progress">
+            <div class="progress-bar">
+                <div class="progress-bar-fill" id="progressFill"></div>
+                <div class="progress-bar-indeterminate" id="progressIndeterminate" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const checkbox = document.getElementById('confirmCheckbox');
+        const button = document.getElementById('seedButton');
+        const result = document.getElementById('result');
+        const progress = document.getElementById('progress');
+        const progressFill = document.getElementById('progressFill');
+        const progressIndeterminate = document.getElementById('progressIndeterminate');
+        
+        checkbox.addEventListener('change', () => {
+            button.disabled = !checkbox.checked;
+        });
+
+        // Simulated progress updates
+        function updateProgress(percent, message) {
+            if (percent === -1) {
+                // Indeterminate progress
+                progressFill.style.display = 'none';
+                progressIndeterminate.style.display = 'block';
+            } else {
+                progressFill.style.display = 'block';
+                progressIndeterminate.style.display = 'none';
+                progressFill.style.width = percent + '%';
+            }
+            
+            if (message) {
+                const statusDiv = document.getElementById('statusMessage');
+                if (statusDiv) {
+                    statusDiv.textContent = message;
+                }
+            }
+        }
+
+        button.addEventListener('click', async () => {
+            if (!confirm('Are you SURE you want to wipe the database? This action cannot be undone!')) {
+                return;
+            }
+            
+            button.disabled = true;
+            checkbox.disabled = true;
+            result.className = 'loading';
+            result.innerHTML = `
+                <div><span class="spinner"></span>Seeding database... This may take a few minutes...</div>
+                <div class="status-message" id="statusMessage">Connecting to server...</div>
+                <div class="progress-details" id="progressDetails"></div>
+                <div class="log-container" id="logContainer" style="display: none;"></div>
+            `;
+            progress.className = 'progress active';
+            
+            const statusMessage = document.getElementById('statusMessage');
+            const progressDetails = document.getElementById('progressDetails');
+            const logContainer = document.getElementById('logContainer');
+            let logs = [];
+            
+            function addLog(message, type = 'normal') {
+                const entry = document.createElement('div');
+                entry.className = `log-entry ${type}`;
+                entry.textContent = message;
+                logContainer.appendChild(entry);
+                logContainer.scrollTop = logContainer.scrollHeight;
+                
+                if (logContainer.style.display === 'none') {
+                    logContainer.style.display = 'block';
+                }
+            }
+            
+            try {
+                // Use fetch with streaming response
+                const response = await fetch('/next/seed-progress', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        result.className = 'error';
+                        result.innerHTML = `
+                            <strong>❌ Authentication Error</strong><br>
+                            You need to be logged in as an admin to seed the database.<br>
+                            <a href="/admin">Go to Admin Panel</a>
+                        `;
+                        return;
+                    }
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                
+                                if (data.type === 'status') {
+                                    statusMessage.textContent = data.message;
+                                    if (data.progress !== undefined) {
+                                        updateProgress(data.progress, data.message);
+                                    }
+                                    if (data.details) {
+                                        progressDetails.textContent = data.details;
+                                    }
+                                } else if (data.type === 'log') {
+                                    const logType = data.message.includes('✓') ? 'success' : 
+                                                   data.message.includes('!') || data.message.includes('WARN') ? 'warning' : 
+                                                   'normal';
+                                    addLog(data.message, logType);
+                                } else if (data.type === 'complete') {
+                                    updateProgress(100, 'Complete!');
+                                    result.className = 'success';
+                                    result.innerHTML = `
+                                        <strong>✅ Database seeded successfully!</strong><br>
+                                        The database has been wiped and re-seeded with fresh data.<br>
+                                        ${data.duration ? `Completed in ${Math.round(data.duration / 1000)} seconds.` : ''}
+                                    `;
+                                    
+                                    setTimeout(() => {
+                                        progress.className = 'progress';
+                                        progressFill.style.width = '0%';
+                                    }, 2000);
+                                } else if (data.type === 'error') {
+                                    result.className = 'error';
+                                    result.innerHTML = `
+                                        <strong>❌ Error</strong><br>
+                                        ${data.error}
+                                    `;
+                                }
+                            } catch (e) {
+                                console.error('Failed to parse SSE data:', e);
+                            }
+                        }
+                    }
+                }
+                
+            } catch (error) {
+                result.className = 'error';
+                result.innerHTML = `
+                    <strong>❌ Error</strong><br>
+                    ${error.message}
+                `;
+            } finally {
+                button.disabled = false;
+                checkbox.disabled = false;
+                checkbox.checked = false;
+                setTimeout(() => {
+                    progress.className = 'progress';
+                    progressFill.style.width = '0%';
+                }, 2000);
+            }
+        });
+
+        // Handle individual collection seeding
+        const collectionButtons = document.querySelectorAll('.collection-btn');
+        
+        collectionButtons.forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const button = e.target;
+                const collection = button.dataset.collection;
+                const originalText = button.textContent;
+                
+                if (!confirm(`Are you sure you want to reseed the ${collection} collection? This will DELETE all existing ${collection} data!`)) {
+                    return;
+                }
+                
+                button.disabled = true;
+                button.classList.add('loading');
+                button.textContent = 'Seeding...';
+                
+                result.className = 'loading';
+                result.innerHTML = `
+                    <div><span class="spinner"></span>Seeding ${collection}...</div>
+                `;
+                
+                try {
+                    const response = await fetch('/next/seed-collection', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({ collection })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        result.className = 'success';
+                        result.innerHTML = `
+                            <strong>✅ ${collection} seeded successfully!</strong><br>
+                            ${data.message || `The ${collection} collection has been reseeded.`}
+                        `;
+                    } else {
+                        result.className = 'error';
+                        if (response.status === 403) {
+                            result.innerHTML = `
+                                <strong>❌ Authentication Error</strong><br>
+                                You need to be logged in as an admin to seed collections.<br>
+                                <a href="/admin">Go to Admin Panel</a>
+                            `;
+                        } else {
+                            const errorText = await response.text();
+                            result.innerHTML = `
+                                <strong>❌ Error: ${response.status}</strong><br>
+                                ${errorText || response.statusText}
+                            `;
+                        }
+                    }
+                } catch (error) {
+                    result.className = 'error';
+                    result.innerHTML = `
+                        <strong>❌ Error</strong><br>
+                        ${error.message}
+                    `;
+                } finally {
+                    button.disabled = false;
+                    button.classList.remove('loading');
+                    button.textContent = originalText;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

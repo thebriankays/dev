@@ -1,0 +1,1851 @@
+[
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2855752,
+        "lng": 36.8260672
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.284151519708498,
+          "lng": 36.82728773029149
+        },
+        "southwest": {
+          "lat": -1.286849480291502,
+          "lng": 36.8245897697085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/lodging-71.png",
+    "icon_background_color": "#909CE1",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/hotel_pinlet",
+    "name": "Ambassadeur Hotel",
+    "opening_hours": {
+      "open_now": false
+    },
+    "photos": [
+      {
+        "height": 4032,
+        "html_attributions": [
+          "<a href=\"https://maps.google.com/maps/contrib/104941490397568011785\">victor nzau</a>"
+        ],
+        "photo_reference": "ATKogpenh8m9tIeQOICMA1ozBj70-zOPPIpYqNuGL2ywJbIgoYhkS-i7dP3VRPgJIrtblvLdnsmtA64WjNH3uizZ2Im1o3vRf8NfaotT3ocjkUBmmm9uyC62OldU7K3uMyZuIZr9D05YvsPG0kaHUPzemr3tYm-xq_HXXw-lETEvqnzh1VRKRSWvw2Vzc3mGTse5at4j7lHvW1VXvRz_KMGJaOHqNVhbRrL-CJRKR4PyXnMQhX5hggKhN3P-2P9oLaHibQwSv71uVaOyIcSS8cRPnqrlvd7nbaFd21hxeOxC-f1LoHclrhTtECX4M9OaFEyxU3Y0DN8c11Og_N-ci6clW01mdX2527eOohTnXfoCSZ7Fzsu7BzROVTLKY55oQuGAycYYYvHXt1HHM2VgozbDEZHYHYVv_Fbg9CCvzfoq26xBD7ucEm4j1CjAtq5DJLPI2FXYPnovwPuj50wGHO1r58e3qqpQfAA2evgYZHsMp3HOzkN2xcIFcmcKKrZ6MQ_uDiYy3cbEdr9lc7Yhkz-ow4nu4nkHfkJ2ag4MI-IOeoyOAAAcYktb2tqrkRp304j6-qxGT-p2XFgN3wgKHmfNK44gd60YUT53ljNURT9Q3q9TYQs_FJEvxnbkXC8qLMSY3zdhBQ",
+        "width": 3024
+      }
+    ],
+    "place_id": "ChIJp6uvNCgRLxgRpv3VDij31xM",
+    "rating": 4.1,
+    "reference": "ChIJp6uvNCgRLxgRpv3VDij31xM",
+    "scope": "GOOGLE",
+    "types": [
+      "bar",
+      "lodging",
+      "restaurant",
+      "food",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 3952,
+    "vicinity": "PR7G+QC3, Moi Avenue, Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2870297,
+        "lng": 36.8145232
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.285839919708498,
+          "lng": 36.81567948029151
+        },
+        "southwest": {
+          "lat": -1.288537880291502,
+          "lng": 36.81298151970851
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/lodging-71.png",
+    "icon_background_color": "#909CE1",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/hotel_pinlet",
+    "name": "Nairobi Serena Hotel",
+    "opening_hours": {
+      "open_now": true
+    },
+    "photos": [
+      {
+        "height": 2670,
+        "html_attributions": [
+          "<a href=\"https://maps.google.com/maps/contrib/112246991135533820110\">Nairobi Serena Hotel</a>"
+        ],
+        "photo_reference": "ATKogpcwCvItkYot6Wqcm14N-3sGT_zyYh7oKuhKWnA_SiWZAtUK7qGEqO3OFcSkovJZ7Cvt1JvqaTXYsUG77oxDQulClSEWpKKxeFePHgp-lanlPCrTImeFMoFjNxK6hpwSRY7iDxBFsvzPj090evpcXjKda8d3viMSAuBKgFuuYZ_dhELpvqE_3iIQwz8UMbIRd1MFOBiHN1RqizhnGJbFutnoFRYZHgld-_nBIvR5GK3LUFKirkaMsDXCsb9D1H1ysVrnoSOwsxLS4UOjLvCozGCGGjLgAJgZRvantku_0xf7u1m3VSqQEo9G9cPOEIbrMuh5te0Cu-o",
+        "width": 4000
+      }
+    ],
+    "place_id": "ChIJnfDwxNYQLxgRsKQVsmtU6vw",
+    "plus_code": {
+      "compound_code": "PR77+5R Nairobi, Kenya",
+      "global_code": "6GCRPR77+5R"
+    },
+    "rating": 4.7,
+    "reference": "ChIJnfDwxNYQLxgRsKQVsmtU6vw",
+    "scope": "GOOGLE",
+    "types": [
+      "lodging",
+      "restaurant",
+      "food",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 5882,
+    "vicinity": "Kenyatta Avenue, Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2917363,
+        "lng": 36.8213345
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.290417869708498,
+          "lng": 36.82269883029149
+        },
+        "southwest": {
+          "lat": -1.293115830291502,
+          "lng": 36.8200008697085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/restaurant-71.png",
+    "icon_background_color": "#FF9E67",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/restaurant_pinlet",
+    "name": "African Kitchen",
+    "place_id": "ChIJ0Q9Lz94QLxgR0MgYE8KBiRk",
+    "plus_code": {
+      "compound_code": "PR5C+8G Nairobi, Kenya",
+      "global_code": "6GCRPR5C+8G"
+    },
+    "rating": 4.5,
+    "reference": "ChIJ0Q9Lz94QLxgR0MgYE8KBiRk",
+    "scope": "GOOGLE",
+    "types": [
+      "restaurant",
+      "food",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 2,
+    "vicinity": "Kanisa Road, Nyeri Central, Opp. Kenya Revenue Authority Red Cross Lane, Nairobi City"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2917256,
+        "lng": 36.8232952
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.290367519708498,
+          "lng": 36.82466348029149
+        },
+        "southwest": {
+          "lat": -1.293065480291502,
+          "lng": 36.8219655197085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/restaurant-71.png",
+    "icon_background_color": "#FF9E67",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/restaurant_pinlet",
+    "name": "mpambe dishes",
+    "place_id": "ChIJ_y-lMN8QLxgRJrmA7nCJ094",
+    "rating": 5,
+    "reference": "ChIJ_y-lMN8QLxgRJrmA7nCJ094",
+    "scope": "GOOGLE",
+    "types": [
+      "restaurant",
+      "food",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 3,
+    "vicinity": "PR5F+883, Haile Selassie Avenue, Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.292238,
+        "lng": 36.82100199999999
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.290785219708498,
+          "lng": 36.8222993802915
+        },
+        "southwest": {
+          "lat": -1.293483180291502,
+          "lng": 36.8196014197085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/restaurant-71.png",
+    "icon_background_color": "#FF9E67",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/restaurant_pinlet",
+    "name": "Euphoria Fish Spa",
+    "opening_hours": {
+      "open_now": false
+    },
+    "photos": [
+      {
+        "height": 704,
+        "html_attributions": [
+          "<a href=\"https://maps.google.com/maps/contrib/111547038404256923426\">Mamadou Kolade</a>"
+        ],
+        "photo_reference": "ATKogpcbSiTJmFM-vq0dnO7wpHp2bGHvZWaE9XqieFrXJzGnZlk5CGEH-6fZDePe3fQXVrD6as2b_Cp3fcZop3hepyuHKdjhW7O5_a3tVcPeM0ZduRZq6vI7MQC7H9FupOio83u8P_sXi1OEPvOGjGELBJk99ka_TAxJEgoyR7zBqNW6WHn0CgCm-FI7sMVU7t5eoAtW672RMBo2S7Wfw7ooeDGNl-AFJf4GInSCa2fzfXY-mmeb2yWvrIw1e0lCp03c0kMC-BzIJwizDvu12UfTI4OCNJC5dyThTmfqEXC_VShS7_sqyhq1m6PerUMAzcQvOjzEaEKRCA9daR9rQC_-9363l5Qrbnka9taeQHf_Gt9cy7NZcESWIffXM0GZy14JBsrqweLApfiocwcsgw5RYv2nYasKiyfzSywFnodhn_IIvoGxRFmZKw5UbCSn0YwO91Ir3l7KgzOcCyCmU-X6NnT50VGSDoL-pjNX2Q3SmBdV2w5lkscFyKbRpMN382KzmKc067Q7Vzcx1br-g_gtIJ_hPFSVmdmmn2unOQ6ApU6MprQiJTGFC88YB9tpYYLy9wdbZR8bsPxoNIie_HVInZN5-LXRK3rxceO0j3fBug1uT1MxpvOjfesRD-3NfjqWbvCZ5g",
+        "width": 1024
+      }
+    ],
+    "place_id": "ChIJRaqW7hgaLxgRlbDFE5FRS0E",
+    "plus_code": {
+      "compound_code": "PR5C+4C Nairobi, Kenya",
+      "global_code": "6GCRPR5C+4C"
+    },
+    "price_level": 2,
+    "rating": 3.8,
+    "reference": "ChIJRaqW7hgaLxgRlbDFE5FRS0E",
+    "scope": "GOOGLE",
+    "types": [
+      "restaurant",
+      "food",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 57,
+    "vicinity": "Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2908471,
+        "lng": 36.82188129999999
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.289481169708498,
+          "lng": 36.82326713029149
+        },
+        "southwest": {
+          "lat": -1.292179130291502,
+          "lng": 36.82056916970849
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/restaurant-71.png",
+    "icon_background_color": "#FF9E67",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/restaurant_pinlet",
+    "name": "Java House - Phoenix",
+    "opening_hours": {
+      "open_now": false
+    },
+    "photos": [
+      {
+        "height": 2304,
+        "html_attributions": [
+          "<a href=\"https://maps.google.com/maps/contrib/105724554161597253554\">Babu Samuel</a>"
+        ],
+        "photo_reference": "ATKogpcARcGYYMy7U5pipq3l399oKiE2JuKPePmvFZoJZ9pyCX90UQTWOksiM-KsFIFkbNZhxyEnjuo9oE0M8nMEdtphl9yQn5Jwsg4k72Vf7AClNUacMqlIZNxItXzsX1J8M7GfYWKnqz9R43RsD_gpfTKIHuNF0eErkSRYsyClDX1IojrklSG-_edgbhZXFej3Ol-hMzQVYfr1-FVMoXKkHNhR6A1sqVmBJBrEOKMRCuN2lBnquQ6bFXb3Q25SQdgLrIyy4-KgQzy3nNcS5phR82V25jaAaeeChrDNpP_IxTo3F2AGVtccBuinD9PcjLyWe359Lqo1zo3FmaETrnETD-0sF9BcH2fasHt3tsu1dGJOz96EIitv_AFvxO1qIywzJ3Ihc8ZIorxRa0A71A4HiCiLdavx1XA9waEKVsF2PpC7L2PQBYGxfqT6Q7HnBUAbdqMUWktidozqCxZJXfLm32Y4r1OKgKnGYpd6krL9jkQK8MFS73rMRCobQe0dLVtDK-nqvTCb5PesKoUpV2pexTXyPw6SHaSg8uPOh6NNrgXnCMEzoIiFHrFsjiZG3hwPTaqnc7m7hExc2xTj-z6AXvF8Wvst70bOJETn7eVT8zyEsuKsAsaXKDlD7mcAKm7VRfxyDA",
+        "width": 4096
+      }
+    ],
+    "place_id": "ChIJu8VO4dYQLxgR0-Wlvn_XYHI",
+    "plus_code": {
+      "compound_code": "PR5C+MQ Nairobi, Kenya",
+      "global_code": "6GCRPR5C+MQ"
+    },
+    "price_level": 2,
+    "rating": 4.1,
+    "reference": "ChIJu8VO4dYQLxgR0-Wlvn_XYHI",
+    "scope": "GOOGLE",
+    "types": [
+      "restaurant",
+      "food",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 1113,
+    "vicinity": "Uganda House"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2908418,
+        "lng": 36.8218525
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.289476269708498,
+          "lng": 36.8232516802915
+        },
+        "southwest": {
+          "lat": -1.292174230291502,
+          "lng": 36.8205537197085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/restaurant-71.png",
+    "icon_background_color": "#FF9E67",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/restaurant_pinlet",
+    "name": "Java House - Embassy House",
+    "opening_hours": {
+      "open_now": false
+    },
+    "photos": [
+      {
+        "height": 3024,
+        "html_attributions": [
+          "<a href=\"https://maps.google.com/maps/contrib/118254923322056608175\">Luide Kakembo</a>"
+        ],
+        "photo_reference": "ATKogpcnQT2bcWimaFCxEbYmXCjoPyV0Sx0aG4XgASl-PK6MxF4rZSM3W3k4W4XvmcmlaJOuM7b1RDp98Oej6OBodmfqJNrgkxfHp2RxFp5vZpv_YsFf37BML6U4a-4Dd7wKAhiJ5WLL3r7w8wxxIT09SsCwQf6bF99z89cUK5nMCx71oLISx-hrhhwqnc_P9o6DVGH9eTkz0hA9-QhlnCqyOdUYQCRvd1LQNhJZsxuWXLgBk8kA40MUZ3coKfXcZ20dGrMorQCniTvOiNQpp7XBzq1b2TOzhdBwgy42aLE6a648GVe-B3Z0nvkHhXJ-W4uETX4DwcucHIp8m7emW3SUumjXI3EkSZ0J5IaWAUcrpKYgXDBsN7fAd7r1EoQoK6KJK3-ItHxvSCwYQ4yPOHHgp8Uja7tn9CBOBc1AeQSAmnZh6cXwGocaiob5cwBqVQ3DJNnP5NKDBTNOOBY2I1IgUdYSegy0WMQcHvAwj8vhnnjXxE9NOE3e3ayseCy_YVGoImVkFbMRfBez473pTEnmc79mpdYXU8HIt_gBqvjqmB8ACFr1zRSy_HFn-bLlfCsJQg3QdHOmwXyJbeW1kpHUtVqjwb1K1S4YEI7h6tArtguKS7bkEDTo_vg29V1xSVrJQQDeAw",
+        "width": 4032
+      }
+    ],
+    "place_id": "ChIJT6OwJdkQLxgREgoXQBS_fFA",
+    "plus_code": {
+      "compound_code": "PR5C+MP Nairobi, Kenya",
+      "global_code": "6GCRPR5C+MP"
+    },
+    "price_level": 2,
+    "rating": 4.3,
+    "reference": "ChIJT6OwJdkQLxgREgoXQBS_fFA",
+    "scope": "GOOGLE",
+    "types": [
+      "restaurant",
+      "food",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 1315,
+    "vicinity": "Parliament Lane, Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2912912,
+        "lng": 36.82436679999999
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.289798619708498,
+          "lng": 36.8256436802915
+        },
+        "southwest": {
+          "lat": -1.292496580291502,
+          "lng": 36.8229457197085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/restaurant-71.png",
+    "icon_background_color": "#FF9E67",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/restaurant_pinlet",
+    "name": "Trendys Restaurant",
+    "opening_hours": {
+      "open_now": false
+    },
+    "place_id": "ChIJ17VVTd8QLxgRaIzucF0qjEs",
+    "rating": 4,
+    "reference": "ChIJ17VVTd8QLxgRaIzucF0qjEs",
+    "scope": "GOOGLE",
+    "types": [
+      "restaurant",
+      "food",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 2,
+    "vicinity": "PR5F+FPQ, Next To KPCU, Haile Selassie Avenue, Nairobi City"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2885755,
+        "lng": 36.8230926
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.287150119708498,
+          "lng": 36.82439308029149
+        },
+        "southwest": {
+          "lat": -1.289848080291502,
+          "lng": 36.82169511970849
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/restaurant-71.png",
+    "icon_background_color": "#FF9E67",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/restaurant_pinlet",
+    "name": "Tin Tin Restaurant",
+    "opening_hours": {
+      "open_now": false
+    },
+    "photos": [
+      {
+        "height": 3632,
+        "html_attributions": [
+          "<a href=\"https://maps.google.com/maps/contrib/114552479811616873617\">Tin Tin Restaurant</a>"
+        ],
+        "photo_reference": "ATKogpe_DzCpuO1GgalKzUyzxtlPaAV0WYTKsh6GhgO3Zzvypb78lp_7sf7TAJ-n16jej4W4r5DxstGyRvaeUefoZsr4F-Li2jHhdSRZ_DncZeniZWVXPSSPnchgzQIhRUCW18q-mGxwqcdbzXyaBGBjphp8fxQAb-x4Oo7q6cq-diSvaVealhHaw42OHTQLuq7zPu0fFbXTMXGTGx_XQOjgZvBs8Dc9UnSkP_FGjrScJuL_wdFwVB2PAJ79dLq41W2jU2AYb7WeDmGhiZ7QjL-tYVYbxp3wdTfdxb7zDazCNn5nm0iTDNhOn9Sy8ntZL80QIA2Yf0GBuqg",
+        "width": 5456
+      }
+    ],
+    "place_id": "ChIJTy6uUdgQLxgRfgtSkLmzwmU",
+    "plus_code": {
+      "compound_code": "PR6F+H6 Nairobi, Kenya",
+      "global_code": "6GCRPR6F+H6"
+    },
+    "price_level": 2,
+    "rating": 4.4,
+    "reference": "ChIJTy6uUdgQLxgRfgtSkLmzwmU",
+    "scope": "GOOGLE",
+    "types": [
+      "restaurant",
+      "meal_delivery",
+      "food",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 217,
+    "vicinity": "Kenyatta International Conference Centre, Harambee Avenue, Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2862779,
+        "lng": 36.8205196
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.285006369708498,
+          "lng": 36.8218760302915
+        },
+        "southwest": {
+          "lat": -1.287704330291502,
+          "lng": 36.81917806970851
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/restaurant-71.png",
+    "icon_background_color": "#FF9E67",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/restaurant_pinlet",
+    "name": "Hot Dishes Restaurant (Bruce House)",
+    "opening_hours": {
+      "open_now": false
+    },
+    "photos": [
+      {
+        "height": 3024,
+        "html_attributions": [
+          "<a href=\"https://maps.google.com/maps/contrib/106977731447275062807\">hitesh kapoor</a>"
+        ],
+        "photo_reference": "ATKogpeOWt80SNdYUPbdb6sVnTlG3F5KSevw3i_HMsxq8-ynoUciFSmcR2VWrdfDplhFbnxoPOaev92g2Gjfbb1QcjZGaQsxl32REq3aQ93_6BwJ_SkCBWs-YXRdYKoK8G2RF4r1WxlLyKwwobQb0AJvSS8ow9S0BDZgq2eMKNBO5Zf0Y4DyMBpzO8VTyfPsMNQQwouKT6OR_imljpdBlyJmIveggneBNV-_-PLbo9Z6Zv9bGzqcLNc6btGox9-GTiZBbDP0uOULiXbF68wAlRdq1EJjqcga1W92YyJrAb4kzbGmGDTJEG271W_nE8K1IeguVWBw2L-FGHEYZa8evsYomfnO0RICRuVPimSDQKpCqvRXq3AQ4p8lPKKqNdidDSNmRsiY5r8ZdyhWoT-QT7pkEAOVPKdvsl49x87lRFkhbkRIAbirmKNW-IDD8GH3RiK11zmoNrX04EES9C_euSrp0lhDQ_N1oAWo7KYHLY1JFPAf_2oo1jvXi5O98vJDRFGqMC5m5ex0yFyg19BBKMDFYykrKkrfJy26bpjv-tRjN-NwNSMtmiBEYP6A2IZBB-NO1GpswtytkjL8VnhnK39D6nXrSRsFc1pCslic1rtZ2rSfSTkXgKth6qALpadgYWM2wl68ew",
+        "width": 4032
+      }
+    ],
+    "place_id": "ChIJrbkdPNcQLxgR5_7jbchoKLM",
+    "plus_code": {
+      "compound_code": "PR7C+F6 Nairobi, Kenya",
+      "global_code": "6GCRPR7C+F6"
+    },
+    "price_level": 1,
+    "rating": 4.1,
+    "reference": "ChIJrbkdPNcQLxgR5_7jbchoKLM",
+    "scope": "GOOGLE",
+    "types": [
+      "restaurant",
+      "food",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 551,
+    "vicinity": "Bruce House, 00100 Kaunda Street, Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2920659,
+        "lng": 36.82194619999999
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.290687469708498,
+          "lng": 36.82328083029149
+        },
+        "southwest": {
+          "lat": -1.293385430291502,
+          "lng": 36.8205828697085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/airport-71.png",
+    "icon_background_color": "#10BDFF",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/airport_pinlet",
+    "name": "Emirates - Jkia",
+    "opening_hours": {
+      "open_now": false
+    },
+    "place_id": "ChIJE7QH4CERLxgRgQyt853vn9Q",
+    "plus_code": {
+      "compound_code": "PR5C+5Q Nairobi, Kenya",
+      "global_code": "6GCRPR5C+5Q"
+    },
+    "rating": 3,
+    "reference": "ChIJE7QH4CERLxgRgQyt853vn9Q",
+    "scope": "GOOGLE",
+    "types": [
+      "airport",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 2,
+    "vicinity": "Embakasi East, Embakasi Jomo Kenyatta International, Airport North Road, Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.289031,
+        "lng": 36.82330689999999
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.287688969708498,
+          "lng": 36.8246608302915
+        },
+        "southwest": {
+          "lat": -1.290386930291502,
+          "lng": 36.8219628697085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/airport-71.png",
+    "icon_background_color": "#10BDFF",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/airport_pinlet",
+    "name": "KICC Helipad",
+    "photos": [
+      {
+        "height": 5712,
+        "html_attributions": [
+          "<a href=\"https://maps.google.com/maps/contrib/117554565354224421943\">Familie Kroppach</a>"
+        ],
+        "photo_reference": "ATKogpeKF8pui6hJ02Iw6BU-e_07PjkYtZ-q3VkrN41-tGGFLq8lel5LFEbNHdNVHHd_AFHp73fg9Epy_ZdmOkjCvDPL0IgG3KVbYopEphtoSNFAijM2gjVW_GoH5_KFaTyjI3-xrk7bAeBs3w80GImJGJRTVC3PDR3BOoF58G61wlM-RvMH8D-Qwcy1uXOjgyla4LspXenjKm0BOEnpA831G1JbgeheuFX9sfZXeEu6pNFHdWLxlJEEC-r7UJ9YCFuLqK9P0q9C22vS4e4CRHjuEmQQzFFTMu11kcIg-w2OtByX94iNR0UYklBabAy39maIJ-M8A_aDa4wXBlWRmJMpg77qhatdI8TAqHQpWPAN7i0v-oVMMQ3VGsFG3Ia2EU4ko-FyeHZs0Hh8_ZtUVXf_prp52H4jyvnhEOLMBm3InqzepoI9VgWV6KAc1bY9WYqLguLAO0BUZYLKJhIzh1EBOOMyBbgsKiNQBe5VCXu1MULLhzhqmzxCE4yeYLNGYsw-RBLhAWSrcemRnQRm_kRPv4W8FC9asdIgxjfKxtZsLzLZs8oPdWuE8zqPhCG0poDyii9Xns2Vy5FPDcx-SrEscxWEwEOPqOwMC5tBQTAFad_gQoo10SMJ0fHWeYlcqNh0",
+        "width": 4284
+      }
+    ],
+    "place_id": "ChIJ86BGW9gQLxgRahx0ZptM63A",
+    "plus_code": {
+      "compound_code": "PR6F+98 Nairobi, Kenya",
+      "global_code": "6GCRPR6F+98"
+    },
+    "rating": 4.6,
+    "reference": "ChIJ86BGW9gQLxgRahx0ZptM63A",
+    "scope": "GOOGLE",
+    "types": [
+      "airport",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 358,
+    "vicinity": "Harambee Avenue, Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2877342,
+        "lng": 36.8259105
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.286381469708498,
+          "lng": 36.8272683302915
+        },
+        "southwest": {
+          "lat": -1.289079430291502,
+          "lng": 36.82457036970851
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/airport-71.png",
+    "icon_background_color": "#10BDFF",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/airport_pinlet",
+    "name": "Pago Airways And Training Institute",
+    "opening_hours": {
+      "open_now": false
+    },
+    "place_id": "ChIJ89kOWcIRLxgRo1EfhECqm-E",
+    "plus_code": {
+      "compound_code": "PR6G+W9 Nairobi, Kenya",
+      "global_code": "6GCRPR6G+W9"
+    },
+    "reference": "ChIJ89kOWcIRLxgRo1EfhECqm-E",
+    "scope": "GOOGLE",
+    "types": [
+      "airport",
+      "point_of_interest",
+      "establishment"
+    ],
+    "vicinity": "Electricity House, Airbase, Nkrumah Lane, Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.285921,
+        "lng": 36.82385699999999
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.284651119708498,
+          "lng": 36.82524353029149
+        },
+        "southwest": {
+          "lat": -1.287349080291502,
+          "lng": 36.8225455697085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/airport-71.png",
+    "icon_background_color": "#10BDFF",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/airport_pinlet",
+    "name": "Aero Zambia",
+    "opening_hours": {
+      "open_now": false
+    },
+    "place_id": "ChIJaUFh46oRLxgRyZnyR5Fy9Bc",
+    "plus_code": {
+      "compound_code": "PR7F+JG Nairobi, Kenya",
+      "global_code": "6GCRPR7F+JG"
+    },
+    "rating": 5,
+    "reference": "ChIJaUFh46oRLxgRyZnyR5Fy9Bc",
+    "scope": "GOOGLE",
+    "types": [
+      "airport",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 1,
+    "vicinity": "International House, Mama Ngina Street, Starehe"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.285685,
+        "lng": 36.82365300000001
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.284220969708498,
+          "lng": 36.8249435802915
+        },
+        "southwest": {
+          "lat": -1.286918930291502,
+          "lng": 36.8222456197085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/airport-71.png",
+    "icon_background_color": "#10BDFF",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/airport_pinlet",
+    "name": "Rwandair -Ticketing Office",
+    "opening_hours": {
+      "open_now": false
+    },
+    "photos": [
+      {
+        "height": 1440,
+        "html_attributions": [
+          "<a href=\"https://maps.google.com/maps/contrib/111120864261747267117\">Rwandair -Ticketing Office</a>"
+        ],
+        "photo_reference": "ATKogpfm9CM0LMj1gXyWfBiOb8Y_ZjjaSaPi05Tn21mF0i42WIxxNU3gUc92HW0Tjpq8YH7q8YWeN8VKxnpHZTM7lt3jkDNhOocGID0s-SioKfHxYYioHwKJLfV-X2th_yqiAQUyoZfuc_hrKxWv-axnsHLVOl-UY6ar69s1kGFx6f3xUkLcLCDKNDnOM4aNmspHayBkdVHo84g9hqRXaA6gz_ll2U61Sz8IJIgvbUcyt0upLjJaRYpvbcmDJWbcU5ZxxRZRRku7qRc_KhxB1FpHDUTYXAJbtX8k8jyiVVXQmZpyegboAOIk_Kq6Rciso0Q00P_ecjwfT_o",
+        "width": 2560
+      }
+    ],
+    "place_id": "ChIJG6roaG8RLxgRwCbjNMFkTrs",
+    "plus_code": {
+      "compound_code": "PR7F+PF Nairobi, Kenya",
+      "global_code": "6GCRPR7F+PF"
+    },
+    "rating": 2.3,
+    "reference": "ChIJG6roaG8RLxgRwCbjNMFkTrs",
+    "scope": "GOOGLE",
+    "types": [
+      "airport",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 18,
+    "vicinity": "International House, Embakasi Mama Ngina Street, Embakasi East, Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2857654,
+        "lng": 36.82433419999999
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.284475319708498,
+          "lng": 36.8257093802915
+        },
+        "southwest": {
+          "lat": -1.287173280291502,
+          "lng": 36.8230114197085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/airport-71.png",
+    "icon_background_color": "#10BDFF",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/airport_pinlet",
+    "name": "Air Madagascar",
+    "opening_hours": {
+      "open_now": false
+    },
+    "place_id": "ChIJOUdM30sRLxgRhArc0AungmM",
+    "plus_code": {
+      "compound_code": "PR7F+MP Nairobi, Kenya",
+      "global_code": "6GCRPR7F+MP"
+    },
+    "rating": 5,
+    "reference": "ChIJOUdM30sRLxgRhArc0AungmM",
+    "scope": "GOOGLE",
+    "types": [
+      "airport",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 1,
+    "vicinity": "Hilton Hotel, Starehe"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.284606,
+        "lng": 36.82151
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.283267519708498,
+          "lng": 36.82286403029151
+        },
+        "southwest": {
+          "lat": -1.285965480291502,
+          "lng": 36.82016606970851
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/airport-71.png",
+    "icon_background_color": "#10BDFF",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/airport_pinlet",
+    "name": "Rick Air Travel Agencies",
+    "opening_hours": {
+      "open_now": false
+    },
+    "place_id": "ChIJBzkMTqERLxgRChp-hOAiNzk",
+    "plus_code": {
+      "compound_code": "PR8C+5J Nairobi, Kenya",
+      "global_code": "6GCRPR8C+5J"
+    },
+    "rating": 1,
+    "reference": "ChIJBzkMTqERLxgRChp-hOAiNzk",
+    "scope": "GOOGLE",
+    "types": [
+      "airport",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 1,
+    "vicinity": "Nairobi Central ST.ELLIS BLDG Starehe"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2847219,
+        "lng": 36.8201652
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.283344769708498,
+          "lng": 36.82158263029149
+        },
+        "southwest": {
+          "lat": -1.286042730291502,
+          "lng": 36.8188846697085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/airport-71.png",
+    "icon_background_color": "#10BDFF",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/airport_pinlet",
+    "name": "Daallo Airlines",
+    "opening_hours": {
+      "open_now": false
+    },
+    "place_id": "ChIJv7n5sQoRLxgRwyIO7SXu-W4",
+    "plus_code": {
+      "compound_code": "PR8C+43 Nairobi, Kenya",
+      "global_code": "6GCRPR8C+43"
+    },
+    "rating": 4.4,
+    "reference": "ChIJv7n5sQoRLxgRwyIO7SXu-W4",
+    "scope": "GOOGLE",
+    "types": [
+      "airport",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 12,
+    "vicinity": "Lonrho House, Standard Street, Starehe"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2845771,
+        "lng": 36.82350989999999
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.283201869708498,
+          "lng": 36.8248812302915
+        },
+        "southwest": {
+          "lat": -1.285899830291502,
+          "lng": 36.8221832697085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/airport-71.png",
+    "icon_background_color": "#10BDFF",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/airport_pinlet",
+    "name": "United Technologies International Operations",
+    "opening_hours": {
+      "open_now": false
+    },
+    "place_id": "ChIJN65IGrURLxgR03FCI3XvQa8",
+    "plus_code": {
+      "compound_code": "PR8F+5C Nairobi, Kenya",
+      "global_code": "6GCRPR8F+5C"
+    },
+    "reference": "ChIJN65IGrURLxgR03FCI3XvQa8",
+    "scope": "GOOGLE",
+    "types": [
+      "airport",
+      "point_of_interest",
+      "establishment"
+    ],
+    "vicinity": "IPS Building, Kimathi Street, Starehe"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.288597,
+        "lng": 36.82930899999999
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.287150319708498,
+          "lng": 36.83060948029149
+        },
+        "southwest": {
+          "lat": -1.289848280291502,
+          "lng": 36.82791151970849
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/airport-71.png",
+    "icon_background_color": "#10BDFF",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/airport_pinlet",
+    "name": "Trans Eastern Airlines Ltd",
+    "opening_hours": {
+      "open_now": false
+    },
+    "place_id": "ChIJs1jTgMERLxgRT2o5g9paHsQ",
+    "plus_code": {
+      "compound_code": "PR6H+HP Nairobi, Kenya",
+      "global_code": "6GCRPR6H+HP"
+    },
+    "reference": "ChIJs1jTgMERLxgRT2o5g9paHsQ",
+    "scope": "GOOGLE",
+    "types": [
+      "airport",
+      "point_of_interest",
+      "establishment"
+    ],
+    "vicinity": "Karen Agriculture House, Nairobi, Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2920659,
+        "lng": 36.82194619999999
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.290687469708498,
+          "lng": 36.82328083029149
+        },
+        "southwest": {
+          "lat": -1.293385430291502,
+          "lng": 36.8205828697085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/lodging-71.png",
+    "icon_background_color": "#909CE1",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/hotel_pinlet",
+    "name": "Nairobi Apartments",
+    "opening_hours": {
+      "open_now": false
+    },
+    "photos": [
+      {
+        "height": 758,
+        "html_attributions": [
+          "<a href=\"https://maps.google.com/maps/contrib/109059399070655084508\">Nehemiah Ogembo Bosire (Eng Bosire Nehemiah)</a>"
+        ],
+        "photo_reference": "ATKogpfII2QmyIZeSYK11GUaaN2qAh5JV9juIOpmXwRNEht4IYGROT0vJMpNh2tuRcz_gbX2FqypcdERIWRdADc6E6SjmYpGlaarJYj6cTFuvBERKohZiIT5hog2LgB9TWTwI9qmQ6C8Hu0SXMjb2eYAHB4K-Y4bIn1vckm79ZXUH1zgLmVZiyJLv3OSoOWoNCnGp7YYWmXFfLv2hxVR7k1QTfbALRarTg89uogiW1OEvxbxKFh04qIxFx2K6CJJJTbU4uEp962ga5vddFLaadieh4txQiEWte9Eq2PvRjWTVrxTSoqeM9xi0_NkrXUW76autuZvAZRq7XQad-p8BTNYNZJRRkyUg0W8ZCC97xCyxX3eqfrpKe_2fIKNzeZ-35karWITR_pHKWrOnEE4nTbbMjNXEhos4Z6mXPsE-VRsml1mTYYVc6pKAJg11qgFVH0rIe1U9Xg_CgKzhYr0JA8awGWJjd2qCp2tyJbcYEaVEH00K-_5QD_wewxU71ZEBPpHX22cVgup_uvITWwewvGODt22RNnjJz4G4hArtxCQlqgyn4nhqkQaF2QqwRgfVGBvHierXQGCA-EBtAX75jsL16zv2E3EfJRl6U5g1W9zAJ6LvcRkKgdETg9XyuAHxhCTJfADZhQa",
+        "width": 736
+      }
+    ],
+    "place_id": "ChIJu0kQLNIQLxgRBZCP4pIlZDE",
+    "rating": 4.2,
+    "reference": "ChIJu0kQLNIQLxgRBZCP4pIlZDE",
+    "scope": "GOOGLE",
+    "types": [
+      "lodging",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 106,
+    "vicinity": "Mokhtar Nairobi KE, Dahha Street, Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2842084,
+        "lng": 36.8228685
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.282791369708498,
+          "lng": 36.8242767802915
+        },
+        "southwest": {
+          "lat": -1.285489330291502,
+          "lng": 36.8215788197085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/lodging-71.png",
+    "icon_background_color": "#909CE1",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/hotel_pinlet",
+    "name": "Sarova Stanley Nairobi - 5 Star Hotel",
+    "opening_hours": {
+      "open_now": true
+    },
+    "photos": [
+      {
+        "height": 683,
+        "html_attributions": [
+          "<a href=\"https://maps.google.com/maps/contrib/107606859195434845281\">Sarova Stanley Nairobi - 5 Star Hotel</a>"
+        ],
+        "photo_reference": "ATKogpfEtb1JJrqW2Gf7a1khXKrHAkSicj7Ue1xk-yRCJFh7UJF1zkjDJSW7YK_8vE-X0ffAZMJvLwTlllUA62auzLMrm7SjcpyNrSuUToFCeyUjFjKgZg54b-gOCXdnzdiVtZPcoYkCFpa9v6jZYAe-WH3daykQ3dK2UJZfq6Olq2X0u7F6ocOOGyU7jICWG5NRUn37o9j-Q9BVIApLop22uU43tcSSiXC-Wil4tzr0r8ylyO9T9fb3qRtIwLiFMGuPvvgAtLqaMsSO3pNLTN-y_tw6QZOzXwqv9usSbUciY8D_8ntLwZi0P2nCHGyLYbk1lNS5lOPdfJE",
+        "width": 1024
+      }
+    ],
+    "place_id": "ChIJgal_ZdYQLxgRQJpbfya5kqg",
+    "plus_code": {
+      "compound_code": "PR8F+84 Nairobi, Kenya",
+      "global_code": "6GCRPR8F+84"
+    },
+    "rating": 4.6,
+    "reference": "ChIJgal_ZdYQLxgRQJpbfya5kqg",
+    "scope": "GOOGLE",
+    "types": [
+      "lodging",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 9054,
+    "vicinity": "Junction Of Kenyatta Avenue and, Kimathi Street, Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2849312,
+        "lng": 36.81649889999999
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.283392069708498,
+          "lng": 36.8180798302915
+        },
+        "southwest": {
+          "lat": -1.286090030291502,
+          "lng": 36.8153818697085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/lodging-71.png",
+    "icon_background_color": "#909CE1",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/hotel_pinlet",
+    "name": "Laico Regency",
+    "opening_hours": {
+      "open_now": false
+    },
+    "photos": [
+      {
+        "height": 3120,
+        "html_attributions": [
+          "<a href=\"https://maps.google.com/maps/contrib/100336652164194078501\">peter okwemba</a>"
+        ],
+        "photo_reference": "ATKogpdUI_AvwLgOT78zLhjCi2KaUluFbuXg5iiVilYwKcBGohEAegSHv7TmcOxmJOTw_HcmqLg8qYdRpeH22CIw_oW655HGPiEkklyqxfOF18MaQ8hntsIQwwylCLhJhRYq-tCPt537YZhMl2egh_r7ocPj1qc41U8r2465ZricTXOWT5Fm4B4HK_qDwrJPLbSUL0A7LY5kAdFJg6hAA59HIG-scneP9yQdwad06r4_Bdl_r1v276QroofVsw8-AjkE2gVuzm5Hts7RaQJ896XNxyetnRk6Hc4hUk2uHIC3XAdm26R-GffbgGp01BKs93d24bpAQK8gGimPF3hS8fijBd938E8rrvTSRWfxKOlX7NX2iqjQ4gZVZVglXkfM4I1xK1ISy1ELBu95Sap6L8pxuzrrsOpjHWKSJBnmFx3BcNB3e-h2O1hpzpfDQRt4e5tI2OroN3zKM6bHEDw2p4XJIwgLZ-OLuByg9VdwzE7HvEPjPUtlLyicutHRpRVTlOj4bDW8bMBqB8vQ8sd_7tfv8sBr0OeJB-T98jjo8JwLiHOKOBu_Ny-SdBB2HYYBh2HoZqq0ii9h5gOkOGw9qSqORwXXwNGINJ-f_fwLteCvSdu70zWzpGNpK9FEaGl4ak8Qm1EkSA",
+        "width": 4160
+      }
+    ],
+    "place_id": "ChIJ8bPTgtEQLxgRM12ZdpRcQEg",
+    "plus_code": {
+      "compound_code": "PR88+2H Nairobi, Kenya",
+      "global_code": "6GCRPR88+2H"
+    },
+    "rating": 4.2,
+    "reference": "ChIJ8bPTgtEQLxgRM12ZdpRcQEg",
+    "scope": "GOOGLE",
+    "types": [
+      "lodging",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 3209,
+    "vicinity": "Nairobi Central Loita St, Uhuru Highway, Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.3002043,
+        "lng": 36.82041539999999
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.298823519708498,
+          "lng": 36.8219575802915
+        },
+        "southwest": {
+          "lat": -1.301521480291502,
+          "lng": 36.8192596197085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/lodging-71.png",
+    "icon_background_color": "#909CE1",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/hotel_pinlet",
+    "name": "Hillpark Hotel",
+    "opening_hours": {
+      "open_now": true
+    },
+    "photos": [
+      {
+        "height": 3712,
+        "html_attributions": [
+          "<a href=\"https://maps.google.com/maps/contrib/104290548752770617224\">Hillpark Hotels</a>"
+        ],
+        "photo_reference": "ATKogpcZICtuHwqKfihvLvCAr0ZyBPlwDV7WIDk18jHgPq_XIWa122rt29Q1UsmwRuJ7v5FQfA6O5sfabksr-QtVx_4BELpA8tuR89mn3LhEI_tRfniweCEUd7QsESPfEvJtgsM0rqluYwP5P6D_6pIc9evpZfnR31rIayMgRIao8Eq8SAquQpVHHRYBdO4QCndR2uRm4MttENHsmttP7dwtD2g1gPCZr5Ih8Fv7qq4T62D3MB4AfVnrcNECwA4MPGI8a1ueEP77XQQKmUx_1JB12iYp9WgutvqHZHt7O2V7_9mAQPII3-nlqloLtEUODN7JWK3uNErE630",
+        "width": 5568
+      }
+    ],
+    "place_id": "ChIJT1cW5eMQLxgRQ-V4q9Hq1iY",
+    "plus_code": {
+      "compound_code": "MRXC+W5 Nairobi, Kenya",
+      "global_code": "6GCRMRXC+W5"
+    },
+    "rating": 4.3,
+    "reference": "ChIJT1cW5eMQLxgRQ-V4q9Hq1iY",
+    "scope": "GOOGLE",
+    "types": [
+      "lodging",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 2095,
+    "vicinity": "Lower Hill Road, Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2855361,
+        "lng": 36.8206643
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.284159819708498,
+          "lng": 36.8220553802915
+        },
+        "southwest": {
+          "lat": -1.286857780291502,
+          "lng": 36.8193574197085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/lodging-71.png",
+    "icon_background_color": "#909CE1",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/hotel_pinlet",
+    "name": "Maanzoni 680 Hotel",
+    "opening_hours": {
+      "open_now": true
+    },
+    "photos": [
+      {
+        "height": 680,
+        "html_attributions": [
+          "<a href=\"https://maps.google.com/maps/contrib/107866217997657446411\">Maanzoni 680 Hotel</a>"
+        ],
+        "photo_reference": "ATKogpcM2gztCF5NNgmViASOM7WIsKIZgwcpUWhXeGZAkeztT6HVdw6Qr4JdYhuBnHh2lxjmv6J2JFC4BdZGlTKagpxl9dPk9W-y7ut5FAc60uKhB4J8SZSyhhx79ONCCaalyM2R_HXCXYopXwSlvhTvPUmEt58FuMbGw0ND-TOfKCTfulQBv6dIcL0UL7-uJUkf4-ivaIiIBIMbac_1Y0wiY75Sg5YHCItWd7sVrebG5p8mABFzEPJkFNnSZ1HeZL4ytNsM5wIlusuH_ViHdP17GXtXXhlRi_jWxtCiV-nU3j3m_KZNVWKiJG341kTiyNSL_vWDcMMDrm0",
+        "width": 1024
+      }
+    ],
+    "place_id": "ChIJ8yIAV44RLxgRMaUM4ostKfo",
+    "plus_code": {
+      "compound_code": "PR7C+Q7 Nairobi, Kenya",
+      "global_code": "6GCRPR7C+Q7"
+    },
+    "rating": 4.1,
+    "reference": "ChIJ8yIAV44RLxgRMaUM4ostKfo",
+    "scope": "GOOGLE",
+    "types": [
+      "lodging",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 1641,
+    "vicinity": "HOTEL BLDG Starehe, 680 Muindi Mbingu Street, Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2841033,
+        "lng": 36.823441
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.282822919708498,
+          "lng": 36.8247383302915
+        },
+        "southwest": {
+          "lat": -1.285520880291502,
+          "lng": 36.8220403697085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/lodging-71.png",
+    "icon_background_color": "#909CE1",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/hotel_pinlet",
+    "name": "Oakwood Hotel",
+    "opening_hours": {
+      "open_now": true
+    },
+    "photos": [
+      {
+        "height": 1831,
+        "html_attributions": [
+          "<a href=\"https://maps.google.com/maps/contrib/118346952356674303350\">Oakwood hotel</a>"
+        ],
+        "photo_reference": "ATKogpdHJSp3zYRWwg7jWC8uXV7DQQ7ZLaB-CWsRHQ7d7ej6P7BEc8pmcrgOvjDb2zIc2tQ2nooEhyYzJavM1fDYK90IbAYTphZoD1UOgp8sAwSZ4XonWNlgYzKMu9SSoK3IEeKaG3bo-ph-mCCQ1YrjgZZ2AizH4Lubq2Zo-YqwKAx-CGcKW9G0sz1vXQ_jF1ncoQfsi5yR7MlZ8rHMvWBiCSYQ4f_OtX5Ms9mqlVF2qu6najF6G0NR0TM3hUSWOQHrBhFrssUzfOJDQd6xBq_abhTAcSbrqcQ3HiuZNFODUiTwarGhjgQ3rgme0kqUAnnGKxturWs4Vao",
+        "width": 2958
+      }
+    ],
+    "place_id": "ChIJ2btykkcRLxgRfZApoMkdAXU",
+    "plus_code": {
+      "compound_code": "PR8F+99 Nairobi, Kenya",
+      "global_code": "6GCRPR8F+99"
+    },
+    "rating": 3.9,
+    "reference": "ChIJ2btykkcRLxgRfZApoMkdAXU",
+    "scope": "GOOGLE",
+    "types": [
+      "lodging",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 114,
+    "vicinity": "Elite Hse, Starehe"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2920659,
+        "lng": 36.82194619999999
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.290687469708498,
+          "lng": 36.82328083029149
+        },
+        "southwest": {
+          "lat": -1.293385430291502,
+          "lng": 36.8205828697085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/generic_business-71.png",
+    "icon_background_color": "#7B9EB0",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/generic_pinlet",
+    "name": "GeoMara @ West Heights Junction Mall",
+    "opening_hours": {
+      "open_now": true
+    },
+    "place_id": "ChIJe87OaGsaLxgRs8ZNLMjopgg",
+    "plus_code": {
+      "compound_code": "PR5C+5Q Nairobi, Kenya",
+      "global_code": "6GCRPR5C+5Q"
+    },
+    "reference": "ChIJe87OaGsaLxgRs8ZNLMjopgg",
+    "scope": "GOOGLE",
+    "types": [
+      "lodging",
+      "point_of_interest",
+      "establishment"
+    ],
+    "vicinity": "Mararo Avenue West Heights B26 9th floor"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2855752,
+        "lng": 36.8260672
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.284151519708498,
+          "lng": 36.82728773029149
+        },
+        "southwest": {
+          "lat": -1.286849480291502,
+          "lng": 36.8245897697085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/lodging-71.png",
+    "icon_background_color": "#909CE1",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/hotel_pinlet",
+    "name": "Ambassadeur Hotel",
+    "opening_hours": {
+      "open_now": false
+    },
+    "photos": [
+      {
+        "height": 4032,
+        "html_attributions": [
+          "<a href=\"https://maps.google.com/maps/contrib/104941490397568011785\">victor nzau</a>"
+        ],
+        "photo_reference": "ATKogpdTc9g3aqHDzKfhEqW1fhkHT4PiHfW8M6Ugro8odi-2bAp3tKtaIxAwLyy1D-jKE5kgoeXT7XMe-r0psi48irMEG9wo6OKx_XfkgK9JBxQPTkm2hMFmawZxGNeLN0swN2bKG_MSRfIbmTScW1RmVSLrD5jUqDRtjQqJnhuMzzkABEba0KzXUCfTiF9oLJRmrXVaLx7yMnOcr6AlBH0ftyd_aQy6thqA1ZlToyf6QQhtItO-dB-qMa-DoTsMho8cNeTJhtaByZ8YQKcfrpIzBl5IR3UamYEF98pcLsy906cfCF3-gVpAL-W8K1-LMqj5Y5JUv-AZHi9ej73igkjSSnmVVvaCQ5cMWCX-SBZbej3C1N5sCeEEV0Kf9LCjIvLTJN9cBtzpfEyRyRw3ZjOypB2xZQx4ei8tYXLhncrJC6kXfMlI8GCNR92QT79Q8NB8LagE-kF-Cobg-T5QY9x2KJGSPkHTDBddgxhOphSiADZiqs4T-uPrMQuCNpdfKlAxun40W2P7wn4-jzRHS_Dz4GPumlOLpnDoGWTiX7sLWTgAAddqoxG_ebNiCW11eCuMpDXoREhFzGBek4GG0--XSSWsc5-XT3sP6zt16HYE7oYlmVgFKs7VGgvjE_2m5hc10e0eNw",
+        "width": 3024
+      }
+    ],
+    "place_id": "ChIJp6uvNCgRLxgRpv3VDij31xM",
+    "rating": 4.1,
+    "reference": "ChIJp6uvNCgRLxgRpv3VDij31xM",
+    "scope": "GOOGLE",
+    "types": [
+      "bar",
+      "lodging",
+      "restaurant",
+      "food",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 3952,
+    "vicinity": "PR7G+QC3, Moi Avenue, Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.286695,
+        "lng": 36.816937
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.285373619708498,
+          "lng": 36.81830023029151
+        },
+        "southwest": {
+          "lat": -1.288071580291502,
+          "lng": 36.81560226970851
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/lodging-71.png",
+    "icon_background_color": "#909CE1",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/hotel_pinlet",
+    "name": "GLORIOUS HOTELS/RESTAURANTS DESTINATION",
+    "place_id": "ChIJ3V3eYdAQLxgRmHhrKqS_vOA",
+    "plus_code": {
+      "compound_code": "PR78+8Q Nairobi, Kenya",
+      "global_code": "6GCRPR78+8Q"
+    },
+    "reference": "ChIJ3V3eYdAQLxgRmHhrKqS_vOA",
+    "scope": "GOOGLE",
+    "types": [
+      "lodging",
+      "point_of_interest",
+      "establishment"
+    ],
+    "vicinity": "27502-00100, Kenya"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2867322,
+        "lng": 36.8270136
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.285389119708498,
+          "lng": 36.8283496302915
+        },
+        "southwest": {
+          "lat": -1.288087080291502,
+          "lng": 36.8256516697085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/lodging-71.png",
+    "icon_background_color": "#909CE1",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/hotel_pinlet",
+    "name": "Arkland hotel * YOHOH",
+    "photos": [
+      {
+        "height": 2988,
+        "html_attributions": [
+          "<a href=\"https://maps.google.com/maps/contrib/112021237353935827285\">Shah Jahan</a>"
+        ],
+        "photo_reference": "ATKogpca_YxE2ACYww4Lzk8xxtIvLUICEO0f46SrjpD5HbMU6ZXu3lrdftVXg6VxVT8laQ4RfIPwcsOjlHAbkubZMcTq-z1SUz33uY5iYAkBcy9xsA9Fu7N3eOUGO2lruyzl7artsUe5ZSv-FrOZ9LcOO_N7kpu1qJb_oF6J98rq1fLN-_IuF3Z8soTQz3bnF8oe9E4EX3LlUlGK3yJo5eL3C7CJammxpOJ7dYM1iN-CuwFM_M57g7aUzTxF_wIsIXEmInWjKBmnkybm1dEDKlKW--d0SVQ38bng_1PPCPNigXB33h6EYO-Ej7MlUijjyKxbhs7pUV01dc3B9O7XJHOppWAW4qD-AQSYG-kk8IySPweylGc2ktDglXKXXUwoNa_4bZqRQMGqETD80NLiYzGXJW4zn1pW2XTdnlJbtChNescbMnFzywCRhaeB0EqX9ZBAtDQM6l6GsUVBOs-tsidtzkhwuz-zjgM_Zb8Annk3BmJtCR1Qo2JJnE-lEkcH603VnSYDp7eAxZFSTJrXTTjc8CPq2d0HBa2XdU2XoDbWpT8c7X-zNrNfSMRx8TZHn1P5a9Nc_t7xl-l29PFwc1Cq_N0Qg4WGKgrkcemXylvi3AVViM30qZmP1mQpFSFVzrBKDivvC5Zb",
+        "width": 5312
+      }
+    ],
+    "place_id": "ChIJh2tlbygRLxgRaRaHTe3k1mg",
+    "reference": "ChIJh2tlbygRLxgRaRaHTe3k1mg",
+    "scope": "GOOGLE",
+    "types": [
+      "lodging",
+      "point_of_interest",
+      "establishment"
+    ],
+    "vicinity": "Roland Ngala Junction, Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2889904,
+        "lng": 36.8268679
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.287892869708498,
+          "lng": 36.8281691302915
+        },
+        "southwest": {
+          "lat": -1.290590830291502,
+          "lng": 36.8254711697085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/park-71.png",
+    "icon_background_color": "#4DB546",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/tree_pinlet",
+    "name": "August 7th Memorial Park",
+    "opening_hours": {
+      "open_now": false
+    },
+    "photos": [
+      {
+        "height": 453,
+        "html_attributions": [
+          "<a href=\"https://maps.google.com/maps/contrib/108868124290499565483\">August 7th Memorial Park</a>"
+        ],
+        "photo_reference": "ATKogpcJXw7g26s3ZGmSxIovOektTpFUEo30seTamZDFD-ShA5-QJoR8ahzcf4lOrR0wQBs8OIN_-ObDu_qRRy7DubjYFxL1x8yvMEn6LHQ_1_oBmWiisrSA-UVfBRkGBtpz_MfdtoeRUIXLwXhIYNsAUIK_UmwWgEFYwMuTyI9Uj3-VOSC4evCVzR1FfnKn1yJV9jghKLrWRV0DA9-WmcwqzZ_f05BVF1ZvSRr7NU2nIp_92LiRaszn3__YsCMgNNKU95omNVYAvib_pP3gOx5edTyNFv4pf7HW72aj1_qmFrHb92fkvr3FwyRupA1NUhzUhkHPEiDr",
+        "width": 1271
+      }
+    ],
+    "place_id": "ChIJ-YgypCcRLxgRVHude1WHPhM",
+    "plus_code": {
+      "compound_code": "PR6G+CP Nairobi, Kenya",
+      "global_code": "6GCRPR6G+CP"
+    },
+    "rating": 4.4,
+    "reference": "ChIJ-YgypCcRLxgRVHude1WHPhM",
+    "scope": "GOOGLE",
+    "types": [
+      "tourist_attraction",
+      "park",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 4950,
+    "vicinity": "Junction of Moi Avenue, Nairobi"
+  },
+  {
+    "business_status": "CLOSED_TEMPORARILY",
+    "geometry": {
+      "location": {
+        "lat": -1.2876434,
+        "lng": 36.819528
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.286290319708498,
+          "lng": 36.82088368029149
+        },
+        "southwest": {
+          "lat": -1.288988280291502,
+          "lng": 36.8181857197085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/generic_business-71.png",
+    "icon_background_color": "#7B9EB0",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/generic_pinlet",
+    "name": "RKL Casino",
+    "permanently_closed": true,
+    "photos": [
+      {
+        "height": 4000,
+        "html_attributions": [
+          "<a href=\"https://maps.google.com/maps/contrib/115923676907206001737\">Ian Kiprotich</a>"
+        ],
+        "photo_reference": "ATKogpd33sTSSYCilbrlXXfhxNhLRPhKBQNALCumKfy_TqdbTmHUDblecfOw90xPM2MyHnuoaY1m7FjUoyTfCnMdUjq0m9snARHcnRd9p_e0N7rrSSciG1zx37DSZr7YJnpJ04gfpRoQM2lkqYzvk_QYgdVOYQnFcS3y-AHauDPy8vGehGn2apOyD_VkGbB76SNBWtWXl5_ueWeJF51C3Hu3Abc5y9uxTuhYEMgQtHRsPBPBGL9UNcPvacBkVE6M3XEnaqIaQ-9ku7qVQSnHvXaz0i7b-Y25gYQ9CGfMAPsXrA6T3r3jUpaHinxZAJO6L6FZgC2-scOiMz3MPSRr26DzYtJ2dAdABuGuhdV_zo1NjS7bZ46L9eo65s_r1CviGx77J6_Com05s8KpMEH_x-eKmJqfnXHGQOCF-8tCvVNl1AkcBZEX8D3V73iUgjSDcfOhPvuTV-8mTEleYmA2gTZq-b2LNu7vmC61TGNMvrikEG2LVjZMZJSvqUB2CQk-Dv_a7p--sRE51qZN6MM80-BXyuLt-VN5jk-ASgvJjKjtOasca2LzhEguBADIuV1JANnpAD14o3ydEl65x5NrTcwW4N6XBDcsq71heqKhQGsNI-Mba2L3JQ46V4CusuxWJfuenl2lJw",
+        "width": 3000
+      }
+    ],
+    "place_id": "ChIJF6x8xdcQLxgRHL0HCPthgN0",
+    "rating": 4.2,
+    "reference": "ChIJF6x8xdcQLxgRHL0HCPthgN0",
+    "scope": "GOOGLE",
+    "types": [
+      "casino",
+      "tourist_attraction",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 127,
+    "vicinity": "PR69+WRR, Parliament Road, Nairobi City"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.291981,
+        "lng": 36.818628
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.290788519708498,
+          "lng": 36.8197349802915
+        },
+        "southwest": {
+          "lat": -1.293486480291502,
+          "lng": 36.8170370197085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/generic_business-71.png",
+    "icon_background_color": "#7B9EB0",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/generic_pinlet",
+    "name": "Nairobi Nv Lunar Park",
+    "opening_hours": {
+      "open_now": false
+    },
+    "photos": [
+      {
+        "height": 2160,
+        "html_attributions": [
+          "<a href=\"https://maps.google.com/maps/contrib/101837751453114111407\">Julius Wadenya</a>"
+        ],
+        "photo_reference": "ATKogpeQy-KIAaKuj_ASpDQ664V2JkTVRn277YaHlkYzMIi-4qBsi895-i2DadZM2xrprdATvXPiLFRd0MEA0WDM9ssBHZkjjhF-lbbwpSYBHutClbk-MeT-IebkA8LXTf9iXIAwRHmAbhl0NkWkj2NFMLNs2p6ENoGCf1rk-DbP0f9pQToPmIkb1hZILX_acL-_2-28UoXsOTD7MP6HCXNnf39IyS01-F_FoRz9aTtyPcrl-gKIu4oBlMBADBjSvPMX1fCj8z9FeXbvLOAqtzlmgGDPOV6E6LwoptoCqH4lyNd9sOdR2A4YDVigORLFKUCGufBZuNJfQZcwQQ6QEOtFM9xURWYY4vfJluTjGBnjBn5QpXic8dwKSGN7CtTvrplVk8hkgtVxnKi91UgAcZA53SHbNgEtFZBevdI96BZ51c6s9AKn5q-8KjWXb4eP_JnoJ9kZWlzWJ5jFOOwYk7MzVZfmfjA06A1W8o00uC9LVnEn5UYrT1nYMq67G3SmTsBvL94eM2jpK3SsCBylgT5sQZC3hQnq2yc7hh2CWm-duGvi0wN-1ZlK-CQvGFCA7i0Lf5eERieQnr9xP09EGezwuxj3D_0jvLMPzlzlf57PVlN4sCN7lo3IH3yAcJizrqkVQRksdw",
+        "width": 3840
+      }
+    ],
+    "place_id": "ChIJ_aVrPNwQLxgREKu-rROMBlM",
+    "plus_code": {
+      "compound_code": "PR59+6F Nairobi, Kenya",
+      "global_code": "6GCRPR59+6F"
+    },
+    "rating": 4.2,
+    "reference": "ChIJ_aVrPNwQLxgREKu-rROMBlM",
+    "scope": "GOOGLE",
+    "types": [
+      "amusement_park",
+      "tourist_attraction",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 181,
+    "vicinity": "Lunar Park Starehe, Haile Selassie Avenue, Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2867556,
+        "lng": 36.817789
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.285465469708498,
+          "lng": 36.81922043029149
+        },
+        "southwest": {
+          "lat": -1.288163430291502,
+          "lng": 36.8165224697085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/museum-71.png",
+    "icon_background_color": "#13B5C7",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/museum_pinlet",
+    "name": "Nairobi Gallery",
+    "opening_hours": {
+      "open_now": false
+    },
+    "photos": [
+      {
+        "height": 452,
+        "html_attributions": [
+          "<a href=\"https://maps.google.com/maps/contrib/111057579038855526852\">ꌗꍏꂵ ꌗꉓꂦꋊꀤꉓ X</a>"
+        ],
+        "photo_reference": "ATKogpf6FztD1MZaNhMrOWBucM-eZEubAq8ayb7ikhcuxWreGCf0nZidKRTbH6ELMxVRzI2yyfBZw56XhfAjpaVFKMw38IbY_vWsgBDOyps8VZ4Uq26SihxArqltt-be0YRSQBwh_7SG87f53lSCX9Kt7UT-M_PPasZcL1fTPoQnfOjd25LNYXiI-P87oxfAe9TniIglJKiXDvZq_oRL6-AmbOxcd59V2TlV-7TlhAGuEXuMiS7gu4uztj-8l2KQUzBz8DpQpo0cwi4swZuI8l2v0svk1iMLrhG0ua0onkoHWMNGWNjB3_al1DbPt8K1BMNHTFgZuEAXQNpdhEHjEBjSw_cszuLG4IXArI8FCrO6sVP4ox7kMn47SIaxcOExi_ZJF7MsY7qJB4eTXwhz701gyES_lMeuKhkD0LdDlbQJ2ieNB9iY4STZjsZ5ILuB18PeOaJY3zVQWRlfLOQ2o8Eg471GCUEbFXGB-S04VujKOUScteyM5iNjWSuoJJDhZaIcZjoVTG3mL_Qa-f73xE6er5EbpHdaurQRKuQyuPuCTGECWwCtJzo7fWlroLc-j7Vh7zccOvZaehVGVILU4G8_HKom22FdrnKEmb48cn6vbggQb6snPXdYQnqU35q6zPFcrBYj_EB_",
+        "width": 678
+      }
+    ],
+    "place_id": "ChIJO7jfk9AQLxgRuGxcX6JXqBI",
+    "plus_code": {
+      "compound_code": "PR79+74 Nairobi, Kenya",
+      "global_code": "6GCRPR79+74"
+    },
+    "rating": 4.3,
+    "reference": "ChIJO7jfk9AQLxgRuGxcX6JXqBI",
+    "scope": "GOOGLE",
+    "types": [
+      "museum",
+      "tourist_attraction",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 609,
+    "vicinity": "Kenyatta Avenue, Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2846426,
+        "lng": 36.8189752
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.283271969708498,
+          "lng": 36.8203678302915
+        },
+        "southwest": {
+          "lat": -1.285969930291502,
+          "lng": 36.8176698697085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/generic_business-71.png",
+    "icon_background_color": "#7B9EB0",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/generic_pinlet",
+    "name": "Smile To Africa Adventure & kenya safari",
+    "opening_hours": {
+      "open_now": false
+    },
+    "photos": [
+      {
+        "height": 399,
+        "html_attributions": [
+          "<a href=\"https://maps.google.com/maps/contrib/118375128705254701904\">Smile To Africa Adventure &amp; kenya safari</a>"
+        ],
+        "photo_reference": "ATKogpeYGzJJlimmu6-4KoR19gL7cw9HA4tzqyZVd3l3YppU6tGv0-32sWYWiy77zWdFjKMRNTvM8gGdQNC7weXHOuukwogoYGEdpnUIZC3hkmfuSNK_Yo0meq-VyYnYCpob1fzHwpIaR89vUAFIfHpNysII3kzs_Q4xJi8RmwogG2Ear1j45F74dndbAfaKsXLIqMfMTyKU83P37eI5AvnshEtBYi1BAX0NxmrhQnKznEXjLyyzXxOYWRIJCRZYqzLm6uHBE9YQ6vzoQJrY62oWhRq7W-73bxpZXq52dzlVlULfJY6YMst-7I8IJIW2AP-a9CWxoUBmkho",
+        "width": 612
+      }
+    ],
+    "place_id": "ChIJuZNHBNYQLxgRf0fjvGtVKWM",
+    "plus_code": {
+      "compound_code": "PR89+4H Nairobi, Kenya",
+      "global_code": "6GCRPR89+4H"
+    },
+    "rating": 4.9,
+    "reference": "ChIJuZNHBNYQLxgRf0fjvGtVKWM",
+    "scope": "GOOGLE",
+    "types": [
+      "tourist_attraction",
+      "travel_agency",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 8,
+    "vicinity": "House Complex, First Floor Kenya Koinange Street, Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2872501,
+        "lng": 36.8208115
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.286051769708498,
+          "lng": 36.8222354302915
+        },
+        "southwest": {
+          "lat": -1.288749730291502,
+          "lng": 36.8195374697085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/worship_general-71.png",
+    "icon_background_color": "#7B9EB0",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/worship_christian_pinlet",
+    "name": "Cathedral Basilica of the Holy Family",
+    "opening_hours": {
+      "open_now": false
+    },
+    "photos": [
+      {
+        "height": 4032,
+        "html_attributions": [
+          "<a href=\"https://maps.google.com/maps/contrib/104127278479984790037\">sin ike</a>"
+        ],
+        "photo_reference": "ATKogpf8QP-X8QIlfTHfAd9SgMeQaoJKX0JNajamLahrihfd-rZgZBASYkjnJjU-MJCry13AdPO8743q2f5ZZLsEARMzoAPen7k3XFcn0woIiUxc7DjDXLc7fOulcmUra92CnQI6qfkBRMsHvOffAYB8gjR8wTnz-swK5VWuTydWzzsuc9sJ5oxr_kWtSL8AQp1u4Z0SwLkFCqZCQKo8wvcAjnYWcEdt5uiNAjvkmnoSn2xnjGEF03KyAiNOkWs17qepEVPlsvArVsjBcfJZOASF1oplN0lGQ9Dtcmj1yMrScKYePJ1GeZS7r9q-YzZIi7UhiV95pcYyWXQIloPO4DWvDj4Cs3_oBrH_cr8OZwEs0ptHkve1GvvH4G6zJFUYrav2OK3Ss-qld8ZDsZ2n4KgimLQP87uKTLVkVXkLQ8VkXSQySb_H6NVMPp1Gb4dk34vSx3pKbb7TJBDVzsLRrc9dUeziagT9-QEo5RE5IgetlsSAf7e_B4xx6eoDBzrxOcNFmx0Gcnqgn7E2yxA-hs-OjLtC8LBdPC8u9Wy85M86lb2ewNtzL3Ng-ZWProAI1rl7gXYk8E9WxsAYuI7pJiqZOGiFzaQReIMcII_mLGNJtLo6OcDGT9EIX4J0nHX6n5KYQ2iJs2eI",
+        "width": 3024
+      }
+    ],
+    "place_id": "ChIJaw31WdcQLxgR9Z5phQEMwAs",
+    "plus_code": {
+      "compound_code": "PR7C+38 Nairobi, Kenya",
+      "global_code": "6GCRPR7C+38"
+    },
+    "rating": 4.7,
+    "reference": "ChIJaw31WdcQLxgR9Z5phQEMwAs",
+    "scope": "GOOGLE",
+    "types": [
+      "tourist_attraction",
+      "church",
+      "place_of_worship",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 4385,
+    "vicinity": "02 Koinange Street, Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2874316,
+        "lng": 36.82869439999999
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.286031619708498,
+          "lng": 36.8300160802915
+        },
+        "southwest": {
+          "lat": -1.288729580291502,
+          "lng": 36.8273181197085
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/museum-71.png",
+    "icon_background_color": "#13B5C7",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/museum_pinlet",
+    "name": "Vinelly Safaris",
+    "opening_hours": {
+      "open_now": false
+    },
+    "place_id": "ChIJ6QfMICYRLxgR4ZdEH_kT-8o",
+    "rating": 3.4,
+    "reference": "ChIJ6QfMICYRLxgR4ZdEH_kT-8o",
+    "scope": "GOOGLE",
+    "types": [
+      "museum",
+      "tourist_attraction",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 7,
+    "vicinity": "PR7H+2FG, Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2886351,
+        "lng": 36.8203733
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.287309169708498,
+          "lng": 36.82167578029151
+        },
+        "southwest": {
+          "lat": -1.290007130291502,
+          "lng": 36.81897781970851
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/generic_business-71.png",
+    "icon_background_color": "#7B9EB0",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/generic_pinlet",
+    "name": "Maasai Market",
+    "opening_hours": {
+      "open_now": false
+    },
+    "photos": [
+      {
+        "height": 4000,
+        "html_attributions": [
+          "<a href=\"https://maps.google.com/maps/contrib/101871910505886903813\">Brian Ondieki</a>"
+        ],
+        "photo_reference": "ATKogpd5TUFPo_ES5CWH0H_zspcNuJXj5tNxMZ2THNNSPZiTYhcwSCihgnBp0DxiR3BbD15YNIlpNYV0PknnX9NF1iTOH6wU-uk4L5N7RWGpuquUuvaExnugYF0VaLu8-F0PLK-WsvFcDjxFw7NW36ojSQdbWxumP6cGXMueN6BfwRK1BOF9ZSb2MgeKLoonLKXQV5F3BNEOG-AfcG2yPUT3Ov9BvzjMm8_6mZOFAQMPejwbipw4a1icfH8w5vRiYxoW1QTQrLzfADaTl9JrYSVTH4cZEAxBkYBQGY6EqhxbEheISCSZGsXKZI-8ZflvoytZBEn0AErw28IochzB5xZaxkoxm3F3xCEu9y0iM7xrOGFBMIkjI3jCrDn7GVqOb-i6LNWOSq36haWPfAN817ZkzuLvxEuehI6rDo8W2hu93Biar_aYPAipFkzkZhN43SLhP0eZGMPA1ytuMAKwQTRmiWDfyOBEkTlGmLmDcg3iOJKxY7Ii68v1QiFLeR7VCpgBBQjMaVn_CBwW06g-gthIPN1WZY1rbr4la7KQryuCxXfYPfDHHT8H5RQ9TqWz26sFA7SQfy_1OGnNHbJWa06X_TlgaKwV4yZcAAaq3uCKu6uzvQEzVPhTdumLRI22OOOBKaXL3u4E",
+        "width": 3000
+      }
+    ],
+    "place_id": "ChIJ1XSuttQQLxgRklDUrn0V_Dw",
+    "plus_code": {
+      "compound_code": "PR6C+G4 Nairobi, Kenya",
+      "global_code": "6GCRPR6C+G4"
+    },
+    "rating": 4.3,
+    "reference": "ChIJ1XSuttQQLxgRklDUrn0V_Dw",
+    "scope": "GOOGLE",
+    "types": [
+      "tourist_attraction",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 5179,
+    "vicinity": "Supreme Court, Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.2935983,
+        "lng": 36.82220889999999
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.292010519708498,
+          "lng": 36.82349273029151
+        },
+        "southwest": {
+          "lat": -1.294708480291502,
+          "lng": 36.82079476970851
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/museum-71.png",
+    "icon_background_color": "#13B5C7",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/museum_pinlet",
+    "name": "Kenya Railway Museum",
+    "opening_hours": {
+      "open_now": false
+    },
+    "photos": [
+      {
+        "height": 2250,
+        "html_attributions": [
+          "<a href=\"https://maps.google.com/maps/contrib/101489249995690692005\">TMkimani</a>"
+        ],
+        "photo_reference": "ATKogpd6SGqbFciYcuXLegje_a8Sxucr0Ot-c4bOwh1GQEDu6xeS5LGzZwThAwf_zkGUklV-9ZKI0qRoyWqdcR3KsSakoL-Ap8cPHQf4aVttFQedOgNSIaSWPy0Y6qDPXIMirm0E_C2Cp-MiZGXPX8OYqDicguKEH2hUR7sxhvDwtcGabmIui3SFst6d0Zh2SZq9jm3g4Lfm1ed5SN35Z0ceLR7ysxK0oF2OHlBLJNWo1Z6PqH0MmS107dJHrcSoWYozIDhWRs5wL9cv8763fBuL2Baqb3cslscoqAO3nx7fCyrZDmKbq0dXxrAg6Djo9urdsr9uTbYnXOhIYAc03r9B1RjPm9mhOORgWwwBauSYWh4Qjbxq_W6lfWiQeft-I7P6Hr5aB6fepDZ6jSCLGu0rHi1ZtCMhzfkPcMKerFsZkNFKX4283dyWcpBrbbh7rkuA8GuCSEymTdPU2aUlG7so2nXjZUplOvkC9OogeiUH-nZRi-wQXwXAGiQfVufepkQroDiZiIAy8cO27j4gS5pxbc5TSyOQXUz6CfE9gJfc_tPsAz4X4FmRfAXEPdi82krQWVwszV-oKNCBOcbZ-5FjL6L5ksdx-0qza0ncoEngMdxVwVoafTvM2AM7T9ZFpTAv0TsN-iIr",
+        "width": 4000
+      }
+    ],
+    "place_id": "ChIJfxo6_t4QLxgRvReAMQpgmiQ",
+    "rating": 4.4,
+    "reference": "ChIJfxo6_t4QLxgRvReAMQpgmiQ",
+    "scope": "GOOGLE",
+    "types": [
+      "tourist_attraction",
+      "museum",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 1273,
+    "vicinity": "PR4F+MX5, Station Road, Nairobi"
+  },
+  {
+    "business_status": "OPERATIONAL",
+    "geometry": {
+      "location": {
+        "lat": -1.292066,
+        "lng": 36.821946
+      },
+      "viewport": {
+        "northeast": {
+          "lat": -1.290687569708498,
+          "lng": 36.82328063029149
+        },
+        "southwest": {
+          "lat": -1.293385530291502,
+          "lng": 36.82058266970849
+        }
+      }
+    },
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/generic_business-71.png",
+    "icon_background_color": "#13B5C7",
+    "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/generic_pinlet",
+    "name": "Giraffe manor",
+    "place_id": "ChIJbXL_Y58RLxgR9bDELHUv-ic",
+    "rating": 4.5,
+    "reference": "ChIJbXL_Y58RLxgR9bDELHUv-ic",
+    "scope": "GOOGLE",
+    "types": [
+      "tourist_attraction",
+      "point_of_interest",
+      "establishment"
+    ],
+    "user_ratings_total": 2,
+    "vicinity": "PR5C+5QG, International life house, Nairobi"
+  }
+]
