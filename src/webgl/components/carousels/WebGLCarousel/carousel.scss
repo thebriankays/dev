@@ -1,0 +1,239 @@
+.webgl-carousel {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  max-height: 800px;
+  overflow: hidden;
+  background: var(--color-gray-1000);
+
+  // Content overlay
+  .carousel-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .carousel-slide-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: flex-end;
+    padding: 80px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+    
+    &.active {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    @media (max-width: 768px) {
+      padding: 40px 20px;
+    }
+  }
+
+  // Glass morphism overlay
+  .slide-overlay {
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 600px;
+
+    @media (max-width: 768px) {
+      padding: 24px;
+      border-radius: 16px;
+    }
+  }
+
+  .slide-title {
+    font-size: clamp(32px, 5vw, 56px);
+    font-weight: 700;
+    color: var(--color-gray-0);
+    margin: 0 0 16px 0;
+    line-height: 1.1;
+  }
+
+  .slide-description {
+    font-size: clamp(16px, 2vw, 20px);
+    color: var(--color-gray-300);
+    margin: 0 0 32px 0;
+    line-height: 1.6;
+  }
+
+  .slide-cta {
+    display: inline-flex;
+    align-items: center;
+    padding: 16px 32px;
+    background: var(--color-primary-500);
+    color: var(--color-gray-0);
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      background: var(--color-primary-600);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+  }
+
+  // Navigation controls
+  .carousel-control {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 20;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--color-gray-0);
+
+    &--prev {
+      left: 40px;
+    }
+
+    &--next {
+      right: 40px;
+    }
+
+    &:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-50%) scale(1.1);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    &:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    @media (max-width: 768px) {
+      width: 48px;
+      height: 48px;
+      
+      &--prev {
+        left: 20px;
+      }
+      
+      &--next {
+        right: 20px;
+      }
+    }
+  }
+
+  // Indicators
+  .carousel-indicators {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    display: flex;
+    gap: 12px;
+
+    @media (max-width: 768px) {
+      bottom: 20px;
+      gap: 8px;
+    }
+  }
+
+  .carousel-indicator {
+    width: 48px;
+    height: 4px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 2px;
+    }
+
+    .carousel-indicator-dot {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      background: var(--color-gray-0);
+      width: 0;
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    &.active .carousel-indicator-dot {
+      width: 100%;
+      transition: width 5s linear; // Auto-play duration
+    }
+
+    &:hover:not(.active) {
+      &::before {
+        background: rgba(255, 255, 255, 0.5);
+      }
+    }
+  }
+
+  // WebGL view
+  .carousel-webgl-view {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+  }
+
+  // Loading state
+  &.loading {
+    .carousel-content,
+    .carousel-control,
+    .carousel-indicators {
+      opacity: 0;
+    }
+  }
+
+  // Touch device optimizations
+  @media (hover: none) {
+    .carousel-control {
+      opacity: 0.8;
+    }
+  }
+}

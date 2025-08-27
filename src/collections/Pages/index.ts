@@ -8,6 +8,7 @@ import { Content } from '../../blocks/Content/config'
 import { FormBlock } from '../../blocks/Form/config'
 import { MediaBlock } from '../../blocks/MediaBlock/config'
 import { WebGLText } from '../../blocks/WebGLText/config'
+import { TravelGlobe } from '../../blocks/TravelGlobe/config'
 import { hero } from '@/heros/config'
 import { slugField } from '@/fields/slug'
 import { populatePublishedAt } from '../../hooks/populatePublishedAt'
@@ -76,7 +77,7 @@ export const Pages: CollectionConfig<'pages'> = {
             {
               name: 'layout',
               type: 'blocks',
-              blocks: [CallToAction, Content, MediaBlock, Archive, FormBlock, WebGLText],
+              blocks: [CallToAction, Content, MediaBlock, Archive, FormBlock, WebGLText, TravelGlobe],
               required: true,
               admin: {
                 initCollapsed: true,

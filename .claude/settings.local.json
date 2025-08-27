@@ -9,7 +9,14 @@
       "Bash(rm:*)",
       "mcp__ide__getDiagnostics",
       "Bash(npm run build:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npx tsc:*)",
+      "Bash(grep:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm info:*)",
+      "Bash(mv:*)",
+      "Bash(pnpm payload generate:types:*)",
+      "Bash(npx payload generate:types:*)"
     ],
     "deny": []
   }

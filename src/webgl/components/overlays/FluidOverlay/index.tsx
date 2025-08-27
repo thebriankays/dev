@@ -19,7 +19,7 @@ export function FluidOverlay({
   scale = 1.1,
 }: FluidOverlayProps) {
   const meshRef = useRef<THREE.Mesh>(null)
-  const { flowmap } = useFlowmap()
+  const flowmapInstance = useFlowmap()
   
   const material = useMemo(() => {
     return new THREE.ShaderMaterial({
@@ -39,10 +39,21 @@ export function FluidOverlay({
   }, [intensity, color])
   
   useFrame(({ clock, size }: any) => {
-    if (!material || !flowmap) return
+    if (!material || !flowmapInstance) return
     
     material.uniforms.uTime.value = clock.getElapsedTime()
-    material.uniforms.uFlowmap.value = flowmap.getTexture()
+    
+    // Handle both fluid simulation and flowmap
+    let texture: THREE.Texture | null = null
+    if ('uniform' in flowmapInstance && flowmapInstance.uniform) {
+      // FluidSimulation
+      texture = flowmapInstance.uniform.value
+    } else if ('texture' in flowmapInstance && flowmapInstance.texture) {
+      // FlowmapPass
+      texture = flowmapInstance.texture
+    }
+    
+    material.uniforms.uFlowmap.value = texture
     material.uniforms.uResolution.value.set(size.width, size.height)
   })
   

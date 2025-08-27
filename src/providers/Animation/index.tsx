@@ -10,9 +10,22 @@ import { Tempus } from '@/webgl/libs/tempus'
 // Register GSAP plugins
 gsap.registerPlugin(ScrollTrigger)
 
+// Try to import SplitText if available (premium plugin)
+let SplitText: any = null
+try {
+  const SplitTextModule = require('gsap/SplitText')
+  SplitText = SplitTextModule.SplitText || SplitTextModule.default
+  if (SplitText) {
+    gsap.registerPlugin(SplitText)
+  }
+} catch (e) {
+  console.log('GSAP SplitText not available - using manual text splitting')
+}
+
 interface AnimationContextValue {
   gsap: typeof gsap
   ScrollTrigger: typeof ScrollTrigger
+  SplitText: any
   lenis: Lenis | null
   hamo: Hamo | null
   tempus: Tempus | null
@@ -138,6 +151,7 @@ export function AnimationProvider({ children }: { children: ReactNode }) {
   const value: AnimationContextValue = {
     gsap,
     ScrollTrigger,
+    SplitText,
     lenis: lenisRef.current,
     hamo: hamoRef.current,
     tempus: tempusRef.current,

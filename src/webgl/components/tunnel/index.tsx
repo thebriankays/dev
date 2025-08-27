@@ -1,24 +1,22 @@
 'use client'
 
-import React, { Fragment, useId } from 'react'
-import { useContextBridge } from '@react-three/drei'
+import React, { Fragment, useId, PropsWithChildren } from 'react'
 import { useCanvas } from '@/providers/Canvas'
 
-export function WebGLTunnel({ children }: { children: React.ReactNode }) {
+export function WebGLTunnel({ children }: PropsWithChildren) {
   const { WebGLTunnel } = useCanvas()
-  const ContextBridge = useContextBridge()
   const uuid = useId()
   
   if (!WebGLTunnel) return null
   
   return (
     <WebGLTunnel.In>
-      <ContextBridge key={uuid}>{children}</ContextBridge>
+      <Fragment key={uuid}>{children}</Fragment>
     </WebGLTunnel.In>
   )
 }
 
-export function DOMTunnel({ children }: { children: React.ReactNode }) {
+export function DOMTunnel({ children }: PropsWithChildren) {
   const { DOMTunnel } = useCanvas()
   const uuid = useId()
   

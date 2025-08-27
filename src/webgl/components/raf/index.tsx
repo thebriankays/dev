@@ -1,51 +1,36 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useThree, useFrame } from '@react-three/fiber'
+import { useThree } from '@react-three/fiber'
+import { useTempus } from 'tempus/react'
 
 interface RAFProps {
   render?: boolean
-  priority?: number
 }
 
-export function RAF({ render = true, priority = 0 }: RAFProps) {
-  const { gl, scene, camera, advance, frameloop, invalidate } = useThree()
-  
-  useEffect(() => {
-    if (!render) return
-    
-    let animationId: number
-    
-    const animate = (time: number) => {
-      if (frameloop === 'never') {
-        advance(time)
-        gl.render(scene, camera)
+export function RAF({ render = true }: RAFProps) {
+  const advance = useThree((state) => state.advance)
+
+  useTempus(
+    (time: number) => {
+      if (render) {
+        advance(time / 1000)
       }
-      
-      animationId = requestAnimationFrame(animate)
+    },
+    {
+      priority: 1,
     }
-    
-    animationId = requestAnimationFrame(animate)
-    
-    return () => {
-      if (animationId) {
-        cancelAnimationFrame(animationId)
-      }
-    }
-  }, [render, gl, scene, camera, advance, frameloop])
-  
-  // Use frame for demand-based rendering
-  useFrame((state: any, delta: number) => {
-    if (render && frameloop === 'demand') {
-      invalidate()
-    }
-  }, priority)
-  
+  )
+
   return null
 }
 
 export const useRaf = (callback: (time: number, delta: number) => void, priority = 0) => {
-  useFrame((state: any, delta: number) => {
-    callback(state.clock.elapsedTime, delta)
-  }, priority)
+  let lastTime = 0
+  
+  useTempus((time: number) => {
+    const currentTime = time / 1000
+    const delta = currentTime - lastTime
+    lastTime = currentTime
+    callback(currentTime, delta)
+  }, { priority })
 }

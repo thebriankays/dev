@@ -2,15 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Import glass styles */
-@import '@/providers/Glass/glass.scss';
-
-/* Import canvas styles */
-@import '@/webgl/components/canvas/canvas.scss';
-
-/* Import mouse follower styles */
-@import '@/providers/MouseFollower/mouse-follower.scss';
-
 @layer base {
   h1,
   h2,
@@ -56,6 +47,12 @@
     --success: 196 52% 74%;
     --warning: 34 89% 85%;
     --error: 10 100% 86%;
+
+    /* Whatamesh gradient colors */
+    --gradient-color-1: #667eea;
+    --gradient-color-2: #764ba2;
+    --gradient-color-3: #f093fb;
+    --gradient-color-4: #feca57;
   }
 
   [data-theme='dark'] {
@@ -90,6 +87,12 @@
     --success: 196 100% 14%;
     --warning: 34 51% 25%;
     --error: 10 39% 43%;
+
+    /* Whatamesh gradient colors (dark theme) */
+    --gradient-color-1: #4c1d95;
+    --gradient-color-2: #5b21b6;
+    --gradient-color-3: #7c3aed;
+    --gradient-color-4: #8b5cf6;
   }
 }
 

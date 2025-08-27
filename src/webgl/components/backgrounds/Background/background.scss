@@ -1,0 +1,21 @@
+.webgl-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+  
+  &__overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--background-overlay, transparent);
+    mix-blend-mode: var(--background-blend-mode, normal);
+    opacity: var(--background-overlay-opacity, 0);
+    pointer-events: none;
+  }
+}

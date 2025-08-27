@@ -1,0 +1,61 @@
+// Variables
+$purple: #6343E7;
+$red: #FF5F47;
+$yellow: #FFC673;
+$green: #5EAF74;
+$marquee-gap: 0rem; // Remove gap for seamless scrolling
+
+@keyframes scrollVertical {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+.vertical-marquee-container {
+  width: 3rem;
+  height: 100vh;
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 0.5rem;
+  background: linear-gradient(180deg, $purple 15%, $red 38%, $yellow 61%, $green 85%);
+  overflow: hidden;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  pointer-events: none; // Don't block globe interactions
+}
+
+.vertical-marquee-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  animation: scrollVertical linear infinite;
+  padding: 0; // Remove padding for seamless scrolling
+}
+
+.vertical-text {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: black;
+  text-align: center;
+  margin: 0;
+  padding: 0.5rem 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  letter-spacing: 0.5px;
+  writing-mode: vertical-lr;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  line-height: 1;
+  
+  &.vertical-symbols {
+    padding: 0.3rem 0; // Smaller padding for symbols
+    font-size: 1.6rem; // Slightly smaller symbols
+  }
+}

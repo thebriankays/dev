@@ -1,0 +1,43 @@
+.split-text {
+  display: inline-block;
+  
+  // Line wrapper
+  .split-line {
+    display: block;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  // Word wrapper
+  .split-word {
+    display: inline-block;
+    position: relative;
+    white-space: nowrap;
+  }
+  
+  // Character wrapper
+  .split-char {
+    display: inline-block;
+    position: relative;
+  }
+  
+  // Preserve whitespace
+  &--chars {
+    white-space: pre-wrap;
+  }
+  
+  // Ensure proper line height
+  &--lines,
+  &--words-lines,
+  &--chars-words-lines {
+    .split-line {
+      min-height: 1em;
+    }
+  }
+  
+  // For better animation performance
+  .split-word,
+  .split-char {
+    will-change: transform, opacity;
+  }
+}

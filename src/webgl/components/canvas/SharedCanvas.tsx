@@ -9,6 +9,7 @@ import { FlowmapProvider } from '../flowmap'
 import { PostProcessing } from '../postprocessing'
 import { RAF } from '../raf'
 import { Preload } from '../preload'
+import { WhatameshBackground } from '../backgrounds/Whatamesh'
 import './canvas.scss'
 
 interface SharedCanvasProps {
@@ -18,6 +19,8 @@ interface SharedCanvasProps {
   style?: React.CSSProperties
   interactive?: boolean
   children?: React.ReactNode
+  background?: 'whatamesh' | 'none'
+  backgroundProps?: any
 }
 
 export function SharedCanvas({
@@ -27,6 +30,8 @@ export function SharedCanvas({
   style,
   interactive = true,
   children,
+  background = 'whatamesh',
+  backgroundProps = {},
 }: SharedCanvasProps) {
   const { WebGLTunnel, DOMTunnel } = useCanvas() as any
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -72,6 +77,8 @@ export function SharedCanvas({
           {/* Add default lighting for visibility */}
           <ambientLight intensity={0.5} />
           <directionalLight position={[10, 10, 5]} intensity={1} />
+          {/* Background gradient */}
+          {background === 'whatamesh' && <WhatameshBackground {...backgroundProps} />}
           <FlowmapProvider>
             <View.Port />
             <Suspense fallback={null}>

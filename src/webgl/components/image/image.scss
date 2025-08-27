@@ -1,0 +1,32 @@
+.webgl-image {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  
+  &__dom {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+  
+  // Loading state
+  &[data-loaded="false"] {
+    .webgl-image__dom {
+      opacity: 1 !important;
+    }
+  }
+  
+  // Hover effects for non-WebGL
+  &:not([data-webgl="true"]):hover {
+    .webgl-image__dom img {
+      transform: scale(1.05);
+      transition: transform 0.3s ease-out;
+    }
+  }
+}

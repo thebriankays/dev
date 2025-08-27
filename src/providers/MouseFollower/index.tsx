@@ -7,6 +7,8 @@ import './mouse-follower.scss'
 
 interface MouseFollowerContextValue {
   cursor: MouseFollower | null
+  x: number
+  y: number
   setStick: (element: HTMLElement) => void
   removeStick: () => void
   setText: (text: string) => void
@@ -61,6 +63,7 @@ export const useCursorState = (state: string, element?: HTMLElement) => {
 export function MouseFollowerProvider({ children }: { children: ReactNode }) {
   const [cursor, setCursor] = useState<MouseFollower | null>(null)
   const cursorRef = useRef<MouseFollower | null>(null)
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -99,16 +102,28 @@ export function MouseFollowerProvider({ children }: { children: ReactNode }) {
     cursorRef.current = cursorInstance
     setCursor(cursorInstance)
 
+    // Track mouse position normalized between -1 and 1
+    const handleMouseMove = (e: MouseEvent) => {
+      const x = (e.clientX / window.innerWidth) * 2 - 1
+      const y = -(e.clientY / window.innerHeight) * 2 + 1
+      setMousePosition({ x, y })
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+
     return () => {
       if (cursorRef.current) {
         cursorRef.current.destroy()
       }
+      window.removeEventListener('mousemove', handleMouseMove)
     }
   }, [])
 
   // Cursor control methods
   const value: MouseFollowerContextValue = {
     cursor,
+    x: mousePosition.x,
+    y: mousePosition.y,
     setStick: (element: HTMLElement) => cursorRef.current?.setStick(element),
     removeStick: () => cursorRef.current?.removeStick(),
     setText: (text: string) => cursorRef.current?.setText(text),

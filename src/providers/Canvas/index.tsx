@@ -9,6 +9,7 @@ interface SharedCanvasContextValue {
   WebGLTunnel: ReturnType<typeof tunnel>
   DOMTunnel: ReturnType<typeof tunnel>
   isReady: boolean
+  isWebGL: boolean
   invalidate: () => void
   requestRender: () => void
 }
@@ -29,12 +30,18 @@ export const useCanvas = () => {
 
 export function SharedCanvasProvider({ children }: { children: ReactNode }) {
   const [isReady, setIsReady] = useState(false)
+  const [isWebGL, setIsWebGL] = useState(true) // Assume WebGL is available by default
   const WebGLTunnel = useRef(tunnel()).current
   const DOMTunnel = useRef(tunnel()).current
   const renderRequest = useRef<number | null>(null)
   
   useEffect(() => {
+    // Check WebGL support
+    const canvas = document.createElement('canvas')
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+    setIsWebGL(!!gl)
     setIsReady(true)
+    
     return () => {
       if (renderRequest.current) {
         cancelAnimationFrame(renderRequest.current)
@@ -62,6 +69,7 @@ export function SharedCanvasProvider({ children }: { children: ReactNode }) {
     WebGLTunnel,
     DOMTunnel,
     isReady,
+    isWebGL,
     invalidate,
     requestRender,
   }
