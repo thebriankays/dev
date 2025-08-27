@@ -5,7 +5,10 @@
       "Bash(ls:*)",
       "Bash(npm install:*)",
       "Bash(pnpm add:*)",
-      "Bash(pnpm dev:*)"
+      "Bash(pnpm dev:*)",
+      "Bash(rm:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(npm run build:*)"
     ],
     "deny": []
   }

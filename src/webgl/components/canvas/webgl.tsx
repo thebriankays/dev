@@ -1,1 +1,0 @@
-export { SharedCanvas as default } from './SharedCanvas'

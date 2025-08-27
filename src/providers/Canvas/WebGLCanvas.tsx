@@ -36,20 +36,21 @@ export function WebGLCanvas({
           stencil: false,
           depth: postprocessing ? false : true,
         }}
-        onCreated={({ gl }) => {
+        onCreated={(state) => {
+          const { gl } = state
           gl.setClearColor(0x000000, 0)
           gl.autoClear = false
           gl.outputColorSpace = THREE.SRGBColorSpace
           gl.toneMapping = THREE.NoToneMapping
-          // Store reference for invalidation
+          // Store R3F state globally for invalidation
           if (typeof window !== 'undefined') {
-            (window as any).__r3f = { invalidate: () => gl.render }
+            (window as any).__r3f = state
           }
         }}
         dpr={[1, 2]}
         orthographic
         camera={{ position: [0, 0, 5000], near: 0.001, far: 10000, zoom: 1 }}
-        frameloop="never"
+        frameloop="demand"
         style={{
           pointerEvents: interactive ? 'auto' : 'none',
           position: 'fixed',

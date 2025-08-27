@@ -2,7 +2,7 @@
 
 import React, { Fragment, useId } from 'react'
 import { useContextBridge } from '@react-three/drei'
-import { useCanvas } from '../canvas'
+import { useCanvas } from '@/providers/Canvas'
 
 export function WebGLTunnel({ children }: { children: React.ReactNode }) {
   const { WebGLTunnel } = useCanvas()

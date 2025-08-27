@@ -4,7 +4,7 @@ import React, { Suspense, useEffect, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { View } from '@react-three/drei'
 import * as THREE from 'three'
-import { useCanvas } from './'
+import { useCanvas } from '@/providers/Canvas'
 import { FlowmapProvider } from '../flowmap'
 import { PostProcessing } from '../postprocessing'
 import { RAF } from '../raf'
@@ -44,11 +44,14 @@ export function SharedCanvas({
             stencil: false,
             depth: !postprocessing,
           }}
-          onCreated={({ gl }) => {
+          onCreated={(state) => {
+            const { gl } = state
             gl.setClearColor(0x000000, 0)
             gl.autoClear = false
             gl.outputColorSpace = THREE.SRGBColorSpace
             gl.toneMapping = THREE.NoToneMapping
+            // Store R3F state globally for invalidation
+            ;(window as any).__r3f = state
           }}
           dpr={[1, 2]}
           orthographic
@@ -66,6 +69,9 @@ export function SharedCanvas({
           resize={{ scroll: false, debounce: { scroll: 0, resize: 0 } }}
         >
           <RAF render={render} />
+          {/* Add default lighting for visibility */}
+          <ambientLight intensity={0.5} />
+          <directionalLight position={[10, 10, 5]} intensity={1} />
           <FlowmapProvider>
             <View.Port />
             <Suspense fallback={null}>
@@ -81,3 +87,6 @@ export function SharedCanvas({
     </>
   )
 }
+
+// Default export for backward compatibility
+export default SharedCanvas
