@@ -72,6 +72,19 @@ export interface Config {
     media: Media;
     categories: Category;
     users: User;
+    religions: Religion;
+    timezones: Timezone;
+    countries: Country;
+    currencies: Currency;
+    languages: Language;
+    regions: Region;
+    airlines: Airline;
+    airports: Airport;
+    routes: Route;
+    'travel-advisories': TravelAdvisory;
+    'visa-requirements': VisaRequirement;
+    'michelin-restaurants': MichelinRestaurant;
+    destinations: Destination;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -81,13 +94,36 @@ export interface Config {
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
-  collectionsJoins: {};
+  collectionsJoins: {
+    currencies: {
+      destinations: 'destinations';
+    };
+    languages: {
+      destinations: 'destinations';
+    };
+    regions: {
+      destinations: 'destinations';
+    };
+  };
   collectionsSelect: {
     pages: PagesSelect<false> | PagesSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
+    religions: ReligionsSelect<false> | ReligionsSelect<true>;
+    timezones: TimezonesSelect<false> | TimezonesSelect<true>;
+    countries: CountriesSelect<false> | CountriesSelect<true>;
+    currencies: CurrenciesSelect<false> | CurrenciesSelect<true>;
+    languages: LanguagesSelect<false> | LanguagesSelect<true>;
+    regions: RegionsSelect<false> | RegionsSelect<true>;
+    airlines: AirlinesSelect<false> | AirlinesSelect<true>;
+    airports: AirportsSelect<false> | AirportsSelect<true>;
+    routes: RoutesSelect<false> | RoutesSelect<true>;
+    'travel-advisories': TravelAdvisoriesSelect<false> | TravelAdvisoriesSelect<true>;
+    'visa-requirements': VisaRequirementsSelect<false> | VisaRequirementsSelect<true>;
+    'michelin-restaurants': MichelinRestaurantsSelect<false> | MichelinRestaurantsSelect<true>;
+    destinations: DestinationsSelect<false> | DestinationsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -945,6 +981,654 @@ export interface ThreeDCarouselBlock {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "religions".
+ */
+export interface Religion {
+  id: number;
+  /**
+   * Name of the religion
+   */
+  name: string;
+  /**
+   * Brief description of the religion
+   */
+  description?: string | null;
+  /**
+   * Parent religion (e.g., Christianity for Catholic)
+   */
+  parentReligion?: (number | null) | Religion;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Timezone data for countries and regions
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "timezones".
+ */
+export interface Timezone {
+  id: number;
+  /**
+   * IANA timezone identifier (e.g., America/New_York)
+   */
+  name: string;
+  /**
+   * URL-friendly slug (e.g., america-new-york)
+   */
+  slug: string;
+  /**
+   * Human-readable name (e.g., Eastern Time (US & Canada))
+   */
+  label: string;
+  /**
+   * UTC offset in ±HH:MM format
+   */
+  offset: string;
+  /**
+   * UTC offset in minutes (negative for west of UTC)
+   */
+  offsetMinutes: number;
+  /**
+   * Whether this timezone observes daylight saving time
+   */
+  isDST?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "countries".
+ */
+export interface Country {
+  id: number;
+  name: string;
+  /**
+   * ISO-3166-1 alpha-2 (US, FR, etc.)
+   */
+  code: string;
+  /**
+   * ISO-3166-1 alpha-3 (USA, FRA, etc.)
+   */
+  code3?: string | null;
+  /**
+   * ISO-3166-1 numeric (840, etc.)
+   */
+  isoCode?: string | null;
+  continent: 'africa' | 'antarctica' | 'asia' | 'europe' | 'north-america' | 'oceania-australia' | 'south-america';
+  /**
+   * Geographic region within continent
+   */
+  region?: string | null;
+  subregion?: string | null;
+  capital?: string | null;
+  /**
+   * Filename in /public/flags (auto-set from code)
+   */
+  flag?: string | null;
+  /**
+   * Primary country-code domain (.fr, .us, etc.)
+   */
+  webDomain?: string | null;
+  /**
+   * International dialing code (+1, +33, etc.)
+   */
+  dialingCode?: string | null;
+  /**
+   * What to call people from this country (American, French, etc.)
+   */
+  demonym?: string | null;
+  /**
+   * Official and commonly spoken languages
+   */
+  languages?: (number | Language)[] | null;
+  /**
+   * Religions practiced in the country with percentages
+   */
+  religions?:
+    | {
+        religion: number | Religion;
+        /**
+         * Percentage of population
+         */
+        percentage?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  timezones?: (number | Timezone)[] | null;
+  currencies?: (number | Currency)[] | null;
+  /**
+   * Countries that share a land border
+   */
+  neighboringCountries?: (number | Country)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "languages".
+ */
+export interface Language {
+  id: number;
+  name: string;
+  /**
+   * ISO 639-1 language code (e.g., en, fr, es)
+   */
+  code: string;
+  nativeName?: string | null;
+  /**
+   * All destinations where this language is spoken
+   */
+  destinations?: {
+    docs?: (number | Destination)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "destinations".
+ */
+export interface Destination {
+  id: number;
+  title: string;
+  /**
+   * Search for a location using Google Places
+   */
+  locationData?: {
+    address?: string | null;
+    coordinates?: {
+      lat?: number | null;
+      lng?: number | null;
+    };
+    placeID?: string | null;
+    country?: string | null;
+    continent?: string | null;
+    city?: string | null;
+    isGoodForChildren?: boolean | null;
+    isGoodForGroups?: boolean | null;
+    priceLevel?: number | null;
+    rating?: number | null;
+    user_ratings_total?: number | null;
+    reviews?:
+      | {
+          author_name?: string | null;
+          rating?: number | null;
+          text?: string | null;
+          id?: string | null;
+        }[]
+      | null;
+    photos?:
+      | {
+          photo_reference?: string | null;
+          height?: number | null;
+          width?: number | null;
+          id?: string | null;
+        }[]
+      | null;
+    tempCountryData?: {
+      countryName?: string | null;
+      countryCode?: string | null;
+      currencyCode?: string | null;
+      languageCode?: string | null;
+      region?: string | null;
+    };
+  };
+  lat?: number | null;
+  lng?: number | null;
+  continent: 'Africa' | 'Asia' | 'Europe' | 'North America' | 'Oceania' | 'South America' | 'Antarctica';
+  city?: string | null;
+  state?: string | null;
+  googleMapsUri?: string | null;
+  countryRelation?: (number | null) | Country;
+  currencyRelation?: (number | null) | Currency;
+  languagesRelation?: (number | Language)[] | null;
+  regionRelation?: (number | null) | Region;
+  country?: string | null;
+  /**
+   * Country flag SVG file
+   */
+  flagSvg?: string | null;
+  languages?: string | null;
+  countryData?: {
+    label?: string | null;
+    code?: string | null;
+    capital?: string | null;
+    region?: string | null;
+    currency?: {
+      code?: string | null;
+      label?: string | null;
+      symbol?: string | null;
+    };
+    language?: {
+      code?: string | null;
+      label?: string | null;
+      nativeName?: string | null;
+    };
+    flag?: string | null;
+  };
+  isGoodForChildren?: boolean | null;
+  isGoodForGroups?: boolean | null;
+  priceLevel?: number | null;
+  rating?: number | null;
+  user_ratings_total?: number | null;
+  reviews?:
+    | {
+        author_name?: string | null;
+        rating?: number | null;
+        text?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  featuredImage?: (number | null) | Media;
+  featuredVideo?: (number | null) | Media;
+  mediaGallery?: (number | Media)[] | null;
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  relatedDestinations?: (number | Destination)[] | null;
+  authors?: (number | User)[] | null;
+  populatedAuthors?:
+    | {
+        id?: string | null;
+        name?: string | null;
+      }[]
+    | null;
+  /**
+   * Show photorealistic 3D map view
+   */
+  enable3DMap?: boolean | null;
+  areaExplorerConfig?: {
+    showPOIs?: boolean | null;
+    poiTypes?:
+      | (
+          | 'restaurant'
+          | 'bar'
+          | 'cafe'
+          | 'store'
+          | 'supermarket'
+          | 'park'
+          | 'bank'
+          | 'school'
+          | 'bus_station'
+          | 'train_station'
+          | 'airport'
+          | 'parking'
+          | 'lodging'
+          | 'tourist_attraction'
+        )[]
+      | null;
+    /**
+     * Maximum number of POIs to display
+     */
+    poiDensity?: number | null;
+    /**
+     * Search radius for POIs (100m - 50km)
+     */
+    searchRadius?: number | null;
+    /**
+     * Automatically rotate the camera around the destination
+     */
+    autoOrbit?: boolean | null;
+    theme?: ('dark' | 'light') | null;
+    /**
+     * Override the default center point to focus on a specific landmark or area
+     */
+    customCenter?: {
+      enabled?: boolean | null;
+      /**
+       * Latitude of the landmark/area to center on
+       */
+      lat?: number | null;
+      /**
+       * Longitude of the landmark/area to center on
+       */
+      lng?: number | null;
+      /**
+       * E.g., "Eiffel Tower area", "Downtown district"
+       */
+      description?: string | null;
+    };
+  };
+  /**
+   * Points of Interest are automatically cached when coordinates change
+   */
+  poiDataCachedAt?: string | null;
+  slug?: string | null;
+  slugLock?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "currencies".
+ */
+export interface Currency {
+  id: number;
+  name: string;
+  /**
+   * ISO 4217 currency code (e.g., USD, EUR, GBP)
+   */
+  code: string;
+  symbol: string;
+  /**
+   * Exchange rate to USD (updated via API)
+   */
+  exchangeRate?: number | null;
+  /**
+   * Last time the exchange rate was updated
+   */
+  exchangeRateUpdatedAt?: string | null;
+  /**
+   * All destinations using this currency
+   */
+  destinations?: {
+    docs?: (number | Destination)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "regions".
+ */
+export interface Region {
+  id: number;
+  name: string;
+  /**
+   * Short region / state code (optional)
+   */
+  code?: string | null;
+  country: number | Country;
+  /**
+   * Administrative level
+   */
+  type: 'state' | 'province' | 'region' | 'territory' | 'district';
+  capital?: string | null;
+  /**
+   * All destinations in this region
+   */
+  destinations?: {
+    docs?: (number | Destination)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Airline data with IATA/ICAO codes and callsigns
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "airlines".
+ */
+export interface Airline {
+  id: number;
+  /**
+   * Full name of the airline
+   */
+  name: string;
+  /**
+   * Alternative name or alias
+   */
+  alias?: string | null;
+  /**
+   * IATA code (2-letter code)
+   */
+  iata?: string | null;
+  /**
+   * ICAO code (3-letter code)
+   */
+  icao?: string | null;
+  /**
+   * Radio callsign used by pilots
+   */
+  callsign?: string | null;
+  /**
+   * Country where the airline is based
+   */
+  country: string;
+  /**
+   * Whether the airline is currently active
+   */
+  active?: boolean | null;
+  /**
+   * OpenFlights database ID
+   */
+  openflights_id?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Airport data with IATA/ICAO codes and location information
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "airports".
+ */
+export interface Airport {
+  id: number;
+  /**
+   * Full name of the airport
+   */
+  name: string;
+  /**
+   * IATA code (3-letter code)
+   */
+  iata?: string | null;
+  /**
+   * ICAO code (4-letter code)
+   */
+  icao?: string | null;
+  /**
+   * City served by the airport
+   */
+  city: string;
+  /**
+   * Country where the airport is located
+   */
+  country: number | Country;
+  /**
+   * State/Province/Region where the airport is located
+   */
+  region?: (number | null) | Region;
+  /**
+   * Latitude coordinate
+   */
+  latitude: number;
+  /**
+   * Longitude coordinate
+   */
+  longitude: number;
+  /**
+   * Elevation in feet above sea level
+   */
+  elevation?: number | null;
+  /**
+   * Timezone of the airport
+   */
+  timezone?: (number | null) | Timezone;
+  /**
+   * Type/size of the airport
+   */
+  type?: ('large' | 'medium' | 'small' | 'heliport' | 'seaplane' | 'closed') | null;
+  /**
+   * OpenFlights database ID for data mapping
+   */
+  openflights_id?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Flight routes between airports
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "routes".
+ */
+export interface Route {
+  id: number;
+  /**
+   * Auto-generated route code (e.g., AA-LAX-JFK)
+   */
+  routeCode?: string | null;
+  /**
+   * Airline operating this route
+   */
+  airline?: (number | null) | Airline;
+  /**
+   * Airline code (IATA or ICAO)
+   */
+  airline_code?: string | null;
+  /**
+   * Departure airport
+   */
+  sourceAirport?: (number | null) | Airport;
+  /**
+   * Source airport code (IATA or ICAO)
+   */
+  source_airport_code?: string | null;
+  /**
+   * Arrival airport
+   */
+  destinationAirport?: (number | null) | Airport;
+  /**
+   * Destination airport code (IATA or ICAO)
+   */
+  destination_airport_code?: string | null;
+  /**
+   * Whether this is a codeshare flight
+   */
+  codeshare?: boolean | null;
+  /**
+   * Number of stops (0 for direct flights)
+   */
+  stops?: number | null;
+  /**
+   * Aircraft types used on this route
+   */
+  equipment?:
+    | {
+        /**
+         * Aircraft type code (e.g., 737, A320)
+         */
+        aircraft?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "travel-advisories".
+ */
+export interface TravelAdvisory {
+  id: number;
+  title: string;
+  pubDate?: string | null;
+  /**
+   * Link to official advisory source
+   */
+  link?: string | null;
+  threatLevel: '1' | '2' | '3' | '4';
+  /**
+   * Country name extracted from the advisory
+   */
+  countryTag?: string | null;
+  /**
+   * Link to country in our system
+   */
+  country?: (number | null) | Country;
+  category?: ('advisory' | 'alert' | 'warning') | null;
+  /**
+   * Summary of the advisory
+   */
+  description?: string | null;
+  /**
+   * Regional threat levels within the country
+   */
+  regions?:
+    | {
+        region?: string | null;
+        level?: ('1' | '2' | '3' | '4') | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Whether this advisory is currently active
+   */
+  isActive?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "visa-requirements".
+ */
+export interface VisaRequirement {
+  id: number;
+  passportCountry: number | Country;
+  destinationCountry: number | Country;
+  requirement: 'visa_free' | 'visa_on_arrival' | 'evisa' | 'eta' | 'visa_required' | 'no_admission';
+  days?: number | null;
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "michelin-restaurants".
+ */
+export interface MichelinRestaurant {
+  id: number;
+  name: string;
+  /**
+   * Michelin stars (1 – 3)
+   */
+  rating?: number | null;
+  year?: number | null;
+  link?: string | null;
+  website?: string | null;
+  phone?: string | null;
+  /**
+   * Images pulled from Michelin Guide
+   */
+  gallery?: (number | Media)[] | null;
+  country?: (number | null) | Country;
+  location?: {
+    latitude?: number | null;
+    longitude?: number | null;
+    address?: string | null;
+    city?: string | null;
+    destination?: (number | null) | Destination;
+  };
+  type?: ('restaurant' | 'bib-gourmand' | 'green-star' | 'young-chef') | null;
+  award?: string | null;
+  cuisine?: string | null;
+  priceRange?: ('1' | '2' | '3' | '4') | null;
+  greenStar?: boolean | null;
+  description?: string | null;
+  isActive?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -1135,6 +1819,58 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'users';
         value: number | User;
+      } | null)
+    | ({
+        relationTo: 'religions';
+        value: number | Religion;
+      } | null)
+    | ({
+        relationTo: 'timezones';
+        value: number | Timezone;
+      } | null)
+    | ({
+        relationTo: 'countries';
+        value: number | Country;
+      } | null)
+    | ({
+        relationTo: 'currencies';
+        value: number | Currency;
+      } | null)
+    | ({
+        relationTo: 'languages';
+        value: number | Language;
+      } | null)
+    | ({
+        relationTo: 'regions';
+        value: number | Region;
+      } | null)
+    | ({
+        relationTo: 'airlines';
+        value: number | Airline;
+      } | null)
+    | ({
+        relationTo: 'airports';
+        value: number | Airport;
+      } | null)
+    | ({
+        relationTo: 'routes';
+        value: number | Route;
+      } | null)
+    | ({
+        relationTo: 'travel-advisories';
+        value: number | TravelAdvisory;
+      } | null)
+    | ({
+        relationTo: 'visa-requirements';
+        value: number | VisaRequirement;
+      } | null)
+    | ({
+        relationTo: 'michelin-restaurants';
+        value: number | MichelinRestaurant;
+      } | null)
+    | ({
+        relationTo: 'destinations';
+        value: number | Destination;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -1714,6 +2450,368 @@ export interface UsersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "religions_select".
+ */
+export interface ReligionsSelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  parentReligion?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "timezones_select".
+ */
+export interface TimezonesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  label?: T;
+  offset?: T;
+  offsetMinutes?: T;
+  isDST?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "countries_select".
+ */
+export interface CountriesSelect<T extends boolean = true> {
+  name?: T;
+  code?: T;
+  code3?: T;
+  isoCode?: T;
+  continent?: T;
+  region?: T;
+  subregion?: T;
+  capital?: T;
+  flag?: T;
+  webDomain?: T;
+  dialingCode?: T;
+  demonym?: T;
+  languages?: T;
+  religions?:
+    | T
+    | {
+        religion?: T;
+        percentage?: T;
+        id?: T;
+      };
+  timezones?: T;
+  currencies?: T;
+  neighboringCountries?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "currencies_select".
+ */
+export interface CurrenciesSelect<T extends boolean = true> {
+  name?: T;
+  code?: T;
+  symbol?: T;
+  exchangeRate?: T;
+  exchangeRateUpdatedAt?: T;
+  destinations?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "languages_select".
+ */
+export interface LanguagesSelect<T extends boolean = true> {
+  name?: T;
+  code?: T;
+  nativeName?: T;
+  destinations?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "regions_select".
+ */
+export interface RegionsSelect<T extends boolean = true> {
+  name?: T;
+  code?: T;
+  country?: T;
+  type?: T;
+  capital?: T;
+  destinations?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "airlines_select".
+ */
+export interface AirlinesSelect<T extends boolean = true> {
+  name?: T;
+  alias?: T;
+  iata?: T;
+  icao?: T;
+  callsign?: T;
+  country?: T;
+  active?: T;
+  openflights_id?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "airports_select".
+ */
+export interface AirportsSelect<T extends boolean = true> {
+  name?: T;
+  iata?: T;
+  icao?: T;
+  city?: T;
+  country?: T;
+  region?: T;
+  latitude?: T;
+  longitude?: T;
+  elevation?: T;
+  timezone?: T;
+  type?: T;
+  openflights_id?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "routes_select".
+ */
+export interface RoutesSelect<T extends boolean = true> {
+  routeCode?: T;
+  airline?: T;
+  airline_code?: T;
+  sourceAirport?: T;
+  source_airport_code?: T;
+  destinationAirport?: T;
+  destination_airport_code?: T;
+  codeshare?: T;
+  stops?: T;
+  equipment?:
+    | T
+    | {
+        aircraft?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "travel-advisories_select".
+ */
+export interface TravelAdvisoriesSelect<T extends boolean = true> {
+  title?: T;
+  pubDate?: T;
+  link?: T;
+  threatLevel?: T;
+  countryTag?: T;
+  country?: T;
+  category?: T;
+  description?: T;
+  regions?:
+    | T
+    | {
+        region?: T;
+        level?: T;
+        id?: T;
+      };
+  isActive?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "visa-requirements_select".
+ */
+export interface VisaRequirementsSelect<T extends boolean = true> {
+  passportCountry?: T;
+  destinationCountry?: T;
+  requirement?: T;
+  days?: T;
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "michelin-restaurants_select".
+ */
+export interface MichelinRestaurantsSelect<T extends boolean = true> {
+  name?: T;
+  rating?: T;
+  year?: T;
+  link?: T;
+  website?: T;
+  phone?: T;
+  gallery?: T;
+  country?: T;
+  location?:
+    | T
+    | {
+        latitude?: T;
+        longitude?: T;
+        address?: T;
+        city?: T;
+        destination?: T;
+      };
+  type?: T;
+  award?: T;
+  cuisine?: T;
+  priceRange?: T;
+  greenStar?: T;
+  description?: T;
+  isActive?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "destinations_select".
+ */
+export interface DestinationsSelect<T extends boolean = true> {
+  title?: T;
+  locationData?:
+    | T
+    | {
+        address?: T;
+        coordinates?:
+          | T
+          | {
+              lat?: T;
+              lng?: T;
+            };
+        placeID?: T;
+        country?: T;
+        continent?: T;
+        city?: T;
+        isGoodForChildren?: T;
+        isGoodForGroups?: T;
+        priceLevel?: T;
+        rating?: T;
+        user_ratings_total?: T;
+        reviews?:
+          | T
+          | {
+              author_name?: T;
+              rating?: T;
+              text?: T;
+              id?: T;
+            };
+        photos?:
+          | T
+          | {
+              photo_reference?: T;
+              height?: T;
+              width?: T;
+              id?: T;
+            };
+        tempCountryData?:
+          | T
+          | {
+              countryName?: T;
+              countryCode?: T;
+              currencyCode?: T;
+              languageCode?: T;
+              region?: T;
+            };
+      };
+  lat?: T;
+  lng?: T;
+  continent?: T;
+  city?: T;
+  state?: T;
+  googleMapsUri?: T;
+  countryRelation?: T;
+  currencyRelation?: T;
+  languagesRelation?: T;
+  regionRelation?: T;
+  country?: T;
+  flagSvg?: T;
+  languages?: T;
+  countryData?:
+    | T
+    | {
+        label?: T;
+        code?: T;
+        capital?: T;
+        region?: T;
+        currency?:
+          | T
+          | {
+              code?: T;
+              label?: T;
+              symbol?: T;
+            };
+        language?:
+          | T
+          | {
+              code?: T;
+              label?: T;
+              nativeName?: T;
+            };
+        flag?: T;
+      };
+  isGoodForChildren?: T;
+  isGoodForGroups?: T;
+  priceLevel?: T;
+  rating?: T;
+  user_ratings_total?: T;
+  reviews?:
+    | T
+    | {
+        author_name?: T;
+        rating?: T;
+        text?: T;
+        id?: T;
+      };
+  featuredImage?: T;
+  featuredVideo?: T;
+  mediaGallery?: T;
+  content?: T;
+  relatedDestinations?: T;
+  authors?: T;
+  populatedAuthors?:
+    | T
+    | {
+        id?: T;
+        name?: T;
+      };
+  enable3DMap?: T;
+  areaExplorerConfig?:
+    | T
+    | {
+        showPOIs?: T;
+        poiTypes?: T;
+        poiDensity?: T;
+        searchRadius?: T;
+        autoOrbit?: T;
+        theme?: T;
+        customCenter?:
+          | T
+          | {
+              enabled?: T;
+              lat?: T;
+              lng?: T;
+              description?: T;
+            };
+      };
+  poiDataCachedAt?: T;
+  slug?: T;
+  slugLock?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

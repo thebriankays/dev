@@ -6,6 +6,8 @@ import * as THREE from 'three'
 import { OrbitControls } from '@react-three/drei'
 import { useTexture } from '@react-three/drei'
 import { Line } from '@react-three/drei'
+import { useGSAP, useAnimation } from '@/providers/Animation'
+import { useCanvas } from '@/providers/Canvas'
 
 interface PolygonData {
   feature: any // GeoJSON feature
@@ -153,6 +155,10 @@ export function TravelDataGlobe({
   const globeRef = useRef<THREE.Group>(null)
   const atmosphereRef = useRef<THREE.Mesh>(null)
   const { camera } = useThree()
+  const { requestRender } = useCanvas()
+  const animation = useAnimation()
+  const rotationSpeed = useRef(autoRotateSpeed)
+  const scrollProgress = useRef(0)
   
   // Load textures
   const textures = useTexture({
@@ -160,10 +166,74 @@ export function TravelDataGlobe({
     bumpMap: bumpImageUrl || globeImageUrl,
   })
   
-  // Auto rotation
+  // Set up scroll animations with GSAP
+  useGSAP((context) => {
+    if (!globeRef.current) return
+    
+    const { ScrollTrigger, gsap } = animation
+    
+    // Create scroll-based rotation
+    ScrollTrigger.create({
+      trigger: 'body',
+      start: 'top top',
+      end: 'bottom bottom',
+      scrub: 1,
+      onUpdate: (self) => {
+        scrollProgress.current = self.progress
+        requestRender() // Request render on scroll update
+      },
+    })
+    
+    // Animate globe scale on enter
+    gsap.fromTo(
+      globeRef.current.scale,
+      { x: 0.8, y: 0.8, z: 0.8 },
+      {
+        x: 1,
+        y: 1,
+        z: 1,
+        duration: 1.5,
+        ease: 'power3.out',
+        onUpdate: () => requestRender(),
+      }
+    )
+    
+    // Animate atmosphere opacity
+    if (atmosphereRef.current) {
+      gsap.fromTo(
+        atmosphereRef.current.material,
+        { opacity: 0 },
+        {
+          opacity: 0.1,
+          duration: 2,
+          ease: 'power2.inOut',
+          onUpdate: () => requestRender(),
+        }
+      )
+    }
+  }, [])
+  
+  // Auto rotation with scroll influence and Hamo/Tempus integration
   useFrame((state, delta) => {
-    if (globeRef.current && autoRotateSpeed) {
-      globeRef.current.rotation.y += autoRotateSpeed * delta * 0.1
+    if (globeRef.current && rotationSpeed.current) {
+      // Combine auto rotation with scroll-based rotation
+      const scrollInfluence = scrollProgress.current * Math.PI * 2
+      const autoRotation = rotationSpeed.current * delta * 0.1
+      
+      // Use Hamo for smooth interpolation if available
+      if (animation.hamo) {
+        const targetRotation = globeRef.current.rotation.y + autoRotation + scrollInfluence
+        globeRef.current.rotation.y = animation.hamo.lerp(
+          globeRef.current.rotation.y,
+          targetRotation,
+          0.05
+        )
+      } else {
+        globeRef.current.rotation.y += autoRotation
+      }
+      
+      // Request render for continuous animation
+      requestRender()
     }
   })
   

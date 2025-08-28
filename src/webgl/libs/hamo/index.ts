@@ -88,6 +88,11 @@ export class Hamo {
     this.stopAll()
   }
 
+  // Lerp function for smooth interpolation
+  lerp(from: number, to: number, t: number): number {
+    return from + (to - from) * t
+  }
+
   // Easing functions
   linear(t: number): number {
     return t

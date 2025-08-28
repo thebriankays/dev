@@ -3,9 +3,9 @@
 import React, { useRef, useEffect, useState } from 'react'
 import Image from 'next/image'
 import { WebGLTunnel } from '@/webgl/components/tunnel'
+import { View } from '@react-three/drei'
 import { WebGLImage } from './WebGLImage'
-import { useCanvas } from '@/providers/Canvas'
-import { useWebGLRect } from '@/hooks/use-webgl-rect'
+import { useCanvas, useView } from '@/providers/Canvas'
 import './image.scss'
 
 interface ImageProps {
@@ -44,8 +44,9 @@ export function WebGLImageComponent({
   loading,
 }: ImageProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const viewRef = useRef<HTMLDivElement>(null)
   const { isWebGL } = useCanvas()
-  const rect = useWebGLRect(containerRef)
+  const bounds = useView(viewRef)
   const [imageLoaded, setImageLoaded] = useState(false)
   
   return (
@@ -54,18 +55,32 @@ export function WebGLImageComponent({
       className={`webgl-image ${className}`}
       data-loaded={imageLoaded}
     >
+      {/* WebGL view reference div */}
+      <div
+        ref={viewRef}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+        }}
+      />
+      
       {/* WebGL version - rendered in the canvas via tunnel */}
       {isWebGL && src && imageLoaded && (
         <WebGLTunnel>
-          <WebGLImage
-            src={src}
-            rect={rect}
-            distortion={distortion}
-            parallax={parallax}
-            hover={hover}
-            transition={transition}
-            scale={scale}
-          />
+          <View track={viewRef as React.RefObject<HTMLElement>}>
+            <WebGLImage
+              src={src}
+              distortion={distortion}
+              parallax={parallax}
+              hover={hover}
+              transition={transition}
+              scale={scale}
+            />
+          </View>
         </WebGLTunnel>
       )}
       

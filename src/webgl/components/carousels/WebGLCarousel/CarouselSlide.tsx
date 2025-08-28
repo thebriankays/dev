@@ -4,7 +4,8 @@ import React, { useRef, useMemo, useEffect } from 'react'
 import { useTexture } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { useGSAP } from '@/providers/Animation'
+import { useGSAP, useAnimation } from '@/providers/Animation'
+import { useCanvas } from '@/providers/Canvas'
 import gsap from 'gsap'
 import type { CarouselSlideData, TransitionEffect } from './types'
 import { getTransitionShaders } from './shaders'
@@ -27,6 +28,8 @@ export function CarouselSlide({
   const meshRef = useRef<THREE.Mesh>(null)
   const materialRef = useRef<THREE.ShaderMaterial>(null)
   const texture = useTexture(data.image)
+  const { requestRender } = useCanvas()
+  const animation = useAnimation()
   
   const isActive = index === currentIndex
   const isNext = index === (currentIndex + 1) % 3 // Assuming max 3 slides visible
@@ -84,6 +87,8 @@ export function CarouselSlide({
   useGSAP((context) => {
     if (!meshRef.current || !materialRef.current || !context) return
 
+    const { gsap, ScrollTrigger } = animation
+
     context.add(() => {
       // Animate position
       gsap.to(meshRef.current!.position, {
@@ -92,6 +97,7 @@ export function CarouselSlide({
         z: targetPosition.z,
         duration: 1.2,
         ease: 'power2.inOut',
+        onUpdate: () => requestRender(),
       })
 
       // Animate scale
@@ -101,6 +107,7 @@ export function CarouselSlide({
         z: 1,
         duration: 1.2,
         ease: 'power2.inOut',
+        onUpdate: () => requestRender(),
       })
 
       // Animate material uniforms
@@ -109,32 +116,38 @@ export function CarouselSlide({
           value: 1,
           duration: 0.8,
           ease: 'power2.out',
+          onUpdate: () => requestRender(),
         })
         gsap.to(materialRef.current!.uniforms.uBlur, {
           value: 0,
           duration: 0.8,
           ease: 'power2.out',
+          onUpdate: () => requestRender(),
         })
         gsap.to(materialRef.current!.uniforms.uDistortion, {
           value: 0,
           duration: 1,
           ease: 'power2.out',
+          onUpdate: () => requestRender(),
         })
       } else {
         gsap.to(materialRef.current!.uniforms.uOpacity, {
           value: 0.6,
           duration: 0.8,
           ease: 'power2.out',
+          onUpdate: () => requestRender(),
         })
         gsap.to(materialRef.current!.uniforms.uBlur, {
           value: 0.002,
           duration: 0.8,
           ease: 'power2.out',
+          onUpdate: () => requestRender(),
         })
         gsap.to(materialRef.current!.uniforms.uDistortion, {
           value: 0.1,
           duration: 1,
           ease: 'power2.out',
+          onUpdate: () => requestRender(),
         })
       }
 
@@ -147,8 +160,10 @@ export function CarouselSlide({
             value: 1,
             duration: 1.2,
             ease: 'power2.inOut',
+            onUpdate: () => requestRender(),
             onComplete: () => {
               gsap.set(materialRef.current!.uniforms.uTransition, { value: 0 })
+              requestRender()
             },
           }
         )
@@ -160,13 +175,32 @@ export function CarouselSlide({
   useFrame(({ clock, pointer }: any) => {
     if (!materialRef.current) return
 
-    materialRef.current.uniforms.uTime.value = clock.getElapsedTime()
-    materialRef.current.uniforms.uMouse.value.lerp(pointer, 0.1)
+    // Use Tempus for time if available
+    const time = animation.tempus ? animation.tempus.elapsed * 0.001 : clock.getElapsedTime()
+    
+    materialRef.current.uniforms.uTime.value = time
+    
+    // Use Hamo for smooth mouse interpolation
+    if (animation.hamo) {
+      materialRef.current.uniforms.uMouse.value.x = animation.hamo.lerp(
+        materialRef.current.uniforms.uMouse.value.x,
+        pointer.x,
+        0.1
+      )
+      materialRef.current.uniforms.uMouse.value.y = animation.hamo.lerp(
+        materialRef.current.uniforms.uMouse.value.y,
+        pointer.y,
+        0.1
+      )
+    } else {
+      materialRef.current.uniforms.uMouse.value.lerp(pointer, 0.1)
+    }
     
     // Add subtle floating animation for active slide
     if (isActive && meshRef.current) {
-      meshRef.current.rotation.y = Math.sin(clock.getElapsedTime() * 0.3) * 0.02
-      meshRef.current.position.y += Math.sin(clock.getElapsedTime() * 0.5) * 0.001
+      meshRef.current.rotation.y = Math.sin(time * 0.3) * 0.02
+      meshRef.current.position.y += Math.sin(time * 0.5) * 0.001
+      requestRender()
     }
   })
 

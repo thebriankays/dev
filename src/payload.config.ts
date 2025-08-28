@@ -11,6 +11,20 @@ import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
 import { Users } from './collections/Users'
+import { Destinations } from './collections/Destinations'
+import { Countries } from './collections/Countries'
+import { Currencies } from './collections/Currencies'
+import { Languages } from './collections/Languages'
+import { Regions } from './collections/Regions'
+import { Religions } from './collections/Religions'
+import { Timezones } from './collections/Timezones'
+import { Airports } from './collections/Airports'
+import { Airlines } from './collections/Airlines'
+import { Routes } from './collections/Routes'
+import { TravelAdvisories } from './collections/TravelAdvisories'
+import { VisaRequirements } from './collections/VisaRequirements'
+import { MichelinRestaurants } from './collections/MichelinRestaurants'
+import { MapDataCache } from './collections/MapDataCache'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { plugins } from './plugins'
@@ -64,7 +78,31 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URI || '',
     },
   }),
-  collections: [Pages, Posts, Media, Categories, Users],
+  collections: [
+    Pages, 
+    Posts, 
+    Media, 
+    Categories, 
+    Users, 
+    // Core location data
+    Religions,
+    Timezones,
+    Countries,
+    Currencies,
+    Languages,
+    Regions,
+    // Travel data
+    Airlines,
+    Airports,
+    Routes,
+    TravelAdvisories,
+    VisaRequirements,
+    MichelinRestaurants,
+    // System collections
+    MapDataCache,
+    // Main collection
+    Destinations
+  ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],
   plugins: [

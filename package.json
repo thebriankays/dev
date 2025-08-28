@@ -25,6 +25,8 @@
     "@fortawesome/fontawesome-svg-core": "^7.0.0",
     "@fortawesome/free-solid-svg-icons": "^7.0.0",
     "@fortawesome/react-fontawesome": "^3.0.1",
+    "@googlemaps/js-api-loader": "^1.16.2",
+    "@googlemaps/extended-component-library": "^0.6.11",
     "@payloadcms/admin-bar": "3.53.0",
     "@payloadcms/db-postgres": "3.53.0",
     "@payloadcms/live-preview-react": "3.53.0",

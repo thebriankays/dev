@@ -1,7 +1,6 @@
 'use client'
 
-import React, { useState, useMemo, useRef, useEffect } from 'react'
-import { View } from '@react-three/drei'
+import React, { useState, useMemo, useRef } from 'react'
 import { useGSAP } from '@/providers/Animation'
 import { BlockWrapper } from '../_shared/BlockWrapper'
 import { TravelDataGlobe } from '@/webgl/components/globe/TravelDataGlobe'
@@ -70,6 +69,7 @@ interface TravelGlobeClientProps {
     rotationSpeed?: number
     showClouds?: boolean
     showAtmosphere?: boolean
+    atmosphereColor?: string
   }
   
   // Glass effects
@@ -100,7 +100,6 @@ export function TravelGlobeClient({
   fluidOverlay = { enabled: false },
 }: TravelGlobeClientProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const viewRef = useRef<HTMLDivElement>(null)
   const [currentView, setCurrentView] = useState(initialView)
   const [selectedItem, setSelectedItem] = useState<any>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -328,47 +327,51 @@ export function TravelGlobeClient({
           glassEffect={{ enabled: glassEffect?.enabled ?? false, variant: glassEffect?.variant }}
           fluidOverlay={{ enabled: fluidOverlay?.enabled ?? false, intensity: fluidOverlay?.intensity }}
           className="tdg-globe-wrapper"
+          webglContent={
+            <TravelDataGlobe
+              polygonsData={filteredData.polygonData}
+              polygonAltitude={(d: any) => d.altitude || 0.01}
+              polygonCapColor={(d: any) => d.color}
+              polygonOpacity={0.6}
+              onPolygonClick={(polygon: any) => {
+                setSelectedItem(polygon.data)
+                setShowDetails(true)
+              }}
+              onPolygonHover={(polygon: any) => {
+                setHoveredCountry(polygon?.feature || null)
+              }}
+              
+              pointsData={filteredData.pointData}
+              pointAltitude={(d: any) => d.altitude || 0.01}
+              pointColor={(d: any) => d.color}
+              pointRadius={(d: any) => d.size || 0.5}
+              onPointClick={(point: any) => {
+                setSelectedItem(point.data)
+                setShowDetails(true)
+              }}
+              
+              arcsData={filteredData.arcData}
+              arcColor={(d: any) => d.color}
+              arcAltitude={(d: any) => d.altitude || 0.15}
+              arcStroke={(d: any) => d.strokeWidth || 1}
+              
+              globeImageUrl={globeSettings.imageUrl || '/earth-blue-marble.jpg'}
+              bumpImageUrl={globeSettings.bumpUrl || '/earth-bump.jpg'}
+              showAtmosphere={globeSettings.showAtmosphere !== false}
+              atmosphereColor="#3a7ca5"
+              atmosphereAltitude={0.15}
+              
+              autoRotateSpeed={globeSettings.rotationSpeed || 0.5}
+              enableZoom={true}
+              enableRotate={true}
+              enablePan={false}
+              
+              radius={100}
+            />
+          }
         >
-          <TravelDataGlobe
-            polygonsData={filteredData.polygonData}
-            polygonAltitude={(d: any) => d.altitude || 0.01}
-            polygonCapColor={(d: any) => d.color}
-            polygonOpacity={0.6}
-            onPolygonClick={(polygon: any) => {
-              setSelectedItem(polygon.data)
-              setShowDetails(true)
-            }}
-            onPolygonHover={(polygon: any) => {
-              setHoveredCountry(polygon?.feature || null)
-            }}
-            
-            pointsData={filteredData.pointData}
-            pointAltitude={(d: any) => d.altitude || 0.01}
-            pointColor={(d: any) => d.color}
-            pointRadius={(d: any) => d.size || 0.5}
-            onPointClick={(point: any) => {
-              setSelectedItem(point.data)
-              setShowDetails(true)
-            }}
-            
-            arcsData={filteredData.arcData}
-            arcColor={(d: any) => d.color}
-            arcAltitude={(d: any) => d.altitude || 0.15}
-            arcStroke={(d: any) => d.strokeWidth || 1}
-            
-            globeImageUrl={globeSettings.imageUrl || '/earth-blue-marble.jpg'}
-            bumpImageUrl={globeSettings.bumpUrl || '/earth-bump.jpg'}
-            showAtmosphere={globeSettings.showAtmosphere !== false}
-            atmosphereColor="#3a7ca5"
-            atmosphereAltitude={0.15}
-            
-            autoRotateSpeed={globeSettings.rotationSpeed || 0.5}
-            enableZoom={true}
-            enableRotate={true}
-            enablePan={false}
-            
-            radius={100}
-          />
+          {/* Globe viewport placeholder */}
+          <div className="tdg-globe-viewport" style={{ width: '100%', height: '500px' }} />
         </BlockWrapper>
         
         {/* Side panel with details */}

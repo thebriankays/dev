@@ -24,10 +24,16 @@ export class Tempus {
   private timelines: Map<string, Timeline> = new Map()
   private globalSpeed: number = 1
   private paused: boolean = false
+  private startTime: number = 0
 
   constructor() {
     this.time = performance.now()
     this.lastTime = this.time
+    this.startTime = this.time
+  }
+
+  get elapsed(): number {
+    return this.time - this.startTime
   }
 
   update(time: number) {

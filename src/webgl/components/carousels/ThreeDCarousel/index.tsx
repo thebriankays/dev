@@ -3,9 +3,9 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { PerspectiveCamera, OrbitControls } from '@react-three/drei'
-import { useAnimation } from '@/providers/Animation'
+import { useAnimation, useGSAP } from '@/providers/Animation'
 import { useMouse } from '@/providers/MouseFollower'
-import { useView } from '@/providers/Canvas'
+import { useView, useCanvas } from '@/providers/Canvas'
 import { WebGLTunnel } from '@/webgl/components/tunnel'
 import { View } from '@react-three/drei'
 import * as THREE from 'three'
@@ -274,29 +274,94 @@ function Scene({
   onItemClick,
 }: SceneProps) {
   const { camera } = useThree()
+  const { requestRender } = useCanvas()
+  const animation = useAnimation()
+  
+  // Set up scroll-triggered animations
+  useGSAP((context) => {
+    if (!groupRef.current) return
+    
+    const { gsap, ScrollTrigger } = animation
+    
+    // Parallax effect on scroll
+    ScrollTrigger.create({
+      trigger: 'body',
+      start: 'top top',
+      end: 'bottom bottom',
+      scrub: true,
+      onUpdate: (self) => {
+        if (!groupRef.current) return
+        // Add vertical offset based on scroll
+        groupRef.current.position.y = self.progress * 2 - 1
+        requestRender()
+      },
+    })
+    
+    // Scale effect on enter
+    gsap.fromTo(
+      groupRef.current.scale,
+      { x: 0.8, y: 0.8, z: 0.8 },
+      {
+        x: 1,
+        y: 1,
+        z: 1,
+        duration: 1.5,
+        ease: 'power3.out',
+        onUpdate: () => requestRender(),
+      }
+    )
+  }, [])
   
   // Animate rotation
   useFrame((state, delta) => {
     if (!groupRef.current) return
     
-    // Apply momentum
+    // Use Tempus for consistent time if available
+    const time = animation.tempus ? animation.tempus.elapsed * 0.001 : state.clock.elapsedTime
+    
+    // Apply momentum with Hamo interpolation
     if (Math.abs(momentum) > 0.001) {
-      rotationRef.current += momentum * delta
+      const momentumDelta = momentum * delta
+      if (animation.hamo) {
+        rotationRef.current = animation.hamo.lerp(
+          rotationRef.current,
+          rotationRef.current + momentumDelta,
+          0.5
+        )
+      } else {
+        rotationRef.current += momentumDelta
+      }
       setMomentum(momentum * 0.95) // Damping
+      requestRender()
     }
     
     // Auto-rotate
     if (autoRotate) {
       rotationRef.current += rotationSpeed * delta
+      requestRender()
     }
     
     // Smooth rotation to target when not dragging
     if (!autoRotate && Math.abs(momentum) < 0.001) {
-      rotationRef.current = THREE.MathUtils.lerp(
-        rotationRef.current,
-        targetRotation,
-        0.1
-      )
+      const prevRotation = rotationRef.current
+      if (animation.hamo) {
+        rotationRef.current = animation.hamo.lerp(
+          rotationRef.current,
+          targetRotation,
+          0.1
+        )
+      } else {
+        rotationRef.current = THREE.MathUtils.lerp(
+          rotationRef.current,
+          targetRotation,
+          0.1
+        )
+      }
+      
+      // Only request render if rotation changed
+      if (Math.abs(rotationRef.current - prevRotation) > 0.001) {
+        requestRender()
+      }
     }
     
     // Apply rotation to group

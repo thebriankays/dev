@@ -2,14 +2,15 @@
 
 import React, { useRef, useState, useMemo, useEffect } from 'react'
 import { useTexture } from '@react-three/drei'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
+import { useAnimation, useGSAP } from '@/providers/Animation'
+import { useCanvas } from '@/providers/Canvas'
 import vertexShader from './shaders/image.vert'
 import fragmentShader from './shaders/image.frag'
 
 interface WebGLImageProps {
   src: string
-  rect: DOMRect | null
   distortion?: number
   parallax?: number
   hover?: boolean
@@ -19,7 +20,6 @@ interface WebGLImageProps {
 
 export function WebGLImage({ 
   src, 
-  rect,
   distortion = 0,
   parallax = 0.1,
   hover = true,
@@ -29,6 +29,9 @@ export function WebGLImage({
   const meshRef = useRef<THREE.Mesh>(null)
   const texture = useTexture(src)
   const [hovered, setHovered] = useState(false)
+  const { viewport } = useThree()
+  const { requestRender } = useCanvas()
+  const animation = useAnimation()
   
   const material = useMemo(() => {
     return new THREE.ShaderMaterial({
@@ -41,25 +44,53 @@ export function WebGLImage({
         uTime: { value: 0 },
         uHover: { value: 0 },
         uMouse: { value: new THREE.Vector2() },
-        uResolution: { value: new THREE.Vector2(1, 1) },
+        uResolution: { value: new THREE.Vector2(viewport.width, viewport.height) },
         uTransition: { value: 0 },
+        uScrollY: { value: 0 },
       },
       side: THREE.DoubleSide,
       transparent: true,
     })
-  }, [texture, distortion, parallax])
+  }, [texture, distortion, parallax, viewport])
   
-  // Update mesh position and scale based on DOM rect
-  useEffect(() => {
-    if (!meshRef.current || !rect) return
+  // Set up scroll animations
+  useGSAP((context) => {
+    if (!meshRef.current) return
     
-    // Convert DOM coordinates to WebGL coordinates
-    const x = (rect.left + rect.width / 2) - window.innerWidth / 2
-    const y = -(rect.top + rect.height / 2) + window.innerHeight / 2
+    const { gsap, ScrollTrigger } = animation
     
-    meshRef.current.position.set(x, y, 0)
-    meshRef.current.scale.set(rect.width * scale, rect.height * scale, 1)
-  }, [rect, scale])
+    // Fade in on scroll
+    ScrollTrigger.create({
+      trigger: 'body', // Will be scoped to View bounds
+      start: 'top bottom',
+      end: 'bottom top',
+      scrub: true,
+      onUpdate: (self) => {
+        material.uniforms.uScrollY.value = self.progress
+        material.uniforms.uTransition.value = self.progress
+        requestRender()
+      },
+    })
+    
+    // Scale animation on enter
+    gsap.fromTo(
+      meshRef.current.scale,
+      { x: 0.9 * scale, y: 0.9 * scale, z: 1 },
+      {
+        x: scale,
+        y: scale,
+        z: 1,
+        duration: 1,
+        ease: 'power2.out',
+        scrollTrigger: {
+          trigger: 'body',
+          start: 'top 80%',
+          toggleActions: 'play none none reverse',
+        },
+        onUpdate: () => requestRender(),
+      }
+    )
+  }, [])
   
   // Hover animations
   useEffect(() => {
@@ -93,25 +124,52 @@ export function WebGLImage({
   useFrame(({ clock, pointer, size }) => {
     if (!material) return
     
-    material.uniforms.uTime.value = clock.getElapsedTime()
-    material.uniforms.uMouse.value.set(pointer.x, pointer.y)
+    // Use Tempus for time if available
+    const time = animation.tempus ? animation.tempus.elapsed * 0.001 : clock.getElapsedTime()
+    material.uniforms.uTime.value = time
+    
+    // Use Hamo for smooth mouse interpolation
+    if (animation.hamo) {
+      material.uniforms.uMouse.value.x = animation.hamo.lerp(
+        material.uniforms.uMouse.value.x,
+        pointer.x,
+        0.1
+      )
+      material.uniforms.uMouse.value.y = animation.hamo.lerp(
+        material.uniforms.uMouse.value.y,
+        pointer.y,
+        0.1
+      )
+    } else {
+      material.uniforms.uMouse.value.set(pointer.x, pointer.y)
+    }
+    
     material.uniforms.uResolution.value.set(size.width, size.height)
     
-    if (meshRef.current && parallax > 0 && rect) {
-      const x = (rect.left + rect.width / 2) - window.innerWidth / 2
-      const y = -(rect.top + rect.height / 2) + window.innerHeight / 2
-      meshRef.current.position.x = x + pointer.x * parallax * rect.width
-      meshRef.current.position.y = y + pointer.y * parallax * rect.height
+    // Parallax effect on mouse move
+    if (meshRef.current && parallax > 0) {
+      meshRef.current.position.x = pointer.x * parallax * viewport.width * 0.1
+      meshRef.current.position.y = pointer.y * parallax * viewport.height * 0.1
+    }
+    
+    // Always render when animating
+    if (hovered || Math.abs(material.uniforms.uHover.value - (hovered ? 1 : 0)) > 0.01) {
+      requestRender()
     }
   })
-  
-  if (!rect) return null
   
   return (
     <mesh 
       ref={meshRef}
-      onPointerEnter={() => setHovered(true)}
-      onPointerLeave={() => setHovered(false)}
+      onPointerEnter={() => {
+        setHovered(true)
+        requestRender()
+      }}
+      onPointerLeave={() => {
+        setHovered(false)
+        requestRender()
+      }}
+      scale={[viewport.width, viewport.height, 1]}
     >
       <planeGeometry args={[1, 1, 32, 32]} />
       <primitive object={material} attach="material" />
