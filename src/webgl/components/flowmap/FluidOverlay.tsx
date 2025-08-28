@@ -3,7 +3,7 @@
 import React, { useRef, useMemo } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
-import { Flowmap } from './index'
+import { FlowmapProvider } from './index'
 
 interface FluidOverlayProps {
   intensity?: number
@@ -44,7 +44,7 @@ export function FluidOverlay({
   })
   
   return (
-    <Flowmap type="flowmap" config={{ 
+    <FlowmapProvider type="flowmap" config={{ 
       falloff: 0.3 * intensity,
       alpha: 0.5,
       dissipation: 0.96,
@@ -56,7 +56,7 @@ export function FluidOverlay({
       >
         <planeGeometry args={[1, 1, 1, 1]} />
       </mesh>
-    </Flowmap>
+    </FlowmapProvider>
   )
 }
 

@@ -146,16 +146,26 @@ export function FlowmapProvider({
       flowmapRef.current?.dispose()
       fluidRef.current?.dispose()
     }
-  }, [gl, size.width, size.height, type, config])
+    // Only re-initialize when type changes or gl changes
+  }, [gl, type])
+  
+  // Handle resize
+  useEffect(() => {
+    if (type === 'flowmap' && flowmapRef.current) {
+      flowmapRef.current.resize(size.width, size.height)
+    } else if (type === 'fluid' && fluidRef.current) {
+      // FluidSimulation might need a resize method
+    }
+  }, [size.width, size.height, type])
   
   // Update loop
   useFrame(({ clock }, delta) => {
     if (type === 'flowmap' && flowmapRef.current) {
       flowmapRef.current.update(delta, pointer.current)
-      setTexture(flowmapRef.current.getTexture())
+      // Don't update texture here - it's a reference that doesn't change
     } else if (type === 'fluid' && fluidRef.current) {
       fluidRef.current.update(delta)
-      setTexture(fluidRef.current.uniform.value)
+      // Don't update texture here - it's a reference that doesn't change
     }
   })
   

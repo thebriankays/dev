@@ -21,26 +21,39 @@ export function Preload({ enabled = true }: PreloadProps) {
       console.log('WebGL: Preloading...')
       console.time('WebGL: Preload took:')
 
-      const invisible: THREE.Object3D[] = []
-      scene.traverse((object: THREE.Object3D) => {
-        if (object.visible === false && !object.userData?.debug) {
-          invisible.push(object)
-          object.visible = true
+      try {
+        const invisible: THREE.Object3D[] = []
+        scene.traverse((object: THREE.Object3D) => {
+          if (object.visible === false && !object.userData?.debug) {
+            invisible.push(object)
+            object.visible = true
+          }
+        })
+        
+        // Only compile if WebGL context is valid
+        if (gl && gl.getContext) {
+          await gl.compileAsync(scene, camera)
+          
+          // Skip cube camera update if there are shader compilation errors
+          try {
+            const cubeRenderTarget = new WebGLCubeRenderTarget(128)
+            const cubeCamera = new CubeCamera(0.01, 100000, cubeRenderTarget)
+            cubeCamera.update(gl as THREE.WebGLRenderer, scene as THREE.Scene)
+            cubeRenderTarget.dispose()
+          } catch (cubeError) {
+            console.warn('WebGL: Skipping cube camera update due to error:', cubeError)
+          }
         }
-      })
-      
-      await gl.compileAsync(scene, camera)
-      
-      const cubeRenderTarget = new WebGLCubeRenderTarget(128)
-      const cubeCamera = new CubeCamera(0.01, 100000, cubeRenderTarget)
-      cubeCamera.update(gl as THREE.WebGLRenderer, scene as THREE.Scene)
-      cubeRenderTarget.dispose()
 
-      for (const object of invisible) {
-        object.visible = false
+        for (const object of invisible) {
+          object.visible = false
+        }
+
+        console.timeEnd('WebGL: Preload took:')
+      } catch (error) {
+        console.error('WebGL: Preload error:', error)
+        console.timeEnd('WebGL: Preload took:')
       }
-
-      console.timeEnd('WebGL: Preload took:')
     }
 
     load()

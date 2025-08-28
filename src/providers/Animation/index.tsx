@@ -6,7 +6,6 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
 import { Hamo } from '@/webgl/libs/hamo'
 import { Tempus } from '@/webgl/libs/tempus'
-import { useCanvas } from '@/providers/Canvas'
 
 // Register GSAP plugins
 gsap.registerPlugin(ScrollTrigger)
@@ -74,7 +73,21 @@ export function AnimationProvider({ children }: { children: ReactNode }) {
   const scrollRef = useRef(0)
   const velocityRef = useRef(0)
   const [, forceUpdate] = React.useReducer(x => x + 1, 0)
-  const { requestRender } = useCanvas()
+  
+  // Create a default requestRender function
+  const requestRenderRef = useRef<() => void>(() => {})
+  
+  // Try to get the actual requestRender from Canvas context if available
+  useEffect(() => {
+    // This will run after the component mounts, avoiding the SSR issue
+    if (typeof window !== 'undefined' && (window as any).__r3f) {
+      requestRenderRef.current = () => {
+        if ((window as any).__r3f) {
+          (window as any).__r3f.invalidate()
+        }
+      }
+    }
+  }, [])
 
   useEffect(() => {
     // Initialize Lenis smooth scroll
@@ -101,7 +114,7 @@ export function AnimationProvider({ children }: { children: ReactNode }) {
       velocityRef.current = e.velocity
       ScrollTrigger.update()
       // Request render on scroll for WebGL animations tied to scroll
-      requestRender()
+      requestRenderRef.current()
     })
 
     // Update ScrollTrigger on Lenis scroll
@@ -163,7 +176,7 @@ export function AnimationProvider({ children }: { children: ReactNode }) {
     tempus: tempusRef.current,
     scroll: scrollRef.current,
     velocity: velocityRef.current,
-    requestRender,
+    requestRender: requestRenderRef.current,
   }
 
   return (
