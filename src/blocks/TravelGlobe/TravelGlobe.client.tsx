@@ -1,550 +1,466 @@
 'use client'
 
-import React, { useRef, useEffect, useState, forwardRef, useImperativeHandle, useMemo, useCallback } from 'react'
-import { useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
-import * as THREE from 'three'
+import React, { useState, useMemo, useRef, useEffect } from 'react'
 import { View } from '@react-three/drei'
-import { VerticalMarquee } from '@/components/VerticalMarquee/VerticalMarquee'
-import { BlockWrapper } from '../_shared/BlockWrapper'
 import { useGSAP } from '@/providers/Animation'
+import { BlockWrapper } from '../_shared/BlockWrapper'
+import { TravelDataGlobe } from '@/webgl/components/globe/TravelDataGlobe'
+import { VerticalMarquee } from '@/components/VerticalMarquee/VerticalMarquee'
 import gsap from 'gsap'
-import type { 
-  PolyAdv, 
-  VisaPolygon, 
-  AirportData, 
-  MichelinRestaurantData,
-  CountryBorder 
-} from './types'
 import './TravelGlobe.scss'
 
-const GLOBE_RADIUS = 100
-
-// Color maps for different data types
-const LEVEL_COLOR: Record<number, string> = {
-  1: '#4caf50', // green
-  2: '#ffb300', // amber
-  3: '#f4511e', // deep-orange
-  4: '#b71c1c', // red
+// Tab configuration for different data views
+const tabConfig = {
+  travelAdvisory: { 
+    label: 'Travel Advisories', 
+    icon: '⚠️',
+    description: 'Government travel warnings and safety information'
+  },
+  visaRequirements: { 
+    label: 'Visa Requirements', 
+    icon: '📑',
+    description: 'Entry requirements and visa policies worldwide'
+  },
+  michelinRestaurants: { 
+    label: 'Michelin Restaurants', 
+    icon: '🍽️',
+    description: 'Michelin-starred restaurants around the globe'
+  },
+  airports: { 
+    label: 'Major Airports', 
+    icon: '✈️',
+    description: 'International airports and flight connections'
+  },
 }
 
-const VISA_COLOR: Record<string, string> = {
-  visa_free: '#4caf50',
-  visa_on_arrival: '#8bc34a',
-  e_visa: '#03a9f4',
-  eta: '#00bcd4',
-  visa_required: '#f4511e',
-  no_admission: '#b71c1c',
+// Color schemes for different data types
+const ADVISORY_COLORS: Record<number, string> = {
+  1: '#4caf50', // Level 1 - Normal precautions (green)
+  2: '#ffb300', // Level 2 - Exercise caution (amber)
+  3: '#ff6f00', // Level 3 - Reconsider travel (orange)
+  4: '#d32f2f', // Level 4 - Do not travel (red)
 }
 
-// Convert lat/lng to 3D position on sphere
-function latLngToVector3(lat: number, lng: number, radius: number, altitude = 0): THREE.Vector3 {
-  const phi = (90 - lat) * (Math.PI / 180)
-  const theta = (lng + 180) * (Math.PI / 180)
-  const r = radius + altitude
+const VISA_COLORS: Record<string, string> = {
+  visa_free: '#4caf50',        // Green
+  visa_on_arrival: '#8bc34a',  // Light green
+  e_visa: '#03a9f4',           // Light blue
+  eta: '#00bcd4',              // Cyan
+  visa_required: '#ff9800',    // Orange
+  no_admission: '#f44336',     // Red
+}
+
+interface TravelGlobeClientProps {
+  // View configuration
+  enabledViews?: ('travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports')[]
+  initialView?: 'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports'
   
-  return new THREE.Vector3(
-    -r * Math.sin(phi) * Math.cos(theta),
-    r * Math.cos(phi),
-    r * Math.sin(phi) * Math.sin(theta)
-  )
-}
-
-// Convert GeoJSON polygon to Three.js BufferGeometry
-function geoJsonToBufferGeometry(geoJson: any, radius: number, altitude = 0): THREE.BufferGeometry | null {
-  if (!geoJson) return null
+  // Data sources (would come from Payload collections in production)
+  advisories?: any[]
+  visaData?: any[]
+  restaurants?: any[]
+  airports?: any[]
+  flightRoutes?: any[]
+  countryPolygons?: any[] // GeoJSON features
   
-  try {
-    const vertices: number[] = []
-    const indices: number[] = []
-    let vertexIndex = 0
-    
-    const processPolygon = (coordinates: number[][]) => {
-      const baseIndex = vertexIndex
-      const polygonVertices: THREE.Vector3[] = []
-      
-      // Convert coordinates to 3D vertices
-      coordinates.forEach((coord) => {
-        const [lng, lat] = coord
-        const vector = latLngToVector3(lat, lng, radius, altitude)
-        vertices.push(vector.x, vector.y, vector.z)
-        polygonVertices.push(vector)
-        vertexIndex++
-      })
-      
-      // Simple triangulation using fan method (works for convex polygons)
-      // For better results with complex polygons, use earcut.js
-      for (let i = 1; i < polygonVertices.length - 1; i++) {
-        indices.push(baseIndex, baseIndex + i, baseIndex + i + 1)
-      }
-    }
-    
-    // Handle different GeoJSON types
-    if (geoJson.type === 'Feature') {
-      if (geoJson.geometry.type === 'Polygon') {
-        geoJson.geometry.coordinates[0].forEach((ring: number[][]) => {
-          if (ring.length > 2) processPolygon(ring)
-        })
-      } else if (geoJson.geometry.type === 'MultiPolygon') {
-        geoJson.geometry.coordinates.forEach((polygon: number[][][]) => {
-          polygon[0].forEach((ring: number[][]) => {
-            if (ring.length > 2) processPolygon(ring)
-          })
-        })
-      }
-    }
-    
-    if (vertices.length === 0) return null
-    
-    const geometry = new THREE.BufferGeometry()
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
-    if (indices.length > 0) {
-      geometry.setIndex(indices)
-    }
-    geometry.computeVertexNormals()
-    
-    return geometry
-  } catch (error) {
-    console.error('Error converting GeoJSON:', error)
-    return null
+  // Globe settings
+  globeSettings?: {
+    imageUrl?: string
+    bumpUrl?: string
+    rotationSpeed?: number
+    showClouds?: boolean
+    showAtmosphere?: boolean
+  }
+  
+  // Glass effects
+  glassEffect?: {
+    enabled?: boolean
+    variant?: 'card' | 'panel' | 'subtle' | 'frost' | 'liquid'
+    intensity?: number
+  }
+  
+  // Fluid overlay
+  fluidOverlay?: {
+    enabled?: boolean
+    intensity?: number
   }
 }
 
-interface GlobeSceneProps {
-  polygons?: PolyAdv[] | VisaPolygon[]
-  borders?: CountryBorder
-  airports?: AirportData[]
-  restaurants?: MichelinRestaurantData[]
-  currentView: string
-  selectedCountry?: string | null
-  hoveredCountry?: string | null
-  onCountryClick?: (name: string) => void
-  onCountryHover?: (name: string | null) => void
-  onAirportClick?: (airport: AirportData) => void
-  onRestaurantClick?: (restaurant: MichelinRestaurantData) => void
-  autoRotateSpeed?: number
-  atmosphereColor?: string
-}
-
-// Globe Scene Component
-const GlobeScene = forwardRef<any, GlobeSceneProps>(({
-  polygons = [],
-  borders,
-  airports = [],
+export function TravelGlobeClient({
+  enabledViews = ['travelAdvisory', 'visaRequirements', 'michelinRestaurants', 'airports'],
+  initialView = 'travelAdvisory',
+  advisories = [],
+  visaData = [],
   restaurants = [],
-  currentView,
-  selectedCountry,
-  hoveredCountry,
-  onCountryClick,
-  onCountryHover,
-  onAirportClick,
-  onRestaurantClick,
-  autoRotateSpeed = 0.5,
-  atmosphereColor = '#4a90e2',
-}, ref) => {
-  const globeRef = useRef<THREE.Group>(null)
-  const cloudsRef = useRef<THREE.Mesh>(null)
-  const countryMeshesRef = useRef<Map<string, THREE.Mesh>>(new Map())
-  const { camera, gl, raycaster, pointer } = useThree()
-  
-  // Create globe textures
-  const textures = useMemo(() => {
-    const loader = new THREE.TextureLoader()
-    return {
-      earth: loader.load('/textures/globe/earth-day.jpg', 
-        undefined, 
-        undefined, 
-        () => console.log('Failed to load earth texture')
-      ),
-      bump: loader.load('/textures/globe/earth-bump.jpg',
-        undefined,
-        undefined,
-        () => console.log('Failed to load bump texture')
-      ),
-      clouds: loader.load('/textures/globe/clouds.png',
-        undefined,
-        undefined,
-        () => console.log('Failed to load clouds texture')
-      ),
-    }
-  }, [])
-  
-  // Create country polygon meshes
-  useEffect(() => {
-    const meshes = new Map<string, THREE.Mesh>()
-    
-    polygons.forEach((poly) => {
-      const geometry = geoJsonToBufferGeometry(poly, GLOBE_RADIUS, 0.5)
-      if (!geometry) return
-      
-      let color = '#666666'
-      if ('level' in poly && currentView === 'travelAdvisory') {
-        color = LEVEL_COLOR[poly.level] || '#666666'
-      } else if ('requirement' in poly && currentView === 'visaRequirements') {
-        color = VISA_COLOR[poly.requirement] || '#666666'
-      }
-      
-      const material = new THREE.MeshBasicMaterial({
-        color: new THREE.Color(color),
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.7,
-      })
-      
-      const mesh = new THREE.Mesh(geometry, material)
-      mesh.userData = { polygon: poly, name: poly.properties?.name }
-      meshes.set(poly.properties?.name || `poly-${meshes.size}`, mesh)
-    })
-    
-    countryMeshesRef.current = meshes
-  }, [polygons, currentView])
-  
-  // Update country colors based on selection/hover
-  useEffect(() => {
-    countryMeshesRef.current.forEach((mesh, name) => {
-      const material = mesh.material as THREE.MeshBasicMaterial
-      const poly = mesh.userData.polygon
-      
-      // Base color
-      let color = '#666666'
-      let opacity = 0.6
-      
-      if ('level' in poly && currentView === 'travelAdvisory') {
-        color = LEVEL_COLOR[poly.level] || '#666666'
-        opacity = 0.7
-      } else if ('requirement' in poly && currentView === 'visaRequirements') {
-        color = VISA_COLOR[poly.requirement] || '#666666'
-        opacity = 0.7
-      }
-      
-      // Highlight selected/hovered
-      if (name === selectedCountry) {
-        opacity = 1
-        material.emissive = new THREE.Color(color)
-        material.emissiveIntensity = 0.3
-      } else if (name === hoveredCountry) {
-        opacity = 0.9
-      }
-      
-      material.color = new THREE.Color(color)
-      material.opacity = opacity
-      material.needsUpdate = true
-    })
-  }, [selectedCountry, hoveredCountry, currentView])
-  
-  // Mouse interaction
-  useEffect(() => {
-    const handlePointerMove = (event: PointerEvent) => {
-      const rect = gl.domElement.getBoundingClientRect()
-      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
-      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
-      
-      raycaster.setFromCamera(pointer, camera)
-      const intersects = raycaster.intersectObjects(
-        Array.from(countryMeshesRef.current.values())
-      )
-      
-      if (intersects.length > 0) {
-        const name = intersects[0].object.userData.name
-        onCountryHover?.(name)
-        gl.domElement.style.cursor = 'pointer'
-      } else {
-        onCountryHover?.(null)
-        gl.domElement.style.cursor = 'auto'
-      }
-    }
-    
-    const handleClick = () => {
-      raycaster.setFromCamera(pointer, camera)
-      const intersects = raycaster.intersectObjects(
-        Array.from(countryMeshesRef.current.values())
-      )
-      
-      if (intersects.length > 0) {
-        const name = intersects[0].object.userData.name
-        onCountryClick?.(name)
-      }
-    }
-    
-    gl.domElement.addEventListener('pointermove', handlePointerMove)
-    gl.domElement.addEventListener('click', handleClick)
-    
-    return () => {
-      gl.domElement.removeEventListener('pointermove', handlePointerMove)
-      gl.domElement.removeEventListener('click', handleClick)
-    }
-  }, [camera, gl, raycaster, pointer, onCountryClick, onCountryHover])
-  
-  // Animation
-  useFrame((state, delta) => {
-    if (globeRef.current && autoRotateSpeed) {
-      globeRef.current.rotation.y += autoRotateSpeed * delta * 0.1
-    }
-    if (cloudsRef.current) {
-      cloudsRef.current.rotation.y += autoRotateSpeed * delta * 0.12
-    }
-  })
-  
-  // Imperative handle for parent control
-  useImperativeHandle(ref, () => ({
-    pointOfView: (coords: { lat?: number; lng?: number; altitude?: number }, duration = 1000) => {
-      // Implementation for camera movement
-    }
-  }))
-  
-  return (
-    <group ref={globeRef}>
-      {/* Earth sphere */}
-      <mesh>
-        <sphereGeometry args={[GLOBE_RADIUS, 64, 64]} />
-        <meshPhongMaterial
-          map={textures.earth}
-          bumpMap={textures.bump}
-          bumpScale={0.5}
-          specularMap={textures.bump}
-          specular={new THREE.Color(0x333333)}
-          shininess={5}
-        />
-      </mesh>
-      
-      {/* Country polygons */}
-      {Array.from(countryMeshesRef.current.values()).map((mesh, index) => (
-        <primitive key={index} object={mesh} />
-      ))}
-      
-      {/* Atmosphere */}
-      <mesh scale={[1.15, 1.15, 1.15]}>
-        <sphereGeometry args={[GLOBE_RADIUS, 64, 64]} />
-        <meshBasicMaterial
-          color={atmosphereColor}
-          transparent
-          opacity={0.1}
-          side={THREE.BackSide}
-        />
-      </mesh>
-      
-      {/* Clouds */}
-      <mesh ref={cloudsRef} scale={[1.02, 1.02, 1.02]}>
-        <sphereGeometry args={[GLOBE_RADIUS, 64, 64]} />
-        <meshBasicMaterial
-          map={textures.clouds}
-          transparent
-          opacity={0.3}
-          depthWrite={false}
-        />
-      </mesh>
-      
-      {/* Airport/Restaurant markers */}
-      {currentView === 'airports' && airports.map((airport, i) => (
-        <mesh
-          key={i}
-          position={latLngToVector3(airport.location.lat, airport.location.lng, GLOBE_RADIUS, 1)}
-          onClick={() => onAirportClick?.(airport)}
-        >
-          <sphereGeometry args={[0.5, 16, 16]} />
-          <meshBasicMaterial color="#00ffff" />
-        </mesh>
-      ))}
-      
-      {currentView === 'michelinRestaurants' && restaurants.map((restaurant, i) => (
-        <mesh
-          key={i}
-          position={latLngToVector3(restaurant.location.lat, restaurant.location.lng, GLOBE_RADIUS, 1)}
-          onClick={() => onRestaurantClick?.(restaurant)}
-        >
-          <sphereGeometry args={[0.5, 16, 16]} />
-          <meshBasicMaterial color={
-            restaurant.rating === 3 ? '#FFD700' :
-            restaurant.rating === 2 ? '#C0C0C0' :
-            restaurant.rating === 1 ? '#CD7F32' : '#4CAF50'
-          } />
-        </mesh>
-      ))}
-      
-      {/* Lighting */}
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[100, 50, 100]} intensity={0.8} />
-      <directionalLight position={[-100, -50, -100]} intensity={0.3} />
-    </group>
-  )
-})
-
-GlobeScene.displayName = 'GlobeScene'
-
-// Main TravelGlobe Client Component
-export function TravelGlobeClient(props: any) {
+  airports = [],
+  flightRoutes = [],
+  countryPolygons = [],
+  globeSettings = {},
+  glassEffect = { enabled: true, variant: 'panel' },
+  fluidOverlay = { enabled: false },
+}: TravelGlobeClientProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const globeRef = useRef<any>(null)
-  
-  const [currentView, setCurrentView] = useState(props.initialView || 'travelAdvisory')
-  const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
-  const [hoveredCountry, setHoveredCountry] = useState<string | null>(null)
+  const viewRef = useRef<HTMLDivElement>(null)
+  const [currentView, setCurrentView] = useState(initialView)
+  const [selectedItem, setSelectedItem] = useState<any>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [showDetails, setShowDetails] = useState(false)
+  const [hoveredCountry, setHoveredCountry] = useState<any>(null)
   
-  // Tab configuration
-  const tabConfig = {
-    travelAdvisory: { label: 'Travel Advisories', icon: '⚠️' },
-    visaRequirements: { label: 'Visa Requirements', icon: '📑' },
-    michelinRestaurants: { label: 'Michelin Restaurants', icon: '🍽️' },
-    airports: { label: 'Airports', icon: '✈️' },
-  }
+  // Filter enabled tabs
+  const availableTabs = useMemo(() => {
+    return Object.entries(tabConfig)
+      .filter(([key]) => enabledViews.includes(key as any))
+      .map(([key, config]) => ({ key, ...config }))
+  }, [enabledViews])
   
-  // Tab indicator offset
+  // Calculate tab indicator position
   const tabIndicatorOffset = useMemo(() => {
-    const index = props.enabledViews.indexOf(currentView)
-    return `${index * 182}px`
-  }, [currentView, props.enabledViews])
+    const index = availableTabs.findIndex(tab => tab.key === currentView)
+    const tabWidth = 100 / availableTabs.length
+    return `${index * tabWidth}%`
+  }, [currentView, availableTabs])
   
   // GSAP animations
   useGSAP(() => {
     if (!containerRef.current) return
+    
+    // Animate in the container
     gsap.fromTo(
       containerRef.current,
       { opacity: 0, y: 50 },
-      { opacity: 1, y: 0, duration: 1, ease: 'power2.out' }
+      { 
+        opacity: 1, 
+        y: 0, 
+        duration: 1.2,
+        ease: 'power3.out',
+        delay: 0.3
+      }
+    )
+    
+    // Animate tabs
+    gsap.fromTo(
+      '.tdg-tab',
+      { opacity: 0, y: -20 },
+      { 
+        opacity: 1, 
+        y: 0, 
+        duration: 0.8,
+        stagger: 0.1,
+        ease: 'power2.out',
+        delay: 0.6
+      }
     )
   }, [])
   
-  // WebGL content for shared canvas
-  const webglContent = (
-    <>
-      <PerspectiveCamera makeDefault position={[0, 0, 400]} />
-      <OrbitControls
-        enableZoom={true}
-        minDistance={200}
-        maxDistance={800}
-        autoRotate={!selectedCountry}
-        autoRotateSpeed={props.autoRotateSpeed || 0.5}
-      />
-      <GlobeScene
-        ref={globeRef}
-        polygons={props.advisoryPolygons || props.visaPolygons || []}
-        borders={props.borders}
-        airports={props.airports || []}
-        restaurants={props.michelinRestaurants || []}
-        currentView={currentView}
-        selectedCountry={selectedCountry}
-        hoveredCountry={hoveredCountry}
-        onCountryClick={setSelectedCountry}
-        onCountryHover={setHoveredCountry}
-        onAirportClick={(airport) => {
-          console.log('Airport clicked:', airport)
-          setShowDetails(true)
-        }}
-        onRestaurantClick={(restaurant) => {
-          console.log('Restaurant clicked:', restaurant)
-          setShowDetails(true)
-        }}
-        autoRotateSpeed={props.autoRotateSpeed}
-        atmosphereColor={props.atmosphereColor}
-      />
-    </>
-  )
+  // Prepare data based on current view
+  const { polygonData, pointData, arcData } = useMemo(() => {
+    let polygons: any[] = []
+    let points: any[] = []
+    let arcs: any[] = []
+    
+    switch (currentView) {
+      case 'travelAdvisory':
+        // Color countries by advisory level
+        polygons = countryPolygons.map(feature => {
+          const advisory = advisories.find(a => a.countryCode === feature.properties?.ISO_A2)
+          const level = advisory?.level as (1 | 2 | 3 | 4) | undefined
+          return {
+            feature,
+            color: level ? ADVISORY_COLORS[level] : '#333333',
+            altitude: advisory && hoveredCountry?.properties?.ISO_A2 === feature.properties?.ISO_A2 ? 0.02 : 0.01,
+            opacity: advisory ? 0.7 : 0.2,
+            data: { ...feature.properties, advisory }
+          }
+        })
+        break
+        
+      case 'visaRequirements':
+        // Color countries by visa requirements
+        polygons = countryPolygons.map(feature => {
+          const visa = visaData.find(v => v.countryCode === feature.properties?.ISO_A2)
+          const requirement = visa?.requirement as string | undefined
+          return {
+            feature,
+            color: requirement && requirement in VISA_COLORS ? VISA_COLORS[requirement] : '#333333',
+            altitude: visa && hoveredCountry?.properties?.ISO_A2 === feature.properties?.ISO_A2 ? 0.02 : 0.01,
+            opacity: visa ? 0.7 : 0.2,
+            data: { ...feature.properties, visa }
+          }
+        })
+        break
+        
+      case 'michelinRestaurants':
+        // Show restaurants as points
+        points = restaurants.map(restaurant => ({
+          lat: restaurant.latitude,
+          lng: restaurant.longitude,
+          color: restaurant.stars === 3 ? '#ffd700' : // Gold for 3 stars
+                 restaurant.stars === 2 ? '#c0c0c0' : // Silver for 2 stars
+                 '#cd7f32', // Bronze for 1 star
+          size: 0.5 + (restaurant.stars * 0.3),
+          altitude: 0.01,
+          data: restaurant
+        }))
+        
+        // Subtle country outlines
+        polygons = countryPolygons.map(feature => ({
+          feature,
+          color: '#333333',
+          altitude: 0.005,
+          opacity: 0.1,
+          data: feature.properties
+        }))
+        break
+        
+      case 'airports':
+        // Show airports as points
+        points = airports.map(airport => ({
+          lat: airport.latitude,
+          lng: airport.longitude,
+          color: airport.type === 'international' ? '#00bcd4' : '#81c784',
+          size: airport.type === 'international' ? 1.0 : 0.6,
+          altitude: 0.01,
+          data: airport
+        }))
+        
+        // Show flight routes as arcs
+        arcs = flightRoutes.map(route => {
+          const fromAirport = airports.find(a => a.code === route.from)
+          const toAirport = airports.find(a => a.code === route.to)
+          
+          if (!fromAirport || !toAirport) return null
+          
+          return {
+            startLat: fromAirport.latitude,
+            startLng: fromAirport.longitude,
+            endLat: toAirport.latitude,
+            endLng: toAirport.longitude,
+            color: route.type === 'direct' ? '#ffeb3b' : '#ff9800',
+            altitude: 0.1,
+            strokeWidth: route.frequency ? Math.min(route.frequency / 10, 3) : 1,
+            data: route
+          }
+        }).filter(Boolean)
+        
+        // Subtle country outlines
+        polygons = countryPolygons.map(feature => ({
+          feature,
+          color: '#333333',
+          altitude: 0.005,
+          opacity: 0.1,
+          data: feature.properties
+        }))
+        break
+    }
+    
+    return { 
+      polygonData: polygons, 
+      pointData: points, 
+      arcData: arcs 
+    }
+  }, [currentView, advisories, visaData, restaurants, airports, flightRoutes, countryPolygons, hoveredCountry])
+  
+  // Search filter
+  const filteredData = useMemo(() => {
+    if (!searchQuery) return { polygonData, pointData, arcData }
+    
+    const query = searchQuery.toLowerCase()
+    
+    return {
+      polygonData: polygonData.filter(p => 
+        p.data?.name?.toLowerCase().includes(query) ||
+        p.data?.ISO_A2?.toLowerCase().includes(query)
+      ),
+      pointData: pointData.filter(p => 
+        p.data?.name?.toLowerCase().includes(query) ||
+        p.data?.city?.toLowerCase().includes(query) ||
+        p.data?.country?.toLowerCase().includes(query)
+      ),
+      arcData: arcData.filter(a => 
+        a.data?.from?.toLowerCase().includes(query) ||
+        a.data?.to?.toLowerCase().includes(query)
+      )
+    }
+  }, [searchQuery, polygonData, pointData, arcData])
   
   return (
-    <BlockWrapper
-      className="travel-globe-block"
-      glassEffect={props.glassEffect}
-      fluidOverlay={props.fluidOverlay}
-      webglContent={webglContent}
-    >
-      <div className="tdg-container" ref={containerRef}>
-        {/* Vertical Marquee */}
-        <div className="tdg-vertical-marquee">
-          <VerticalMarquee
-            text="Sweet Serenity Getaways • Travel Tools"
-            animationSpeed={0.5}
-            position="left"
+    <div ref={containerRef} className="travel-globe-container">
+      {/* Header with tabs */}
+      <div className="tdg-header">
+        <div className="tdg-tabs">
+          {availableTabs.map(tab => (
+            <button
+              key={tab.key}
+              className={`tdg-tab ${currentView === tab.key ? 'active' : ''}`}
+              onClick={() => setCurrentView(tab.key as any)}
+            >
+              <span className="tdg-tab-icon">{tab.icon}</span>
+              <span className="tdg-tab-label">{tab.label}</span>
+            </button>
+          ))}
+          <div 
+            className="tdg-tab-indicator"
+            style={{ 
+              transform: `translateX(${tabIndicatorOffset})`,
+              width: `${100 / availableTabs.length}%`
+            }}
           />
         </div>
         
-        {/* Glass Tab Bar */}
-        <div className="tdg-tabs-wrapper">
-          <div
-            className="tdg-tabs-container"
-            style={{
-              '--tab-indicator-offset': tabIndicatorOffset,
-              '--tab-indicator-color': props.tabIndicatorColor,
-            } as React.CSSProperties}
-          >
-            {props.enabledViews.map((view: string) => (
-              <button
-                key={view}
-                className={`tdg-tab ${currentView === view ? 'tdg-tab--active' : ''}`}
-                onClick={() => setCurrentView(view)}
-              >
-                <span className="tdg-tab-icon">
-                  {tabConfig[view as keyof typeof tabConfig].icon}
-                </span>
-                <span className="tdg-tab-label">
-                  {tabConfig[view as keyof typeof tabConfig].label}
-                </span>
-              </button>
-            ))}
-          </div>
+        {/* Search bar */}
+        <div className="tdg-search">
+          <input
+            type="text"
+            placeholder="Search countries, cities, airports..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="tdg-search-input"
+          />
+          <button className="tdg-search-button">🔍</button>
         </div>
+      </div>
+      
+      {/* Main content area */}
+      <div className="tdg-content">
+        {/* Globe viewer */}
+        <BlockWrapper
+          glassEffect={{ enabled: glassEffect?.enabled ?? false, variant: glassEffect?.variant }}
+          fluidOverlay={{ enabled: fluidOverlay?.enabled ?? false, intensity: fluidOverlay?.intensity }}
+          className="tdg-globe-wrapper"
+        >
+          <TravelDataGlobe
+            polygonsData={filteredData.polygonData}
+            polygonAltitude={(d: any) => d.altitude || 0.01}
+            polygonCapColor={(d: any) => d.color}
+            polygonOpacity={0.6}
+            onPolygonClick={(polygon: any) => {
+              setSelectedItem(polygon.data)
+              setShowDetails(true)
+            }}
+            onPolygonHover={(polygon: any) => {
+              setHoveredCountry(polygon?.feature || null)
+            }}
+            
+            pointsData={filteredData.pointData}
+            pointAltitude={(d: any) => d.altitude || 0.01}
+            pointColor={(d: any) => d.color}
+            pointRadius={(d: any) => d.size || 0.5}
+            onPointClick={(point: any) => {
+              setSelectedItem(point.data)
+              setShowDetails(true)
+            }}
+            
+            arcsData={filteredData.arcData}
+            arcColor={(d: any) => d.color}
+            arcAltitude={(d: any) => d.altitude || 0.15}
+            arcStroke={(d: any) => d.strokeWidth || 1}
+            
+            globeImageUrl={globeSettings.imageUrl || '/earth-blue-marble.jpg'}
+            bumpImageUrl={globeSettings.bumpUrl || '/earth-bump.jpg'}
+            showAtmosphere={globeSettings.showAtmosphere !== false}
+            atmosphereColor="#3a7ca5"
+            atmosphereAltitude={0.15}
+            
+            autoRotateSpeed={globeSettings.rotationSpeed || 0.5}
+            enableZoom={true}
+            enableRotate={true}
+            enablePan={false}
+            
+            radius={100}
+          />
+        </BlockWrapper>
         
-        {/* Side Panel */}
-        <aside className="tdg-info-panels">
-          <div className="tdg-info-panel-glass">
-            <div className="tdg-info-panel">
-              <h3 className="tdg-panel-heading">
-                {currentView === 'travelAdvisory' && '🌍 U.S. Travel Advisories'}
-                {currentView === 'visaRequirements' && '📑 Select Passport Country'}
-                {currentView === 'michelinRestaurants' && '🍽️ Michelin Star Restaurants'}
-                {currentView === 'airports' && '✈️ International Airports'}
+        {/* Side panel with details */}
+        <div className={`tdg-sidebar ${showDetails ? 'active' : ''}`}>
+          {selectedItem && (
+            <div className="tdg-details">
+              <button 
+                className="tdg-details-close"
+                onClick={() => {
+                  setShowDetails(false)
+                  setSelectedItem(null)
+                }}
+              >
+                ✕
+              </button>
+              
+              <h3 className="tdg-details-title">
+                {selectedItem.name || selectedItem.NAME || selectedItem.city || 'Details'}
               </h3>
               
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="tdg-search-input"
-              />
-              
-              <div className="tdg-list-content">
-                {selectedCountry && (
-                  <div className="tdg-selected-info">
-                    <h4>{selectedCountry}</h4>
-                    <p>Click for more details...</p>
+              {currentView === 'travelAdvisory' && selectedItem.advisory && (
+                <div className="tdg-advisory-info">
+                  <div className={`tdg-advisory-level level-${selectedItem.advisory.level}`}>
+                    Level {selectedItem.advisory.level}
                   </div>
-                )}
-                <p className="tdg-placeholder">
-                  Connect to data collections for live information
-                </p>
-              </div>
+                  <p>{selectedItem.advisory.description}</p>
+                  <div className="tdg-advisory-updated">
+                    Updated: {new Date(selectedItem.advisory.updated).toLocaleDateString()}
+                  </div>
+                </div>
+              )}
+              
+              {currentView === 'visaRequirements' && selectedItem.visa && (
+                <div className="tdg-visa-info">
+                  <div className={`tdg-visa-type type-${selectedItem.visa.requirement}`}>
+                    {selectedItem.visa.requirement.replace(/_/g, ' ').toUpperCase()}
+                  </div>
+                  <p>{selectedItem.visa.details}</p>
+                  {selectedItem.visa.duration && (
+                    <div className="tdg-visa-duration">
+                      Duration: {selectedItem.visa.duration} days
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {currentView === 'michelinRestaurants' && selectedItem.stars && (
+                <div className="tdg-restaurant-info">
+                  <div className="tdg-restaurant-stars">
+                    {'⭐'.repeat(selectedItem.stars)}
+                  </div>
+                  <p className="tdg-restaurant-cuisine">{selectedItem.cuisine}</p>
+                  <p className="tdg-restaurant-address">{selectedItem.address}</p>
+                  {selectedItem.chef && (
+                    <p className="tdg-restaurant-chef">Chef: {selectedItem.chef}</p>
+                  )}
+                </div>
+              )}
+              
+              {currentView === 'airports' && selectedItem.code && (
+                <div className="tdg-airport-info">
+                  <div className="tdg-airport-code">{selectedItem.code}</div>
+                  <p className="tdg-airport-city">{selectedItem.city}, {selectedItem.country}</p>
+                  <p className="tdg-airport-type">
+                    {selectedItem.type === 'international' ? 'International Airport' : 'Domestic Airport'}
+                  </p>
+                  {selectedItem.terminals && (
+                    <p className="tdg-airport-terminals">Terminals: {selectedItem.terminals}</p>
+                  )}
+                </div>
+              )}
             </div>
-          </div>
-        </aside>
-        
-        {/* Globe Container */}
-        <div className="tdg-globe-pane">
-          {/* WebGL content renders through BlockWrapper's View */}
+          )}
+          
+          {/* Statistics marquee */}
+          {!showDetails && (
+            <div className="tdg-stats">
+              <VerticalMarquee 
+                text={`Countries: ${countryPolygons.length} • Data Points: ${pointData.length} • Connections: ${arcData.length}`}
+              />
+            </div>
+          )}
         </div>
-        
-        {/* Detail Overlay */}
-        {showDetails && (
-          <aside className="tdg-detail-overlay">
-            <div className="tdg-detail-glass">
-              <div className="tdg-detail-header">
-                <span className="tdg-detail-title">{selectedCountry || 'Details'}</span>
-                <button 
-                  className="tdg-detail-close"
-                  onClick={() => setShowDetails(false)}
-                >
-                  ×
-                </button>
-              </div>
-              <div className="tdg-detail-content">
-                <p>Travel information will appear here.</p>
-              </div>
-            </div>
-          </aside>
-        )}
       </div>
-    </BlockWrapper>
+      
+      {/* Footer info */}
+      <div className="tdg-footer">
+        <p className="tdg-description">
+          {tabConfig[currentView as keyof typeof tabConfig].description}
+        </p>
+      </div>
+    </div>
   )
 }
 

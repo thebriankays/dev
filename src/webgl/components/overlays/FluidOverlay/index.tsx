@@ -45,12 +45,14 @@ export function FluidOverlay({
     
     // Handle both fluid simulation and flowmap
     let texture: THREE.Texture | null = null
-    if ('uniform' in flowmapInstance && flowmapInstance.uniform) {
-      // FluidSimulation
-      texture = flowmapInstance.uniform.value
-    } else if ('texture' in flowmapInstance && flowmapInstance.texture) {
-      // FlowmapPass
-      texture = flowmapInstance.texture
+    if (flowmapInstance) {
+      if ('uniform' in flowmapInstance && flowmapInstance.uniform) {
+        // FluidSimulation
+        texture = flowmapInstance.uniform.value as THREE.Texture
+      } else if ('texture' in flowmapInstance && flowmapInstance.texture) {
+        // FlowmapPass
+        texture = flowmapInstance.texture as THREE.Texture
+      }
     }
     
     material.uniforms.uFlowmap.value = texture

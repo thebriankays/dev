@@ -126,12 +126,8 @@ export function FlowmapProvider({
   // Initialize flowmap or fluid based on type
   useEffect(() => {
     if (type === 'flowmap') {
-      flowmapRef.current = new FlowmapPass(gl, size.width, size.height, {
-        falloff: config.falloff,
-        alpha: config.alpha,
-        dissipation: config.dissipation,
-      })
-      setTexture(flowmapRef.current.texture)
+      flowmapRef.current = new FlowmapPass(gl, size.width, size.height)
+      setTexture(flowmapRef.current.getTexture())
     } else if (type === 'fluid') {
       fluidRef.current = new FluidSimulation(gl, {
         simRes: config.simRes,
@@ -156,7 +152,7 @@ export function FlowmapProvider({
   useFrame(({ clock }, delta) => {
     if (type === 'flowmap' && flowmapRef.current) {
       flowmapRef.current.update(delta, pointer.current)
-      setTexture(flowmapRef.current.texture)
+      setTexture(flowmapRef.current.getTexture())
     } else if (type === 'fluid' && fluidRef.current) {
       fluidRef.current.update(delta)
       setTexture(fluidRef.current.uniform.value)

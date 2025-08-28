@@ -8,7 +8,9 @@ import { ContentBlock } from '@/blocks/Content/Component'
 import { FormBlock } from '@/blocks/Form/Component'
 import { MediaBlock } from '@/blocks/MediaBlock/Component'
 import { WebGLCarouselBlock } from '@/blocks/WebGLCarousel/Component'
+import { WebGLTextBlock } from '@/blocks/WebGLText/Component'
 import { TravelGlobeComponent } from '@/blocks/TravelGlobe/Component'
+import { ThreeDCarouselBlock } from '@/blocks/ThreeDCarousel/Component'
 
 const blockComponents = {
   archive: ArchiveBlock,
@@ -17,7 +19,9 @@ const blockComponents = {
   formBlock: FormBlock,
   mediaBlock: MediaBlock,
   webglCarousel: WebGLCarouselBlock,
+  webGLText: WebGLTextBlock,
   travelGlobe: TravelGlobeComponent,
+  threeDCarousel: ThreeDCarouselBlock,
 }
 
 export const RenderBlocks: React.FC<{
@@ -39,7 +43,6 @@ export const RenderBlocks: React.FC<{
             if (Block) {
               return (
                 <div className="my-16" key={index}>
-                  {/* @ts-expect-error there may be some mismatch between the expected types here */}
                   <Block {...block} disableInnerContainer />
                 </div>
               )

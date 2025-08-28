@@ -81,8 +81,8 @@ class DoubleFBO {
     internalFormat: number,
     format: number,
     type: number,
-    minFilter: number,
-    magFilter: number
+    minFilter: THREE.MinificationTextureFilter,
+    magFilter: THREE.MagnificationTextureFilter
   ) {
     this.read = new FrameBufferObject(renderer, width, height, internalFormat, format, type, minFilter, magFilter)
     this.write = new FrameBufferObject(renderer, width, height, internalFormat, format, type, minFilter, magFilter)

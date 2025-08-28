@@ -16,7 +16,7 @@ import { ReflectionPlane } from './ReflectionPlane'
 import type { ThreeDCarouselProps, CarouselLayout } from './types'
 import './carousel.scss'
 
-export function ThreeDCarousel({
+export function ThreeDCarouselComponent({
   destinations,
   layout = 'circular',
   autoRotate = true,
@@ -229,6 +229,9 @@ export function ThreeDCarousel({
     </div>
   )
 }
+
+// Export as ThreeDCarousel for consistency
+export const ThreeDCarousel = ThreeDCarouselComponent
 
 // Separate Scene component for WebGL content
 interface SceneProps {

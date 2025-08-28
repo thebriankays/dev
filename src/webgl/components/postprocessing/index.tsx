@@ -1,5 +1,5 @@
 export { PostProcessing } from './PostProcessing'
-export { Preload } from './preload'
+export { Preload } from '../preload'
 
 // Export individual effects for custom usage
 export { Bloom } from './effects/Bloom'

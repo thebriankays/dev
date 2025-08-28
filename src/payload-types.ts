@@ -199,6 +199,7 @@ export interface Page {
     | FormBlock
     | WebGLTextBlock
     | TravelGlobeBlock
+    | ThreeDCarouselBlock
   )[];
   meta?: {
     title?: string | null;
@@ -892,6 +893,58 @@ export interface TravelGlobeBlock {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ThreeDCarouselBlock".
+ */
+export interface ThreeDCarouselBlock {
+  items?:
+    | {
+        image: number | Media;
+        title: string;
+        subtitle?: string | null;
+        description?: string | null;
+        link?: string | null;
+        metadata?: {
+          rating?: number | null;
+          price?: string | null;
+          location?: string | null;
+          date?: string | null;
+        };
+        id?: string | null;
+      }[]
+    | null;
+  layout?: ('circular' | 'helix' | 'wave' | 'cylinder') | null;
+  autoRotate?: boolean | null;
+  rotationSpeed?: number | null;
+  enableReflections?: boolean | null;
+  enableParticles?: boolean | null;
+  enableDepthFade?: boolean | null;
+  radius?: number | null;
+  spacing?: number | null;
+  itemsVisible?: number | null;
+  showControls?: boolean | null;
+  showIndicators?: boolean | null;
+  glassEffect?: {
+    enabled?: boolean | null;
+    variant?: ('card' | 'panel' | 'subtle' | 'frost' | 'liquid') | null;
+    intensity?: number | null;
+  };
+  fluidOverlay?: {
+    enabled?: boolean | null;
+    intensity?: number | null;
+    color?: string | null;
+  };
+  webglEffects?: {
+    distortion?: number | null;
+    parallax?: number | null;
+    hover?: boolean | null;
+    transition?: ('fade' | 'slide' | 'morph') | null;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'threeDCarousel';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -1183,6 +1236,7 @@ export interface PagesSelect<T extends boolean = true> {
         formBlock?: T | FormBlockSelect<T>;
         webGLText?: T | WebGLTextBlockSelect<T>;
         travelGlobe?: T | TravelGlobeBlockSelect<T>;
+        threeDCarousel?: T | ThreeDCarouselBlockSelect<T>;
       };
   meta?:
     | T
@@ -1410,6 +1464,65 @@ export interface TravelGlobeBlockSelect<T extends boolean = true> {
         specularTexture?: T;
         cloudTexture?: T;
       };
+  glassEffect?:
+    | T
+    | {
+        enabled?: T;
+        variant?: T;
+        intensity?: T;
+      };
+  fluidOverlay?:
+    | T
+    | {
+        enabled?: T;
+        intensity?: T;
+        color?: T;
+      };
+  webglEffects?:
+    | T
+    | {
+        distortion?: T;
+        parallax?: T;
+        hover?: T;
+        transition?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ThreeDCarouselBlock_select".
+ */
+export interface ThreeDCarouselBlockSelect<T extends boolean = true> {
+  items?:
+    | T
+    | {
+        image?: T;
+        title?: T;
+        subtitle?: T;
+        description?: T;
+        link?: T;
+        metadata?:
+          | T
+          | {
+              rating?: T;
+              price?: T;
+              location?: T;
+              date?: T;
+            };
+        id?: T;
+      };
+  layout?: T;
+  autoRotate?: T;
+  rotationSpeed?: T;
+  enableReflections?: T;
+  enableParticles?: T;
+  enableDepthFade?: T;
+  radius?: T;
+  spacing?: T;
+  itemsVisible?: T;
+  showControls?: T;
+  showIndicators?: T;
   glassEffect?:
     | T
     | {

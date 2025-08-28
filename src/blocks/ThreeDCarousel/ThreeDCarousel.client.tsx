@@ -2,7 +2,7 @@
 
 import React from 'react'
 import type { ThreeDCarouselBlock } from '@/payload-types'
-import { ThreeDCarouselComponent } from '@/webgl/components/carousels/ThreeDCarousel'
+import { ThreeDCarousel } from '@/webgl/components/carousels/ThreeDCarousel'
 import { BlockWrapper } from '@/blocks/_shared/BlockWrapper'
 import './threed-carousel.scss'
 
@@ -43,28 +43,43 @@ export function ThreeDCarouselClient({
     )
   }
 
+  // Filter out null values from blockProps
+  const filteredBlockProps = Object.entries(blockProps).reduce((acc, [key, value]) => {
+    if (value !== null) {
+      acc[key] = value
+    }
+    return acc
+  }, {} as Record<string, any>)
+
   return (
     <BlockWrapper
-      glassEffect={glassEffect}
-      fluidOverlay={fluidOverlay}
+      glassEffect={glassEffect ? {
+        enabled: glassEffect.enabled || false,
+        variant: glassEffect.variant || undefined,
+        intensity: glassEffect.intensity || undefined,
+      } : undefined}
+      fluidOverlay={fluidOverlay ? {
+        enabled: fluidOverlay.enabled || false,
+        intensity: fluidOverlay.intensity || undefined,
+        color: fluidOverlay.color || undefined,
+      } : undefined}
       webglContent={
-        <ThreeDCarouselComponent
-          items={carouselItems}
-          layout={layout}
-          autoRotate={autoRotate}
-          rotationSpeed={rotationSpeed}
-          enableReflections={enableReflections}
-          enableParticles={enableParticles}
-          enableDepthFade={enableDepthFade}
-          radius={radius}
-          spacing={spacing}
-          itemsVisible={itemsVisible}
-          showControls={showControls}
-          showIndicators={showIndicators}
-          webglEffects={webglEffects}
+        <ThreeDCarousel
+          destinations={carouselItems.map(item => ({
+            ...item,
+            location: item.metadata?.location || item.title || '', // Add required location field
+          }))}
+          layout={layout || 'circular'}
+          autoRotate={autoRotate || false}
+          rotationSpeed={rotationSpeed || 1}
+          enableReflections={enableReflections || true}
+          enableParticles={enableParticles || false}
+          enableDepthFade={enableDepthFade || true}
+          radius={radius || 3}
+          spacing={spacing || 1}
         />
       }
-      {...blockProps}
+      {...filteredBlockProps}
     >
       <div className="threed-carousel threed-carousel--dom">
         {/* DOM fallback - simple grid */}
