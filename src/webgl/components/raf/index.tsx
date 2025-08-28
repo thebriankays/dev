@@ -9,11 +9,14 @@ interface RAFProps {
 
 export function RAF({ render = true }: RAFProps) {
   const advance = useThree((state) => state.advance)
+  const invalidate = useThree((state) => state.invalidate)
 
   useTempus(
     (time: number) => {
       if (render) {
         advance(time / 1000)
+        // Invalidate to trigger a new render frame
+        invalidate()
       }
     },
     {

@@ -6,6 +6,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
 import { Hamo } from '@/webgl/libs/hamo'
 import { Tempus } from '@/webgl/libs/tempus'
+import { useCanvas } from '@/providers/Canvas'
 
 // Register GSAP plugins
 gsap.registerPlugin(ScrollTrigger)
@@ -31,6 +32,7 @@ interface AnimationContextValue {
   tempus: Tempus | null
   scroll: number
   velocity: number
+  requestRender: () => void
 }
 
 const AnimationContext = createContext<AnimationContextValue | null>(null)
@@ -45,15 +47,16 @@ export const useAnimation = () => {
 
 // Custom hook for GSAP animations with automatic cleanup
 export const useGSAP = (
-  callback: (context: gsap.Context) => void,
+  callback: (context: gsap.Context, requestRender: () => void) => void,
   deps: React.DependencyList = []
 ) => {
   const animation = useAnimation()
   const contextRef = useRef<gsap.Context | null>(null)
-
+  const canvasContext = useContext(AnimationContext)
+  
   useLayoutEffect(() => {
     contextRef.current = gsap.context(() => {
-      callback(contextRef.current!)
+      callback(contextRef.current!, canvasContext?.requestRender || (() => {}))
     })
 
     return () => {
@@ -71,6 +74,7 @@ export function AnimationProvider({ children }: { children: ReactNode }) {
   const scrollRef = useRef(0)
   const velocityRef = useRef(0)
   const [, forceUpdate] = React.useReducer(x => x + 1, 0)
+  const { requestRender } = useCanvas()
 
   useEffect(() => {
     // Initialize Lenis smooth scroll
@@ -96,6 +100,8 @@ export function AnimationProvider({ children }: { children: ReactNode }) {
       scrollRef.current = e.animatedScroll
       velocityRef.current = e.velocity
       ScrollTrigger.update()
+      // Request render on scroll for WebGL animations tied to scroll
+      requestRender()
     })
 
     // Update ScrollTrigger on Lenis scroll
@@ -157,6 +163,7 @@ export function AnimationProvider({ children }: { children: ReactNode }) {
     tempus: tempusRef.current,
     scroll: scrollRef.current,
     velocity: velocityRef.current,
+    requestRender,
   }
 
   return (

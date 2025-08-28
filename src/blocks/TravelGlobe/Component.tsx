@@ -1,19 +1,8 @@
 import React from 'react'
-import dynamic from 'next/dynamic'
 import type { TravelGlobeBlockProps, TravelAdvisory, VisaRequirement, MichelinRestaurant, AirportData, FlightRoute, CountryFeature } from './types'
 import { getPayloadHMR } from '@payloadcms/next/utilities'
 import config from '@/payload.config'
-
-// Dynamic import to avoid SSR issues
-const TravelGlobeClient = dynamic(() => import('./TravelGlobe.client'), {
-  ssr: false,
-  loading: () => (
-    <div className="travel-globe-loading">
-      <div className="travel-globe-spinner" />
-      <p>Loading globe...</p>
-    </div>
-  ),
-})
+import TravelGlobeWrapper from './TravelGlobeWrapper'
 
 // Fetch data from Payload collections
 async function fetchCollectionData() {
@@ -113,7 +102,7 @@ async function fetchCollectionData() {
 // Load country GeoJSON data
 async function loadCountryPolygons(): Promise<CountryFeature[]> {
   try {
-    const response = await fetch('/datamaps.world.json')
+    const response = await fetch('/data/maps.world.json')
     const data = await response.json()
     
     if (data.features && Array.isArray(data.features)) {
@@ -147,7 +136,7 @@ export const TravelGlobeComponent: React.FC<TravelGlobeBlockProps> = async (prop
   ])
   
   return (
-    <TravelGlobeClient
+    <TravelGlobeWrapper
       enabledViews={props.enabledViews || ['travelAdvisory', 'visaRequirements', 'michelinRestaurants', 'airports']}
       initialView={props.initialView || 'travelAdvisory'}
       

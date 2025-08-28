@@ -84,6 +84,7 @@ export interface Config {
     'travel-advisories': TravelAdvisory;
     'visa-requirements': VisaRequirement;
     'michelin-restaurants': MichelinRestaurant;
+    'map-data-cache': MapDataCache;
     destinations: Destination;
     redirects: Redirect;
     forms: Form;
@@ -123,6 +124,7 @@ export interface Config {
     'travel-advisories': TravelAdvisoriesSelect<false> | TravelAdvisoriesSelect<true>;
     'visa-requirements': VisaRequirementsSelect<false> | VisaRequirementsSelect<true>;
     'michelin-restaurants': MichelinRestaurantsSelect<false> | MichelinRestaurantsSelect<true>;
+    'map-data-cache': MapDataCacheSelect<false> | MapDataCacheSelect<true>;
     destinations: DestinationsSelect<false> | DestinationsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -1629,6 +1631,59 @@ export interface MichelinRestaurant {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "map-data-cache".
+ */
+export interface MapDataCache {
+  id: number;
+  /**
+   * ID of the destination this cache belongs to
+   */
+  destinationId: string;
+  /**
+   * Unique cache key for this data
+   */
+  cacheKey: string;
+  dataType: 'cesium-tiles' | 'places-nearby' | 'place-details';
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
+  searchParams?: {
+    radius?: number | null;
+    /**
+     * Array of place types that were searched
+     */
+    types?:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
+  };
+  /**
+   * The cached response data
+   */
+  data:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * When this cache entry expires
+   */
+  expiresAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -1867,6 +1922,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'michelin-restaurants';
         value: number | MichelinRestaurant;
+      } | null)
+    | ({
+        relationTo: 'map-data-cache';
+        value: number | MapDataCache;
       } | null)
     | ({
         relationTo: 'destinations';
@@ -2672,6 +2731,31 @@ export interface MichelinRestaurantsSelect<T extends boolean = true> {
   greenStar?: T;
   description?: T;
   isActive?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "map-data-cache_select".
+ */
+export interface MapDataCacheSelect<T extends boolean = true> {
+  destinationId?: T;
+  cacheKey?: T;
+  dataType?: T;
+  coordinates?:
+    | T
+    | {
+        lat?: T;
+        lng?: T;
+      };
+  searchParams?:
+    | T
+    | {
+        radius?: T;
+        types?: T;
+      };
+  data?: T;
+  expiresAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }

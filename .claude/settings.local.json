@@ -18,7 +18,8 @@
       "Bash(pnpm payload generate:types:*)",
       "Bash(npx payload generate:types:*)",
       "Bash(yarn add:*)",
-      "Bash(npm run generate:types:*)"
+      "Bash(npm run generate:types:*)",
+      "Bash(npm run generate:importmap:*)"
     ],
     "deny": []
   }

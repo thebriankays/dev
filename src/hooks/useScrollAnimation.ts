@@ -32,7 +32,7 @@ export function useScrollAnimation(options: ScrollAnimationOptions) {
   const defaultRef = useRef<HTMLElement | null>(null)
   const elementRef = options.trigger || defaultRef
 
-  useGSAP((context) => {
+  useGSAP((context, requestRender) => {
     if (!elementRef.current || !context) return
 
     const element = elementRef.current
@@ -138,11 +138,29 @@ export function useScrollAnimation(options: ScrollAnimationOptions) {
       pinSpacing: options.pinSpacing,
       markers: options.markers,
       toggleActions: options.toggleActions || (options.scrub ? undefined : 'play none none reverse'),
-      onEnter: options.onEnter,
-      onLeave: options.onLeave,
-      onEnterBack: options.onEnterBack,
-      onLeaveBack: options.onLeaveBack,
-      onToggle: options.onToggle,
+      onEnter: () => {
+        options.onEnter?.()
+        requestRender()
+      },
+      onLeave: () => {
+        options.onLeave?.()
+        requestRender()
+      },
+      onEnterBack: () => {
+        options.onEnterBack?.()
+        requestRender()
+      },
+      onLeaveBack: () => {
+        options.onLeaveBack?.()
+        requestRender()
+      },
+      onToggle: (self) => {
+        options.onToggle?.(self)
+        requestRender()
+      },
+      onUpdate: () => {
+        requestRender()
+      },
     })
 
     // If not using scrub and not parallax, pause the animation initially

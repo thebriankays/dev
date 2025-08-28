@@ -90,13 +90,22 @@ export default function GooglePlacesFieldExtended({
       
       // Load Extended Components only on client side
       if (!ExtendedComponentsLoaded && !componentsLoaded) {
+        // Load via script tags instead
+        const loadScript = (src: string) => {
+          return new Promise((resolve, reject) => {
+            const script = document.createElement('script')
+            script.src = src
+            script.type = 'module'
+            script.onload = resolve
+            script.onerror = reject
+            document.head.appendChild(script)
+          })
+        }
+        
         Promise.all([
-          // @ts-ignore
-          import('@googlemaps/extended-component-library/api_loader.js'),
-          // @ts-ignore
-          import('@googlemaps/extended-component-library/place_picker.js'),
-          // @ts-ignore
-          import('@googlemaps/extended-component-library/place_overview.js')
+          loadScript('https://unpkg.com/@googlemaps/extended-component-library@0.6.11/api_loader.js'),
+          loadScript('https://unpkg.com/@googlemaps/extended-component-library@0.6.11/place_picker.js'),
+          loadScript('https://unpkg.com/@googlemaps/extended-component-library@0.6.11/place_overview.js')
         ]).then(() => {
           ExtendedComponentsLoaded = true
           setComponentsLoaded(true)
@@ -110,6 +119,31 @@ export default function GooglePlacesFieldExtended({
     // Use our existing loader to ensure consistency
     loadGoogleMaps().then(() => {
       setIsApiLoaded(true)
+      
+      // Load Extended Components after API is ready
+      if (!ExtendedComponentsLoaded && !componentsLoaded) {
+        const loadScript = (src: string) => {
+          return new Promise((resolve, reject) => {
+            const script = document.createElement('script')
+            script.src = src
+            script.type = 'module'
+            script.onload = resolve
+            script.onerror = reject
+            document.head.appendChild(script)
+          })
+        }
+        
+        Promise.all([
+          loadScript('https://unpkg.com/@googlemaps/extended-component-library@0.6.11/api_loader.js'),
+          loadScript('https://unpkg.com/@googlemaps/extended-component-library@0.6.11/place_picker.js'),
+          loadScript('https://unpkg.com/@googlemaps/extended-component-library@0.6.11/place_overview.js')
+        ]).then(() => {
+          ExtendedComponentsLoaded = true
+          setComponentsLoaded(true)
+        }).catch(err => {
+          console.error('Failed to load Extended Components:', err)
+        })
+      }
     }).catch((err) => {
       console.error('Failed to load Google Maps:', err)
     })
