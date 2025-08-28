@@ -1,4 +1,5 @@
 import type { GlobalConfig } from 'payload'
+import { WhatameshAdminPreview } from '@/components/admin/WhatameshAdminPreview'
 
 export const SiteSettings: GlobalConfig = {
   slug: 'site-settings',
@@ -45,7 +46,7 @@ export const SiteSettings: GlobalConfig = {
           admin: {
             condition: (_, siblingData) => siblingData?.type === 'whatamesh',
             components: {
-              Field: '@/components/admin/WhatameshPreview',
+              Field: WhatameshAdminPreview as any,
             },
           },
           fields: [

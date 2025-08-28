@@ -31,7 +31,7 @@ export function Preload({ enabled = true }: PreloadProps) {
         })
         
         // Only compile if WebGL context is valid
-        if (gl && gl.getContext) {
+        if (gl && gl.getContext()) {
           await gl.compileAsync(scene, camera)
           
           // Skip cube camera update if there are shader compilation errors

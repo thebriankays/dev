@@ -182,6 +182,9 @@ importers:
       three:
         specifier: ^0.179.1
         version: 0.179.1
+      three-stdlib:
+        specifier: ^2.36.0
+        version: 2.36.0(three@0.179.1)
       timezones-list:
         specifier: ^3.1.0
         version: 3.1.0

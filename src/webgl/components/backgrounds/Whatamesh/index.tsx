@@ -50,8 +50,5 @@ export function WhatameshBackground(props: WhatameshBackgroundProps) {
 // Export the raw component for direct use
 export { Whatamesh }
 
-// Export admin preview component
-export { WhatameshPreview, whatameshField } from './WhatameshAdminPreview'
-
 // Export default
 export default WhatameshBackground
