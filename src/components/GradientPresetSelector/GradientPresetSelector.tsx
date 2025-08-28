@@ -59,7 +59,12 @@ const GradientPresetSelector: React.FC<GradientPresetSelectorProps> = ({ path })
   
   // Check if current colors match any preset
   useEffect(() => {
-    const currentColors = (colorsField.value || []).map(c => c.color?.toLowerCase() || '')
+    // Ensure colorsField.value is an array before trying to map
+    if (!Array.isArray(colorsField.value)) {
+      return
+    }
+    
+    const currentColors = colorsField.value.map(c => (c?.color || '').toLowerCase())
     
     if (currentColors.length === 4) {
       const matchingPresetIndex = presets.findIndex(preset =>

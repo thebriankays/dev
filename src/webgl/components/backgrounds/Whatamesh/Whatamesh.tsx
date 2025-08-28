@@ -14,6 +14,8 @@ interface WhatameshProps {
   seed?: number
   darkenTop?: boolean
   shadowPower?: number
+  animate?: boolean
+  intensity?: number
 }
 
 // Convert hex color to normalized RGB
@@ -27,17 +29,21 @@ function normalizeColor(hexCode: number): [number, number, number] {
 
 export function Whatamesh({
   amplitude = 320,
-  speed = 1,
+  speed = 0.5,
   freqX = 0.00014,
   freqY = 0.00029,
   seed = 5,
   darkenTop = false,
   shadowPower = 5,
+  animate = true,
+  intensity = 0.5,
 }: WhatameshProps) {
   const meshRef = useRef<THREE.Mesh>(null)
   const materialRef = useRef<THREE.ShaderMaterial>(null)
   const { size } = useThree()
   const startTime = useRef(Date.now())
+  
+  // console.log('Whatamesh component mounted', { amplitude, speed, freqX, freqY, seed })
   
   // Create uniforms with proper structure matching original Stripe gradient
   const uniforms = useMemo(() => {
@@ -68,7 +74,7 @@ export function Whatamesh({
           offsetTop: -0.5,
           offsetBottom: -0.5,
           noiseFreq: new THREE.Vector2(3, 4),
-          noiseAmp: amplitude,
+          noiseAmp: amplitude * intensity,
           noiseSpeed: 10,
           noiseFlow: 3,
           noiseSeed: seed,
@@ -112,7 +118,8 @@ export function Whatamesh({
   
   // Create shader material
   const material = useMemo(() => {
-    return new THREE.ShaderMaterial({
+    console.log('Creating Whatamesh material with uniforms:', uniforms)
+    const mat = new THREE.ShaderMaterial({
       vertexShader,
       fragmentShader,
       uniforms,
@@ -120,6 +127,9 @@ export function Whatamesh({
       depthWrite: false,
       side: THREE.DoubleSide,
     })
+    console.log('Vertex shader:', vertexShader.substring(0, 100) + '...')
+    console.log('Fragment shader:', fragmentShader.substring(0, 100) + '...')
+    return mat
   }, [uniforms])
   
   // Update material ref
@@ -170,8 +180,11 @@ export function Whatamesh({
         }
       }
       
+      console.log('Loaded CSS colors:', colors)
+      
       // Apply colors if all are loaded
       if (colors.every(c => c !== null)) {
+        console.log('Applying colors to uniforms')
         // Set base color (first color)
         if (colors[0]) {
           materialRef.current.uniforms.u_baseColor.value.fromArray(colors[0])
@@ -184,6 +197,7 @@ export function Whatamesh({
           }
         }
       } else {
+        console.log('CSS colors not ready, retrying...')
         // Use default colors if CSS vars not ready, retry after delay
         setTimeout(loadColors, 100)
       }
@@ -208,29 +222,33 @@ export function Whatamesh({
     
     // Update time exactly like the original
     const elapsed = Date.now() - startTime.current
-    const t = 1253106 + elapsed * speed
+    const t = animate ? 1253106 + elapsed * speed : 1253106
     
     materialRef.current.uniforms.u_time.value = t
   })
   
   // Calculate mesh scale to cover full viewport
   const meshScale = useMemo(() => {
-    // Use viewport dimensions directly
-    return [size.width, size.height, 1]
+    // Ensure we have valid dimensions
+    const width = size.width || 1920
+    const height = size.height || 1080
+    return [width, height, 1]
   }, [size])
   
   // Calculate segments based on density
   const segments = useMemo(() => {
     // Match original density settings [0.06, 0.16]
-    const xSegCount = Math.ceil(size.width * 0.06)
-    const ySegCount = Math.ceil(size.height * 0.16)
+    const width = size.width || 1920
+    const height = size.height || 1080
+    const xSegCount = Math.max(10, Math.ceil(width * 0.06))
+    const ySegCount = Math.max(10, Math.ceil(height * 0.16))
     return [xSegCount, ySegCount]
   }, [size])
   
   return (
     <mesh 
       ref={meshRef}
-      position={[0, 0, -100]} // Position behind all other content
+      position={[0, 0, -100]} // Position behind content but within camera range
       scale={[1, 1, 1]}
     >
       <planeGeometry args={[meshScale[0], meshScale[1], segments[0], segments[1]]} />

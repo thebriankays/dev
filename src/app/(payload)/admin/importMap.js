@@ -19,7 +19,7 @@ import { HorizontalRuleFeatureClient as HorizontalRuleFeatureClient_e70f5e05f09f
 import { BlocksFeatureClient as BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { CurrencyAdmin as CurrencyAdmin_160a60e658412107b5e4cd848a3b6808 } from '@/components/CurrencyAdmin'
 import { default as default_355ecf8c86a73b89c8a37a8793535e32 } from '@/components/admin/GeocodeLocationButton'
-import { ColorPickerComponent as ColorPickerComponent_1235412a97b9bf4aaff2f42ad23eff87 } from '@/fields/ColorPicker/ColorPicker'
+import { default as default_ab754fc32442c02c126925d0ed04cd07 } from '@/fields/ColorPicker/ColorPickerClient'
 import { default as default_d2ac97d4deb9ea8b162d975a40d12a2b } from '@/components/admin/SeedExperienceTypesButton'
 import { default as default_1b8c3be827333680fcc442db3a4297ef } from '@/components/admin/fields/StoryChapterField/GenerateChaptersButton'
 import { default as default_b75b9da359ef5cde49aaf148c8b237be } from '@/components/admin/fields/StoryChapterField/DestinationSelect'
@@ -33,9 +33,10 @@ import { LinkToDoc as LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloa
 import { ReindexButton as ReindexButton_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
 import { RowLabel as RowLabel_ec255a65fa6fa8d1faeb09cf35284224 } from '@/Header/RowLabel'
 import { RowLabel as RowLabel_1f6ff6ff633e3695d348f4f3c58f1466 } from '@/Footer/RowLabel'
-import { default as default_7cbb50822edd6e06ec9912bd173b1997 } from '@/components/admin/WhatameshPreview'
+import { default as default_ee43581a848f10b65bb3aa231f72e770 } from '@/components/admin/WhatameshAdminPreview'
 import { default as default_1a7510af427896d367a49dbf838d2de6 } from '@/components/BeforeDashboard'
 import { default as default_8a7ab0eb7ab5c511aba12e68480bfe5e } from '@/components/BeforeLogin'
+import { default as default_9c94f85e6a8ba463e76c877c207b4ebf } from '@/components/AdminWebGLProvider'
 
 export const importMap = {
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
@@ -59,7 +60,7 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#BlocksFeatureClient": BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@/components/CurrencyAdmin#CurrencyAdmin": CurrencyAdmin_160a60e658412107b5e4cd848a3b6808,
   "@/components/admin/GeocodeLocationButton#default": default_355ecf8c86a73b89c8a37a8793535e32,
-  "@/fields/ColorPicker/ColorPicker#ColorPickerComponent": ColorPickerComponent_1235412a97b9bf4aaff2f42ad23eff87,
+  "@/fields/ColorPicker/ColorPickerClient#default": default_ab754fc32442c02c126925d0ed04cd07,
   "@/components/admin/SeedExperienceTypesButton#default": default_d2ac97d4deb9ea8b162d975a40d12a2b,
   "@/components/admin/fields/StoryChapterField/GenerateChaptersButton#default": default_1b8c3be827333680fcc442db3a4297ef,
   "@/components/admin/fields/StoryChapterField/DestinationSelect#default": default_b75b9da359ef5cde49aaf148c8b237be,
@@ -73,7 +74,8 @@ export const importMap = {
   "@payloadcms/plugin-search/client#ReindexButton": ReindexButton_aead06e4cbf6b2620c5c51c9ab283634,
   "@/Header/RowLabel#RowLabel": RowLabel_ec255a65fa6fa8d1faeb09cf35284224,
   "@/Footer/RowLabel#RowLabel": RowLabel_1f6ff6ff633e3695d348f4f3c58f1466,
-  "@/components/admin/WhatameshPreview#default": default_7cbb50822edd6e06ec9912bd173b1997,
+  "@/components/admin/WhatameshAdminPreview#default": default_ee43581a848f10b65bb3aa231f72e770,
   "@/components/BeforeDashboard#default": default_1a7510af427896d367a49dbf838d2de6,
-  "@/components/BeforeLogin#default": default_8a7ab0eb7ab5c511aba12e68480bfe5e
+  "@/components/BeforeLogin#default": default_8a7ab0eb7ab5c511aba12e68480bfe5e,
+  "@/components/AdminWebGLProvider#default": default_9c94f85e6a8ba463e76c877c207b4ebf
 }

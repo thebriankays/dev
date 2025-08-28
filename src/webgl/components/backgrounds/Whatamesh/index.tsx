@@ -11,6 +11,9 @@ export interface WhatameshBackgroundProps {
   seed?: number
   darkenTop?: boolean
   shadowPower?: number
+  colors?: string[]
+  animate?: boolean
+  intensity?: number
 }
 
 /**
@@ -20,31 +23,32 @@ export interface WhatameshBackgroundProps {
  * Uses 4 colors from CSS variables (--gradient-color-1 through --gradient-color-4)
  */
 export function WhatameshBackground(props: WhatameshBackgroundProps) {
-  // Set CSS variables if not already set
+  // console.log('WhatameshBackground rendering with props:', props)
+  
+  const { colors, ...whatameshProps } = props
+  
+  // Set CSS variables from props or use defaults
   useEffect(() => {
     const root = document.documentElement
-    const computed = getComputedStyle(root)
     
-    // Default gradient colors if not set
+    // Default gradient colors if not provided
     const defaultColors = [
-      '#667eea', // Purple
-      '#764ba2', // Dark Purple
-      '#f093fb', // Pink
-      '#feca57', // Yellow
+      '#dca8d8', // Light purple/pink (from site settings default)
+      '#a3d3f9', // Light blue
+      '#fcd6d6', // Light pink
+      '#eae2ff', // Light purple
     ]
     
-    // Check and set each color variable
-    for (let i = 1; i <= 4; i++) {
-      const varName = `--gradient-color-${i}`
-      const currentValue = computed.getPropertyValue(varName).trim()
-      
-      if (!currentValue) {
-        root.style.setProperty(varName, defaultColors[i - 1])
-      }
+    const colorsToUse = colors && colors.length >= 4 ? colors : defaultColors
+    
+    // Set each color variable
+    for (let i = 0; i < 4; i++) {
+      const varName = `--gradient-color-${i + 1}`
+      root.style.setProperty(varName, colorsToUse[i])
     }
-  }, [])
+  }, [colors])
   
-  return <Whatamesh {...props} />
+  return <Whatamesh {...whatameshProps} />
 }
 
 // Export the raw component for direct use

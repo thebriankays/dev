@@ -52,7 +52,7 @@ export function SharedCanvas({
           onCreated={(state) => {
             const { gl } = state
             gl.setClearColor(0x000000, 0)
-            gl.autoClear = false
+            gl.autoClear = true
             gl.outputColorSpace = THREE.SRGBColorSpace
             gl.toneMapping = THREE.NoToneMapping
             // Store R3F state globally for invalidation
@@ -60,7 +60,7 @@ export function SharedCanvas({
           }}
           dpr={[1, 2]}
           orthographic
-          camera={{ position: [0, 0, 5000], near: 0.001, far: 10000, zoom: 1 }}
+          camera={{ position: [0, 0, 1000], near: -5000, far: 5000, zoom: 1 }}
           frameloop="demand"
           style={{
             pointerEvents: interactive ? 'auto' : 'none',
@@ -77,7 +77,7 @@ export function SharedCanvas({
           {/* Add default lighting for visibility */}
           <ambientLight intensity={0.5} />
           <directionalLight position={[10, 10, 5]} intensity={1} />
-          {/* Background gradient */}
+          {/* Background gradient - render first so it's behind everything */}
           {background === 'whatamesh' && <WhatameshBackground {...backgroundProps} />}
           <FlowmapProvider>
             <View.Port />

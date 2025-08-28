@@ -10,8 +10,14 @@ export default function AdminWebGLProvider({ children }: { children: React.React
     <AnimationProvider>
       <SharedCanvasProvider>
         {children}
-        {/* Mount the single shared canvas for the entire admin application */}
-        <SharedCanvas />
+        {/* Mount the shared canvas with interactive=false so it doesn't block UI clicks */}
+        <SharedCanvas 
+          interactive={false}
+          style={{ 
+            pointerEvents: 'none',
+            zIndex: -1 
+          }} 
+        />
       </SharedCanvasProvider>
     </AnimationProvider>
   )

@@ -1,10 +1,9 @@
 'use client'
 
-import React, { useRef } from 'react'
+import React, { useRef, useEffect } from 'react'
 import { useFormFields, useForm } from '@payloadcms/ui'
 import type { GroupFieldClientComponent } from 'payload'
 import { View } from '@react-three/drei'
-import { PerspectiveCamera } from '@react-three/drei'
 import { Whatamesh } from '@/webgl/components/backgrounds/Whatamesh'
 import GradientPresetSelector from '../GradientPresetSelector/GradientPresetSelector'
 
@@ -77,6 +76,32 @@ export const WhatameshAdminPreview: GroupFieldClientComponent = ({ field, path }
     return null
   }
   
+  // Set CSS variables on document.documentElement so Whatamesh can read them
+  useEffect(() => {
+    const root = document.documentElement
+    
+    // Store original values to restore later
+    const originalColors: string[] = []
+    for (let i = 1; i <= 4; i++) {
+      const varName = `--gradient-color-${i}`
+      originalColors.push(getComputedStyle(root).getPropertyValue(varName))
+    }
+    
+    // Set the new colors
+    formFields.colors.forEach((color, i) => {
+      root.style.setProperty(`--gradient-color-${i + 1}`, color)
+    })
+    
+    // Cleanup: restore original colors when component unmounts
+    return () => {
+      originalColors.forEach((color, i) => {
+        if (color) {
+          root.style.setProperty(`--gradient-color-${i + 1}`, color)
+        }
+      })
+    }
+  }, [formFields.colors])
+  
   const updateColor = (index: number, color: string) => {
     const newColors = formFields.colors.map((c: string, i: number) => ({ 
       color: i === index ? color : c 
@@ -101,22 +126,6 @@ export const WhatameshAdminPreview: GroupFieldClientComponent = ({ field, path }
     })
   }
   
-  // Convert hex colors to RGB format for the shader
-  const parseColors = () => {
-    const colorMap: any = {}
-    formFields.colors.forEach((hex: string, i: number) => {
-      const num = parseInt(hex.replace('#', ''), 16)
-      colorMap[`u_color${i + 1}`] = {
-        value: [
-          ((num >> 16) & 255) / 255,
-          ((num >> 8) & 255) / 255,
-          (num & 255) / 255,
-        ]
-      }
-    })
-    return colorMap
-  }
-  
   return (
     <div style={{ marginBottom: '24px' }}>
       <div style={{
@@ -134,7 +143,7 @@ export const WhatameshAdminPreview: GroupFieldClientComponent = ({ field, path }
           Whatamesh Live Preview
         </h4>
         
-        {/* Mini canvas preview using View */}
+        {/* Mini canvas preview using View - renders the actual Whatamesh component */}
         <div 
           ref={viewRef}
           style={{
@@ -149,14 +158,12 @@ export const WhatameshAdminPreview: GroupFieldClientComponent = ({ field, path }
           }}
         >
           <View track={viewRef as React.RefObject<HTMLElement>}>
-            <PerspectiveCamera makeDefault position={[0, 0, 5]} />
-            <ambientLight intensity={1} />
             <Whatamesh 
               amplitude={320 * formFields.intensity}
               speed={formFields.speed}
               seed={formFields.seed}
               darkenTop={false}
-              {...parseColors()}
+              shadowPower={5}
             />
           </View>
         </div>

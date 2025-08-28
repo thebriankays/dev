@@ -64,10 +64,9 @@ export default buildConfig({
       // Feel free to delete this at any time. Simply remove the line below.
       beforeDashboard: ['@/components/BeforeDashboard'],
       // Add the shared canvas provider to wrap the admin UI
-      // Temporarily disabled due to CSS import issues during type generation
-      // providers: [
-      //   '@/components/AdminWebGLProvider',
-      // ],
+      providers: [
+        '@/components/AdminWebGLProvider',
+      ],
     },
     importMap: {
       baseDir: path.resolve(dirname),
