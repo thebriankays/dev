@@ -125,21 +125,31 @@ export function FlowmapProvider({
   
   // Initialize flowmap or fluid based on type
   useEffect(() => {
-    if (type === 'flowmap') {
-      flowmapRef.current = new FlowmapPass(gl, size.width, size.height)
-      setTexture(flowmapRef.current.getTexture())
-    } else if (type === 'fluid') {
-      fluidRef.current = new FluidSimulation(gl, {
-        simRes: config.simRes,
-        dyeRes: config.dyeRes,
-        densityDissipation: config.densityDissipation,
-        velocityDissipation: config.velocityDissipation,
-        pressureDissipation: config.pressureDissipation,
-        curlStrength: config.curlStrength,
-        radius: config.radius,
-        iterations: config.iterations,
-      })
-      setTexture(fluidRef.current.uniform.value)
+    // Ensure WebGL context is ready
+    if (!gl || !gl.getContext) {
+      console.warn('FlowmapProvider: WebGL context not ready')
+      return
+    }
+    
+    try {
+      if (type === 'flowmap') {
+        flowmapRef.current = new FlowmapPass(gl, size.width, size.height)
+        setTexture(flowmapRef.current.getTexture())
+      } else if (type === 'fluid') {
+        fluidRef.current = new FluidSimulation(gl, {
+          simRes: config.simRes,
+          dyeRes: config.dyeRes,
+          densityDissipation: config.densityDissipation,
+          velocityDissipation: config.velocityDissipation,
+          pressureDissipation: config.pressureDissipation,
+          curlStrength: config.curlStrength,
+          radius: config.radius,
+          iterations: config.iterations,
+        })
+        setTexture(fluidRef.current.uniform.value)
+      }
+    } catch (error) {
+      console.error('FlowmapProvider: Failed to initialize:', error)
     }
     
     return () => {

@@ -21,10 +21,7 @@ export const useCanvas = () => {
   if (!context) {
     throw new Error('useCanvas must be used within SharedCanvasProvider')
   }
-  // Debug: Log when context is accessed
-  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-    console.debug('useCanvas accessed:', { isReady: context.isReady, hasWebGLTunnel: !!context.WebGLTunnel })
-  }
+  // Context access debugging removed for cleaner console output
   return context
 }
 

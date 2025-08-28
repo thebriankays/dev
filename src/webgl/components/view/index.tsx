@@ -41,4 +41,4 @@ export function ViewportRenderer({
   )
 }
 
-export { ViewManager } from './ViewManager'
+// ViewManager removed - using View from @react-three/drei directly

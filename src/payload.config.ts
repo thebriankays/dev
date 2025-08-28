@@ -25,8 +25,28 @@ import { TravelAdvisories } from './collections/TravelAdvisories'
 import { VisaRequirements } from './collections/VisaRequirements'
 import { MichelinRestaurants } from './collections/MichelinRestaurants'
 import { MapDataCache } from './collections/MapDataCache'
+import { CrimeIndexScores } from './collections/CrimeIndexScores'
+import { CountryDetails } from './collections/CountryDetails'
+import { DestinationTypes } from './collections/DestinationTypes'
+import { DestinationCategories } from './collections/DestinationCategories'
+import { CrimeTrends } from './collections/CrimeTrends'
+import { CountryMedia } from './collections/CountryMedia'
+import { Leads } from './collections/Leads'
+import { SalesFunnel } from './collections/SalesFunnel'
+import { SocialMediaPosts } from './collections/SocialMediaPosts'
+import { Customers } from './collections/Customers'
+import { Bookings } from './collections/Bookings'
+import { ClubMembers } from './collections/ClubMembers'
+import { CountryReligions } from './collections/CountryReligions'
+import { ExperienceTypes } from './collections/ExperienceTypes'
+import { Experiences } from './collections/Experiences'
+import { FlightCache } from './collections/FlightCache'
+import { ChatSessions } from './collections/ChatSessions'
+import { TravelDiaries } from './collections/TravelDiaries'
+import { TravelItineraries } from './collections/TravelItineraries'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
+import { SiteSettings } from './globals/SiteSettings'
 import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
@@ -88,6 +108,9 @@ export default buildConfig({
     Religions,
     Timezones,
     Countries,
+    CountryDetails,
+    CountryMedia,
+    CountryReligions,
     Currencies,
     Languages,
     Regions,
@@ -98,13 +121,30 @@ export default buildConfig({
     TravelAdvisories,
     VisaRequirements,
     MichelinRestaurants,
+    CrimeIndexScores,
+    CrimeTrends,
+    // Customer & Marketing
+    Customers,
+    ClubMembers,
+    Bookings,
+    TravelItineraries,
+    TravelDiaries,
+    Leads,
+    SalesFunnel,
+    SocialMediaPosts,
+    ChatSessions,
     // System collections
     MapDataCache,
-    // Main collection
+    FlightCache,
+    // Main collections
+    DestinationTypes,
+    DestinationCategories,
+    ExperienceTypes,
+    Experiences,
     Destinations
   ],
   cors: [getServerSideURL()].filter(Boolean),
-  globals: [Header, Footer],
+  globals: [Header, Footer, SiteSettings],
   plugins: [
     ...plugins,
     // storage-adapter-placeholder

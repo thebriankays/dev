@@ -1,9 +1,16 @@
 // Vertex shader for Whatamesh background gradient
 // Based on Stripe's WebGL gradient animation
 
-// Common uniforms
-uniform mat4 projectionMatrix;
-uniform mat4 modelViewMatrix;
+// Three.js provides these built-in uniforms:
+// - projectionMatrix
+// - modelViewMatrix
+// - normalMatrix
+// Three.js provides these built-in attributes:
+// - position
+// - normal
+// - uv
+
+// Custom uniforms
 uniform vec2 resolution;
 uniform float aspectRatio;
 
@@ -45,9 +52,6 @@ uniform struct WaveLayers {
 
 // Uniform for array length
 uniform int u_waveLayers_length;
-
-// Attributes
-attribute vec2 uv;
 
 // Varyings
 varying vec2 vUv;
@@ -183,25 +187,46 @@ void main() {
   );
   
   // Vertex color calculation
-  if (u_active_colors[0] == 1.0) {
-    v_color = u_baseColor;
+  v_color = u_baseColor; // Initialize with base color
+  
+  // Apply wave layers with explicit bounds checking
+  if (u_waveLayers_length > 0 && u_active_colors[1] == 1.0) {
+    float layerNoise = smoothstep(
+      u_waveLayers[0].noiseFloor,
+      u_waveLayers[0].noiseCeil,
+      snoise(vec3(
+        noiseCoord.x * u_waveLayers[0].noiseFreq.x + time * u_waveLayers[0].noiseFlow,
+        noiseCoord.y * u_waveLayers[0].noiseFreq.y,
+        time * u_waveLayers[0].noiseSpeed + u_waveLayers[0].noiseSeed
+      )) / 2.0 + 0.5
+    );
+    v_color = blendNormal(v_color, u_waveLayers[0].color, pow(layerNoise, 4.0));
   }
   
-  // Apply wave layers
-  for (int i = 0; i < 3; i++) {
-    if (i < u_waveLayers_length && u_active_colors[i + 1] == 1.0) {
-      float layerNoise = smoothstep(
-        u_waveLayers[i].noiseFloor,
-        u_waveLayers[i].noiseCeil,
-        snoise(vec3(
-          noiseCoord.x * u_waveLayers[i].noiseFreq.x + time * u_waveLayers[i].noiseFlow,
-          noiseCoord.y * u_waveLayers[i].noiseFreq.y,
-          time * u_waveLayers[i].noiseSpeed + u_waveLayers[i].noiseSeed
-        )) / 2.0 + 0.5
-      );
-      
-      v_color = blendNormal(v_color, u_waveLayers[i].color, pow(layerNoise, 4.0));
-    }
+  if (u_waveLayers_length > 1 && u_active_colors[2] == 1.0) {
+    float layerNoise = smoothstep(
+      u_waveLayers[1].noiseFloor,
+      u_waveLayers[1].noiseCeil,
+      snoise(vec3(
+        noiseCoord.x * u_waveLayers[1].noiseFreq.x + time * u_waveLayers[1].noiseFlow,
+        noiseCoord.y * u_waveLayers[1].noiseFreq.y,
+        time * u_waveLayers[1].noiseSpeed + u_waveLayers[1].noiseSeed
+      )) / 2.0 + 0.5
+    );
+    v_color = blendNormal(v_color, u_waveLayers[1].color, pow(layerNoise, 4.0));
+  }
+  
+  if (u_waveLayers_length > 2 && u_active_colors[3] == 1.0) {
+    float layerNoise = smoothstep(
+      u_waveLayers[2].noiseFloor,
+      u_waveLayers[2].noiseCeil,
+      snoise(vec3(
+        noiseCoord.x * u_waveLayers[2].noiseFreq.x + time * u_waveLayers[2].noiseFlow,
+        noiseCoord.y * u_waveLayers[2].noiseFreq.y,
+        time * u_waveLayers[2].noiseSpeed + u_waveLayers[2].noiseSeed
+      )) / 2.0 + 0.5
+    );
+    v_color = blendNormal(v_color, u_waveLayers[2].color, pow(layerNoise, 4.0));
   }
   
   gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);

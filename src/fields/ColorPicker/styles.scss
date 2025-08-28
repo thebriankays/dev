@@ -1,0 +1,15 @@
+.color-picker-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #000; /* Ensure black background for contrast */
+    padding: 1rem;
+    border-radius: 8px;
+  }
+  
+  .color-picker {
+    width: 300px;
+    height: auto;
+  }
+  
