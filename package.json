@@ -83,7 +83,8 @@
     "three-stdlib": "^2.36.0",
     "timezones-list": "^3.1.0",
     "troika-three-text": "^0.52.4",
-    "tunnel-rat": "0.1.2"
+    "tunnel-rat": "0.1.2",
+    "world-countries": "^5.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

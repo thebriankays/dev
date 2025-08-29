@@ -74,9 +74,7 @@ export function SharedCanvas({
           resize={{ scroll: false, debounce: { scroll: 0, resize: 0 } }}
         >
           <RAF render={render} />
-          {/* Add default lighting for visibility */}
-          <ambientLight intensity={0.5} />
-          <directionalLight position={[10, 10, 5]} intensity={1} />
+          
           {/* Background gradient - render first so it's behind everything */}
           {background === 'whatamesh' && <WhatameshBackground {...backgroundProps} />}
           <FlowmapProvider>

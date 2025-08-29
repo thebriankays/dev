@@ -1,10 +1,40 @@
-// Whatamesh/Stripe gradient vertex shader adapted for Three.js
-// Based on stripe.com gradient implementation
+// Simplified Stripe gradient vertex shader for Three.js
+// Avoids structs and uses flat uniforms
+
+uniform vec2 resolution;
+uniform float u_time;
+uniform vec4 u_active_colors;
+
+// Global noise settings
+uniform vec2 u_global_noiseFreq;
+uniform float u_global_noiseSpeed;
+
+// Vertex deformation settings
+uniform float u_vertDeform_incline;
+uniform float u_vertDeform_offsetTop;
+uniform float u_vertDeform_offsetBottom;
+uniform vec2 u_vertDeform_noiseFreq;
+uniform float u_vertDeform_noiseAmp;
+uniform float u_vertDeform_noiseSpeed;
+uniform float u_vertDeform_noiseFlow;
+uniform float u_vertDeform_noiseSeed;
+
+// Base color
+uniform vec3 u_baseColor;
+
+// Wave layers - fixed size array approach (max 3 layers)
+uniform vec3 u_waveColors[3];
+uniform vec2 u_waveNoiseFreq[3];
+uniform float u_waveNoiseSpeed[3];
+uniform float u_waveNoiseFlow[3];
+uniform float u_waveNoiseSeed[3];
+uniform float u_waveNoiseFloor[3];
+uniform float u_waveNoiseCeil[3];
 
 varying vec3 v_color;
-varying vec2 v_uv;
+varying vec2 uvNorm;
 
-// Import noise functions inline
+// Simplex 3D noise
 vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
 vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
 vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
@@ -74,70 +104,39 @@ vec3 blendNormal(vec3 base, vec3 blend, float opacity) {
   return (blend * opacity + base * (1.0 - opacity));
 }
 
-// Main uniforms
-uniform float u_time;
-uniform vec2 resolution;
-uniform vec4 u_active_colors;
-
-// Global noise
-uniform vec2 u_global_noiseFreq;
-uniform float u_global_noiseSpeed;
-
-// Vertex deformation
-uniform float u_vertDeform_incline;
-uniform float u_vertDeform_offsetTop;
-uniform float u_vertDeform_offsetBottom;
-uniform vec2 u_vertDeform_noiseFreq;
-uniform float u_vertDeform_noiseAmp;
-uniform float u_vertDeform_noiseSpeed;
-uniform float u_vertDeform_noiseFlow;
-uniform float u_vertDeform_noiseSeed;
-
-// Base color
-uniform vec3 u_baseColor;
-
-// Wave layers - using arrays instead of structs
-uniform vec3 u_waveColors[3];
-uniform vec2 u_waveNoiseFreq[3];
-uniform float u_waveNoiseSpeed[3];
-uniform float u_waveNoiseFlow[3];
-uniform float u_waveNoiseSeed[3];
-uniform float u_waveNoiseFloor[3];
-uniform float u_waveNoiseCeil[3];
-
 void main() {
   float time = u_time * u_global_noiseSpeed;
   
   // Calculate normalized UV
-  vec2 uvNorm = uv * 2.0 - 1.0;
+  uvNorm = uv * 2.0 - 1.0;
   vec2 noiseCoord = resolution * uvNorm * u_global_noiseFreq;
-  
-  // Tilting the plane
+
+  // Vertex deformation
   float tilt = resolution.y / 2.0 * uvNorm.y;
   float incline = resolution.x * uvNorm.x / 2.0 * u_vertDeform_incline;
   float offset = resolution.x / 2.0 * u_vertDeform_incline * mix(u_vertDeform_offsetBottom, u_vertDeform_offsetTop, uv.y);
-  
-  // Vertex noise
+
+  // Apply noise
   float noise = snoise(vec3(
     noiseCoord.x * u_vertDeform_noiseFreq.x + time * u_vertDeform_noiseFlow,
     noiseCoord.y * u_vertDeform_noiseFreq.y,
     time * u_vertDeform_noiseSpeed + u_vertDeform_noiseSeed
   )) * u_vertDeform_noiseAmp;
-  
-  // Fade noise to zero at edges
+
+  // Fade noise at edges
   noise *= 1.0 - pow(abs(uvNorm.y), 2.0);
   noise = max(0.0, noise);
-  
+
   // Calculate position
   vec3 pos = vec3(
     position.x,
     position.y + tilt + incline + noise - offset,
     position.z
   );
-  
+
   // Color calculation
   v_color = u_baseColor;
-  
+
   // Apply wave layers
   for (int i = 0; i < 3; i++) {
     if (u_active_colors[i + 1] == 1.0) {
@@ -153,7 +152,6 @@ void main() {
       v_color = blendNormal(v_color, u_waveColors[i], pow(layerNoise, 4.0));
     }
   }
-  
-  v_uv = uv;
+
   gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 }

@@ -23,9 +23,8 @@ export interface WhatameshBackgroundProps {
  * Uses 4 colors from CSS variables (--gradient-color-1 through --gradient-color-4)
  */
 export function WhatameshBackground(props: WhatameshBackgroundProps) {
-  // console.log('WhatameshBackground rendering with props:', props)
-  
   const { colors, ...whatameshProps } = props
+  
   
   // Set CSS variables from props or use defaults
   useEffect(() => {
@@ -48,7 +47,7 @@ export function WhatameshBackground(props: WhatameshBackgroundProps) {
     }
   }, [colors])
   
-  return <Whatamesh {...whatameshProps} />
+  return <Whatamesh {...whatameshProps} colors={colors} />
 }
 
 // Export the raw component for direct use

@@ -3,7 +3,7 @@
 import React, { useRef, useEffect } from 'react'
 import { useFormFields, useForm } from '@payloadcms/ui'
 import type { GroupFieldClientComponent } from 'payload'
-import { View } from '@react-three/drei'
+import { Canvas } from '@react-three/fiber'
 import { Whatamesh } from '@/webgl/components/backgrounds/Whatamesh'
 import GradientPresetSelector from '../GradientPresetSelector/GradientPresetSelector'
 
@@ -47,7 +47,6 @@ const getRandomColor = () => {
 }
 
 export const WhatameshAdminPreview: GroupFieldClientComponent = ({ field, path }) => {
-  const viewRef = useRef<HTMLDivElement>(null)
   const { dispatchFields } = useForm()
   
   // Read the current whatamesh settings from the form
@@ -143,9 +142,8 @@ export const WhatameshAdminPreview: GroupFieldClientComponent = ({ field, path }
           Whatamesh Live Preview
         </h4>
         
-        {/* Mini canvas preview using View - renders the actual Whatamesh component */}
+        {/* Mini canvas preview - renders the actual Whatamesh component */}
         <div 
-          ref={viewRef}
           style={{
             position: 'relative',
             width: '100%',
@@ -157,15 +155,25 @@ export const WhatameshAdminPreview: GroupFieldClientComponent = ({ field, path }
             background: '#000',
           }}
         >
-          <View track={viewRef as React.RefObject<HTMLElement>}>
+          <Canvas
+            orthographic
+            camera={{ position: [0, 0, 1000], near: -5000, far: 5000, zoom: 1 }}
+            style={{
+              width: '100%',
+              height: '100%',
+            }}
+          >
             <Whatamesh 
+              colors={formFields.colors}
               amplitude={320 * formFields.intensity}
               speed={formFields.speed}
               seed={formFields.seed}
               darkenTop={false}
               shadowPower={5}
+              animate={formFields.animate}
+              intensity={formFields.intensity}
             />
-          </View>
+          </Canvas>
         </div>
         
         {/* Color Controls */}

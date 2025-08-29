@@ -16,6 +16,7 @@ interface WhatameshProps {
   shadowPower?: number
   animate?: boolean
   intensity?: number
+  colors?: string[]
 }
 
 // Convert hex color to normalized RGB
@@ -36,200 +37,115 @@ export function Whatamesh({
   darkenTop = false,
   shadowPower = 5,
   animate = true,
-  intensity = 0.5,
+  intensity = 1,
+  colors,
 }: WhatameshProps) {
   const meshRef = useRef<THREE.Mesh>(null)
   const materialRef = useRef<THREE.ShaderMaterial>(null)
   const { size } = useThree()
   const startTime = useRef(Date.now())
+  const timeRef = useRef(1253106) // Start time matching original
   
-  // console.log('Whatamesh component mounted', { amplitude, speed, freqX, freqY, seed })
+  // Parse colors from props or CSS variables
+  const sectionColors = useMemo(() => {
+    if (colors && colors.length >= 4) {
+      return colors.map(hex => {
+        const num = parseInt(hex.replace('#', ''), 16)
+        return normalizeColor(num)
+      })
+    }
+    
+    // Default colors
+    return [
+      normalizeColor(0xdca8d8), // Light purple/pink
+      normalizeColor(0xa3d3f9), // Light blue  
+      normalizeColor(0xfcd6d6), // Light pink
+      normalizeColor(0xeae2ff), // Light purple
+    ]
+  }, [colors])
   
-  // Create uniforms with proper structure matching original Stripe gradient
-  const uniforms = useMemo(() => {
-    const baseUniforms: any = {
-      u_time: { value: 1253106 }, // Start from same value as original
+  // Create material with array-based uniforms (simpler approach)
+  const material = useMemo(() => {
+    // Prepare wave layer arrays
+    const waveColors = sectionColors.slice(1).map(c => new THREE.Vector3(...c))
+    const waveNoiseFreq = [
+      new THREE.Vector2(2.25, 3.25),
+      new THREE.Vector2(2.5, 3.5),
+      new THREE.Vector2(2.75, 3.75)
+    ]
+    const waveNoiseSpeed = [11.3, 11.6, 11.9]
+    const waveNoiseFlow = [6.8, 7.1, 7.4]
+    const waveNoiseSeed = [seed + 10, seed + 20, seed + 30]
+    const waveNoiseFloor = [0.1, 0.1, 0.1]
+    const waveNoiseCeil = [0.70, 0.77, 0.84]
+    
+    const uniforms = {
+      // Core uniforms
+      u_time: { value: timeRef.current },
+      resolution: { value: new THREE.Vector2(size.width || 1920, size.height || 1080) },
       u_shadow_power: { value: shadowPower },
       u_darken_top: { value: darkenTop ? 1.0 : 0.0 },
       u_active_colors: { value: new THREE.Vector4(1, 1, 1, 1) },
+      u_baseColor: { value: new THREE.Vector3(...sectionColors[0]) },
       
-      // Common uniforms from MiniGL
-      resolution: { value: new THREE.Vector2(size.width, size.height) },
-      aspectRatio: { value: size.width / size.height },
-      projectionMatrix: { value: new THREE.Matrix4() },
-      modelViewMatrix: { value: new THREE.Matrix4() },
+      // Global settings
+      u_global_noiseFreq: { value: new THREE.Vector2(freqX, freqY) },
+      u_global_noiseSpeed: { value: 0.000005 },
       
-      // Global noise settings
-      u_global: {
-        value: {
-          noiseFreq: new THREE.Vector2(freqX, freqY),
-          noiseSpeed: 0.000005,
-        }
-      },
+      // Vertex deform
+      u_vertDeform_incline: { value: 0 },
+      u_vertDeform_offsetTop: { value: -0.5 },
+      u_vertDeform_offsetBottom: { value: -0.5 },
+      u_vertDeform_noiseFreq: { value: new THREE.Vector2(3, 4) },
+      u_vertDeform_noiseAmp: { value: amplitude * intensity },
+      u_vertDeform_noiseSpeed: { value: 10 },
+      u_vertDeform_noiseFlow: { value: 3 },
+      u_vertDeform_noiseSeed: { value: seed },
       
-      // Vertex deformation settings
-      u_vertDeform: {
-        value: {
-          incline: 0, // No incline (Math.tan(0) = 0)
-          offsetTop: -0.5,
-          offsetBottom: -0.5,
-          noiseFreq: new THREE.Vector2(3, 4),
-          noiseAmp: amplitude * intensity,
-          noiseSpeed: 10,
-          noiseFlow: 3,
-          noiseSeed: seed,
-        }
-      },
-      
-      // Base color (first color) - default colors from original
-      u_baseColor: { value: new THREE.Vector3(1, 0, 0) }, // Red
-      
-      // Wave layers array (for colors 2-4)
-      u_waveLayers_length: { value: 3 },
+      // Wave layers as arrays
+      u_waveColors: { value: waveColors },
+      u_waveNoiseFreq: { value: waveNoiseFreq },
+      u_waveNoiseSpeed: { value: waveNoiseSpeed },
+      u_waveNoiseFlow: { value: waveNoiseFlow },
+      u_waveNoiseSeed: { value: waveNoiseSeed },
+      u_waveNoiseFloor: { value: waveNoiseFloor },
+      u_waveNoiseCeil: { value: waveNoiseCeil },
     }
     
-    // Add wave layer uniforms for remaining 3 colors
-    const defaultColors = [
-      [1, 0, 0],    // Red
-      [1, 0, 1],    // Magenta  
-      [0, 1, 0],    // Green
-      [0, 0, 1],    // Blue
-    ]
-    
-    for (let i = 0; i < 3; i++) {
-      baseUniforms[`u_waveLayers[${i}].color`] = { 
-        value: new THREE.Vector3(...defaultColors[i + 1]) 
-      }
-      baseUniforms[`u_waveLayers[${i}].noiseFreq`] = { 
-        value: new THREE.Vector2(
-          2 + (i + 1) / 4, 
-          3 + (i + 1) / 4
-        ) 
-      }
-      baseUniforms[`u_waveLayers[${i}].noiseSpeed`] = { value: 11 + 0.3 * (i + 1) }
-      baseUniforms[`u_waveLayers[${i}].noiseFlow`] = { value: 6.5 + 0.3 * (i + 1) }
-      baseUniforms[`u_waveLayers[${i}].noiseSeed`] = { value: seed + 10 * (i + 1) }
-      baseUniforms[`u_waveLayers[${i}].noiseFloor`] = { value: 0.1 }
-      baseUniforms[`u_waveLayers[${i}].noiseCeil`] = { value: 0.63 + 0.07 * (i + 1) }
-    }
-    
-    return baseUniforms
-  }, [size.width, size.height, amplitude, freqX, freqY, seed, darkenTop, shadowPower])
-  
-  // Create shader material
-  const material = useMemo(() => {
-    console.log('Creating Whatamesh material with uniforms:', uniforms)
-    const mat = new THREE.ShaderMaterial({
+    return new THREE.ShaderMaterial({
+      uniforms,
       vertexShader,
       fragmentShader,
-      uniforms,
-      transparent: true,
+      transparent: false,
       depthWrite: false,
-      side: THREE.DoubleSide,
+      depthTest: false,
     })
-    console.log('Vertex shader:', vertexShader.substring(0, 100) + '...')
-    console.log('Fragment shader:', fragmentShader.substring(0, 100) + '...')
-    return mat
-  }, [uniforms])
+  }, [sectionColors, amplitude, freqX, freqY, seed, darkenTop, shadowPower, intensity, size])
   
   // Update material ref
   useEffect(() => {
     materialRef.current = material
   }, [material])
   
-  // Update resolution and shadow power on resize
+  // Update resolution on resize
   useEffect(() => {
-    if (materialRef.current) {
-      materialRef.current.uniforms.resolution.value.set(size.width, size.height)
-      materialRef.current.uniforms.aspectRatio.value = size.width / size.height
-      materialRef.current.uniforms.u_shadow_power.value = size.width < 600 ? 5 : 6
+    if (material) {
+      material.uniforms.resolution.value.set(size.width, size.height)
+      material.uniforms.u_shadow_power.value = size.width < 600 ? 5 : 6
     }
-  }, [size])
+  }, [size, material])
   
-  // Load colors from CSS variables
-  useEffect(() => {
-    const loadColors = () => {
-      if (!materialRef.current) return
-      
-      const colorVars = [
-        '--gradient-color-1',
-        '--gradient-color-2', 
-        '--gradient-color-3',
-        '--gradient-color-4'
-      ]
-      
-      // Get colors from CSS variables
-      const computedStyle = getComputedStyle(document.documentElement)
-      const colors: ([number, number, number] | null)[] = []
-      
-      for (const varName of colorVars) {
-        let hex = computedStyle.getPropertyValue(varName).trim()
-        
-        if (hex && hex.indexOf('#') !== -1) {
-          // Handle shorthand hex (#abc -> #aabbcc)
-          if (hex.length === 4) {
-            const hexTemp = hex.substring(1).split('').map(c => c + c).join('')
-            hex = `#${hexTemp}`
-          }
-          
-          // Convert to number and normalize
-          const hexNum = parseInt(hex.substring(1), 16)
-          colors.push(normalizeColor(hexNum))
-        } else {
-          colors.push(null)
-        }
-      }
-      
-      console.log('Loaded CSS colors:', colors)
-      
-      // Apply colors if all are loaded
-      if (colors.every(c => c !== null)) {
-        console.log('Applying colors to uniforms')
-        // Set base color (first color)
-        if (colors[0]) {
-          materialRef.current.uniforms.u_baseColor.value.fromArray(colors[0])
-        }
-        
-        // Set wave layer colors (colors 2-4)
-        for (let i = 0; i < 3; i++) {
-          if (colors[i + 1] && materialRef.current.uniforms[`u_waveLayers[${i}].color`]) {
-            materialRef.current.uniforms[`u_waveLayers[${i}].color`].value.fromArray(colors[i + 1]!)
-          }
-        }
-      } else {
-        console.log('CSS colors not ready, retrying...')
-        // Use default colors if CSS vars not ready, retry after delay
-        setTimeout(loadColors, 100)
-      }
-    }
+  // Animation loop
+  useFrame((state, delta) => {
+    if (!material || !animate) return
     
-    // Initial load
-    loadColors()
-    
-    // Listen for theme changes
-    const observer = new MutationObserver(loadColors)
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class', 'data-theme']
-    })
-    
-    return () => observer.disconnect()
-  }, [])
-  
-  // Animation loop - mimics original timing
-  useFrame(() => {
-    if (!materialRef.current) return
-    
-    // Update time exactly like the original
-    const elapsed = Date.now() - startTime.current
-    const t = animate ? 1253106 + elapsed * speed : 1253106
-    
-    materialRef.current.uniforms.u_time.value = t
+    // Update time with proper speed
+    timeRef.current += Math.min(delta * 1000, 1000 / 15) * speed
+    material.uniforms.u_time.value = timeRef.current
   })
   
   // Calculate mesh scale to cover full viewport
   const meshScale = useMemo(() => {
-    // Ensure we have valid dimensions
     const width = size.width || 1920
     const height = size.height || 1080
     return [width, height, 1]
@@ -237,21 +153,21 @@ export function Whatamesh({
   
   // Calculate segments based on density
   const segments = useMemo(() => {
-    // Match original density settings [0.06, 0.16]
     const width = size.width || 1920
     const height = size.height || 1080
     const xSegCount = Math.max(10, Math.ceil(width * 0.06))
     const ySegCount = Math.max(10, Math.ceil(height * 0.16))
     return [xSegCount, ySegCount]
   }, [size])
-  
+
   return (
     <mesh 
       ref={meshRef}
-      position={[0, 0, -100]} // Position behind content but within camera range
-      scale={[1, 1, 1]}
+      position={[0, 0, -1000]} // Position far behind content
+      scale={meshScale as [number, number, number]}
+      renderOrder={-1} // Ensure it renders first
     >
-      <planeGeometry args={[meshScale[0], meshScale[1], segments[0], segments[1]]} />
+      <planeGeometry args={[1, 1, segments[0], segments[1]]} />
       <primitive object={material} attach="material" />
     </mesh>
   )
