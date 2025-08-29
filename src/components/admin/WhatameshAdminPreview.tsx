@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import { useFormFields, useForm } from '@payloadcms/ui'
 import type { GroupFieldClientComponent } from 'payload'
 import { Canvas } from '@react-three/fiber'
@@ -48,11 +48,12 @@ const getRandomColor = () => {
 
 export const WhatameshAdminPreview: GroupFieldClientComponent = ({ field, path }) => {
   const { dispatchFields } = useForm()
+  const [canvasKey, setCanvasKey] = useState(0)
   
   // Read the current whatamesh settings from the form
-  const formFields = useFormFields(([fields]) => {
-    const bgType = fields['background.type']?.value
-    const whatameshData = fields['background.whatamesh']?.value as any || {}
+  const formFields = useFormFields((fields) => {
+    const bgType = (fields as any)?.['background.type']?.value
+    const whatameshData = (fields as any)?.['background.whatamesh']?.value || {}
     const colors = whatameshData.colors || [
       { color: '#dca8d8' },
       { color: '#a3d3f9' },
@@ -70,10 +71,10 @@ export const WhatameshAdminPreview: GroupFieldClientComponent = ({ field, path }
     }
   })
   
-  // Don't render if background type is not whatamesh
-  if (formFields.bgType !== 'whatamesh') {
-    return null
-  }
+  // Force Canvas re-mount when colors change
+  useEffect(() => {
+    setCanvasKey(prev => prev + 1)
+  }, [formFields.colors.join(',')])
   
   // Set CSS variables on document.documentElement so Whatamesh can read them
   useEffect(() => {
@@ -156,12 +157,14 @@ export const WhatameshAdminPreview: GroupFieldClientComponent = ({ field, path }
           }}
         >
           <Canvas
+            key={canvasKey}
             orthographic
             camera={{ position: [0, 0, 1000], near: -5000, far: 5000, zoom: 1 }}
             style={{
               width: '100%',
               height: '100%',
             }}
+            frameloop="always"
           >
             <Whatamesh 
               colors={formFields.colors}

@@ -11,6 +11,7 @@ import { WebGLCarouselBlock } from '@/blocks/WebGLCarousel/Component'
 import { WebGLTextBlock } from '@/blocks/WebGLText/Component'
 import { TravelGlobeComponent } from '@/blocks/TravelGlobe/Component'
 import { ThreeDCarouselBlock } from '@/blocks/ThreeDCarousel/Component'
+import { DolphinBlock } from '@/blocks/DolphinBlock/Component'
 
 const blockComponents = {
   archive: ArchiveBlock,
@@ -22,7 +23,8 @@ const blockComponents = {
   webGLText: WebGLTextBlock,
   travelGlobe: TravelGlobeComponent,
   threeDCarousel: ThreeDCarouselBlock,
-}
+  dolphinBlock: DolphinBlock,
+} as const
 
 export const RenderBlocks: React.FC<{
   blocks: Page['layout'][0][]
@@ -38,12 +40,12 @@ export const RenderBlocks: React.FC<{
           const { blockType } = block
 
           if (blockType && blockType in blockComponents) {
-            const Block = blockComponents[blockType]
+            const Block = blockComponents[blockType as keyof typeof blockComponents]
 
             if (Block) {
               return (
                 <div className="my-16" key={index}>
-                  <Block {...block} disableInnerContainer />
+                  <Block {...(block as any)} />
                 </div>
               )
             }

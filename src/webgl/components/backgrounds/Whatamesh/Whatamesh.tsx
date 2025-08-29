@@ -42,7 +42,7 @@ export function Whatamesh({
 }: WhatameshProps) {
   const meshRef = useRef<THREE.Mesh>(null)
   const materialRef = useRef<THREE.ShaderMaterial>(null)
-  const { size } = useThree()
+  const { size, invalidate } = useThree()
   const startTime = useRef(Date.now())
   const timeRef = useRef(1253106) // Start time matching original
   
@@ -64,10 +64,18 @@ export function Whatamesh({
     ]
   }, [colors])
   
-  // Create material with array-based uniforms (simpler approach)
+  // Create material only once
   const material = useMemo(() => {
-    // Prepare wave layer arrays
-    const waveColors = sectionColors.slice(1).map(c => new THREE.Vector3(...c))
+    // Use default colors for initial material
+    const defaultColors = [
+      normalizeColor(0xdca8d8), // Light purple/pink
+      normalizeColor(0xa3d3f9), // Light blue  
+      normalizeColor(0xfcd6d6), // Light pink
+      normalizeColor(0xeae2ff), // Light purple
+    ]
+    
+    // Prepare initial wave layer arrays
+    const waveColors = defaultColors.slice(1).map(c => new THREE.Vector3(...c))
     const waveNoiseFreq = [
       new THREE.Vector2(2.25, 3.25),
       new THREE.Vector2(2.5, 3.5),
@@ -75,21 +83,21 @@ export function Whatamesh({
     ]
     const waveNoiseSpeed = [11.3, 11.6, 11.9]
     const waveNoiseFlow = [6.8, 7.1, 7.4]
-    const waveNoiseSeed = [seed + 10, seed + 20, seed + 30]
+    const waveNoiseSeed = [5 + 10, 5 + 20, 5 + 30] // Use default seed
     const waveNoiseFloor = [0.1, 0.1, 0.1]
     const waveNoiseCeil = [0.70, 0.77, 0.84]
     
     const uniforms = {
       // Core uniforms
       u_time: { value: timeRef.current },
-      resolution: { value: new THREE.Vector2(size.width || 1920, size.height || 1080) },
-      u_shadow_power: { value: shadowPower },
-      u_darken_top: { value: darkenTop ? 1.0 : 0.0 },
+      resolution: { value: new THREE.Vector2(1920, 1080) }, // Default resolution
+      u_shadow_power: { value: 5 },
+      u_darken_top: { value: 0.0 },
       u_active_colors: { value: new THREE.Vector4(1, 1, 1, 1) },
-      u_baseColor: { value: new THREE.Vector3(...sectionColors[0]) },
+      u_baseColor: { value: new THREE.Vector3(...defaultColors[0]) },
       
       // Global settings
-      u_global_noiseFreq: { value: new THREE.Vector2(freqX, freqY) },
+      u_global_noiseFreq: { value: new THREE.Vector2(0.00014, 0.00029) }, // Default freqX/Y
       u_global_noiseSpeed: { value: 0.000005 },
       
       // Vertex deform
@@ -97,10 +105,10 @@ export function Whatamesh({
       u_vertDeform_offsetTop: { value: -0.5 },
       u_vertDeform_offsetBottom: { value: -0.5 },
       u_vertDeform_noiseFreq: { value: new THREE.Vector2(3, 4) },
-      u_vertDeform_noiseAmp: { value: amplitude * intensity },
+      u_vertDeform_noiseAmp: { value: 320 }, // Default amplitude * intensity
       u_vertDeform_noiseSpeed: { value: 10 },
       u_vertDeform_noiseFlow: { value: 3 },
-      u_vertDeform_noiseSeed: { value: seed },
+      u_vertDeform_noiseSeed: { value: 5 }, // Default seed
       
       // Wave layers as arrays
       u_waveColors: { value: waveColors },
@@ -120,12 +128,35 @@ export function Whatamesh({
       depthWrite: false,
       depthTest: false,
     })
-  }, [sectionColors, amplitude, freqX, freqY, seed, darkenTop, shadowPower, intensity, size])
+  }, []) // Empty dependency array - create material only once
   
   // Update material ref
   useEffect(() => {
     materialRef.current = material
   }, [material])
+  
+  // Update uniforms when props change
+  useEffect(() => {
+    if (material) {
+      // Update colors
+      material.uniforms.u_baseColor.value = new THREE.Vector3(...sectionColors[0])
+      const waveColors = sectionColors.slice(1).map(c => new THREE.Vector3(...c))
+      material.uniforms.u_waveColors.value = waveColors
+      
+      // Update other uniforms
+      material.uniforms.u_shadow_power.value = shadowPower
+      material.uniforms.u_darken_top.value = darkenTop ? 1.0 : 0.0
+      material.uniforms.u_global_noiseFreq.value.set(freqX, freqY)
+      material.uniforms.u_vertDeform_noiseAmp.value = amplitude * intensity
+      material.uniforms.u_vertDeform_noiseSeed.value = seed
+      
+      // Update wave noise seeds
+      material.uniforms.u_waveNoiseSeed.value = [seed + 10, seed + 20, seed + 30]
+      
+      // Force a re-render
+      invalidate()
+    }
+  }, [material, sectionColors, shadowPower, darkenTop, freqX, freqY, amplitude, intensity, seed, invalidate])
   
   // Update resolution on resize
   useEffect(() => {
@@ -146,9 +177,15 @@ export function Whatamesh({
   
   // Calculate mesh scale to cover full viewport
   const meshScale = useMemo(() => {
-    const width = size.width || 1920
-    const height = size.height || 1080
-    return [width, height, 1]
+    // For orthographic camera, the frustum size equals the viewport height
+    // and the width is height * aspect ratio
+    const frustumSize = size.height
+    const aspect = size.width / size.height
+    const width = frustumSize * aspect
+    const height = frustumSize
+    
+    // Add extra padding to ensure full coverage even with camera movement
+    return [width * 1.2, height * 1.2, 1]
   }, [size])
   
   // Calculate segments based on density

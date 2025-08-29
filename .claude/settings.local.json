@@ -21,7 +21,8 @@
       "Bash(npm run generate:types:*)",
       "Bash(npm run generate:importmap:*)",
       "Bash(npx next build:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(cp:*)"
     ],
     "deny": []
   }

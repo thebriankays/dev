@@ -25,6 +25,7 @@ interface BlockWrapperProps {
   className?: string
   interactive?: boolean
   id?: string
+  disableDefaultCamera?: boolean
 }
 
 export function BlockWrapper({
@@ -35,6 +36,7 @@ export function BlockWrapper({
   className = '',
   interactive = false,
   id,
+  disableDefaultCamera = false,
 }: BlockWrapperProps) {
   const ref = useRef<HTMLDivElement>(null)
   const bounds = useView(ref)
@@ -74,7 +76,9 @@ export function BlockWrapper({
       {webglContent && (
         <WebGLTunnel>
           <View track={ref as React.RefObject<HTMLElement>}>
-            <PerspectiveCamera makeDefault position={[0, 0, 600]} />
+            {!disableDefaultCamera && (
+              <PerspectiveCamera makeDefault position={[0, 0, 600]} />
+            )}
             {fluidOverlay.enabled && (
               <FluidOverlay
                 intensity={fluidOverlay.intensity}

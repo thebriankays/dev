@@ -10,6 +10,8 @@ import { MediaBlock } from '../../blocks/MediaBlock/config'
 import { WebGLText } from '../../blocks/WebGLText/config'
 import { TravelGlobe } from '../../blocks/TravelGlobe/config'
 import { ThreeDCarousel } from '../../blocks/ThreeDCarousel/config'
+import { DolphinBlock } from '../../blocks/DolphinBlock/config'
+import { WebGLCarousel } from '../../blocks/WebGLCarousel/config'
 import { hero } from '@/heros/config'
 import { slugField } from '@/fields/slug'
 import { populatePublishedAt } from '../../hooks/populatePublishedAt'
@@ -78,7 +80,7 @@ export const Pages: CollectionConfig<'pages'> = {
             {
               name: 'layout',
               type: 'blocks',
-              blocks: [CallToAction, Content, MediaBlock, Archive, FormBlock, WebGLText, TravelGlobe, ThreeDCarousel],
+              blocks: [CallToAction, Content, MediaBlock, Archive, FormBlock, WebGLText, TravelGlobe, ThreeDCarousel, DolphinBlock, WebGLCarousel],
               required: true,
               admin: {
                 initCollapsed: true,

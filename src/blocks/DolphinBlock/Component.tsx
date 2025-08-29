@@ -21,7 +21,8 @@ export const DolphinBlock: React.FC<DolphinBlockProps> = (props) => {
     <BlockWrapper
       glassEffect={glassEffect}
       fluidOverlay={fluidOverlay}
-      className="dolphin-block relative h-screen"
+      className="dolphin-block relative h-screen min-h-[600px]"
+      disableDefaultCamera={true}
       webglContent={
         <DolphinBlockClient
           sceneSettings={sceneSettings}

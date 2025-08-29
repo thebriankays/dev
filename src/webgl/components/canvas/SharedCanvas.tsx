@@ -69,7 +69,7 @@ export function SharedCanvas({
             left: 0,
             width: '100vw',
             height: '100vh',
-            zIndex: 0,
+            zIndex: -1,
           }}
           resize={{ scroll: false, debounce: { scroll: 0, resize: 0 } }}
         >

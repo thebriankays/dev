@@ -278,6 +278,8 @@ export interface Page {
     | WebGLTextBlock
     | TravelGlobeBlock
     | ThreeDCarouselBlock
+    | DolphinBlock
+    | WebGLCarouselBlockType
   )[];
   meta?: {
     title?: string | null;
@@ -974,33 +976,32 @@ export interface TravelGlobeBlock {
  * via the `definition` "ThreeDCarouselBlock".
  */
 export interface ThreeDCarouselBlock {
+  /**
+   * Add exactly 8 images for the carousel
+   */
   items?:
     | {
         image: number | Media;
-        title: string;
-        subtitle?: string | null;
-        description?: string | null;
-        link?: string | null;
-        metadata?: {
-          rating?: number | null;
-          price?: string | null;
-          location?: string | null;
-          date?: string | null;
-        };
         id?: string | null;
       }[]
     | null;
-  layout?: ('circular' | 'helix' | 'wave' | 'cylinder') | null;
-  autoRotate?: boolean | null;
-  rotationSpeed?: number | null;
-  enableReflections?: boolean | null;
-  enableParticles?: boolean | null;
-  enableDepthFade?: boolean | null;
+  /**
+   * Display the animated banner at the bottom
+   */
+  showBanner?: boolean | null;
+  /**
+   * Image for the rotating banner (optional)
+   */
+  bannerImage?: (number | null) | Media;
+  /**
+   * Distance of images from center
+   */
   radius?: number | null;
-  spacing?: number | null;
-  itemsVisible?: number | null;
-  showControls?: boolean | null;
-  showIndicators?: boolean | null;
+  enableFog?: boolean | null;
+  /**
+   * Number of scroll pages for infinite rotation
+   */
+  scrollPages?: number | null;
   glassEffect?: {
     enabled?: boolean | null;
     variant?: ('card' | 'panel' | 'subtle' | 'frost' | 'liquid') | null;
@@ -1020,6 +1021,87 @@ export interface ThreeDCarouselBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'threeDCarousel';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "DolphinBlock".
+ */
+export interface DolphinBlock {
+  title?: string | null;
+  subtitle?: string | null;
+  sceneSettings?: {
+    /**
+     * Distance from the camera to the scene center
+     */
+    cameraDistance?: number | null;
+    /**
+     * Hex color code for the water
+     */
+    waterColor?: string | null;
+    /**
+     * Haziness of the atmosphere
+     */
+    skyTurbidity?: number | null;
+    /**
+     * Sun position in degrees above horizon
+     */
+    sunElevation?: number | null;
+  };
+  dolphins?: {
+    count?: ('1' | '2' | '3') | null;
+    /**
+     * Speed of dolphin swimming animation
+     */
+    animationSpeed?: number | null;
+    pathVariation?: ('default' | 'wide' | 'narrow') | null;
+  };
+  interaction?: {
+    /**
+     * Allow users to rotate and zoom the camera
+     */
+    enableOrbitControls?: boolean | null;
+    autoRotate?: boolean | null;
+    rotationSpeed?: number | null;
+  };
+  height?: ('small' | 'medium' | 'large' | 'full') | null;
+  glassEffect?: {
+    enabled?: boolean | null;
+    variant?: ('card' | 'panel' | 'subtle' | 'frost' | 'liquid') | null;
+    intensity?: number | null;
+  };
+  fluidOverlay?: {
+    enabled?: boolean | null;
+    intensity?: number | null;
+    color?: string | null;
+  };
+  webglEffects?: {
+    distortion?: number | null;
+    parallax?: number | null;
+    hover?: boolean | null;
+    transition?: ('fade' | 'slide' | 'morph') | null;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'dolphinBlock';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "WebGLCarouselBlockType".
+ */
+export interface WebGLCarouselBlockType {
+  images: {
+    image: number | Media;
+    id?: string | null;
+  }[];
+  enablePostProcessing?: boolean | null;
+  planeSettings?: {
+    width?: number | null;
+    height?: number | null;
+    gap?: number | null;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'webglCarousel';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3787,6 +3869,8 @@ export interface PagesSelect<T extends boolean = true> {
         webGLText?: T | WebGLTextBlockSelect<T>;
         travelGlobe?: T | TravelGlobeBlockSelect<T>;
         threeDCarousel?: T | ThreeDCarouselBlockSelect<T>;
+        dolphinBlock?: T | DolphinBlockSelect<T>;
+        webglCarousel?: T | WebGLCarouselBlockTypeSelect<T>;
       };
   meta?:
     | T
@@ -4048,31 +4132,13 @@ export interface ThreeDCarouselBlockSelect<T extends boolean = true> {
     | T
     | {
         image?: T;
-        title?: T;
-        subtitle?: T;
-        description?: T;
-        link?: T;
-        metadata?:
-          | T
-          | {
-              rating?: T;
-              price?: T;
-              location?: T;
-              date?: T;
-            };
         id?: T;
       };
-  layout?: T;
-  autoRotate?: T;
-  rotationSpeed?: T;
-  enableReflections?: T;
-  enableParticles?: T;
-  enableDepthFade?: T;
+  showBanner?: T;
+  bannerImage?: T;
   radius?: T;
-  spacing?: T;
-  itemsVisible?: T;
-  showControls?: T;
-  showIndicators?: T;
+  enableFog?: T;
+  scrollPages?: T;
   glassEffect?:
     | T
     | {
@@ -4094,6 +4160,83 @@ export interface ThreeDCarouselBlockSelect<T extends boolean = true> {
         parallax?: T;
         hover?: T;
         transition?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "DolphinBlock_select".
+ */
+export interface DolphinBlockSelect<T extends boolean = true> {
+  title?: T;
+  subtitle?: T;
+  sceneSettings?:
+    | T
+    | {
+        cameraDistance?: T;
+        waterColor?: T;
+        skyTurbidity?: T;
+        sunElevation?: T;
+      };
+  dolphins?:
+    | T
+    | {
+        count?: T;
+        animationSpeed?: T;
+        pathVariation?: T;
+      };
+  interaction?:
+    | T
+    | {
+        enableOrbitControls?: T;
+        autoRotate?: T;
+        rotationSpeed?: T;
+      };
+  height?: T;
+  glassEffect?:
+    | T
+    | {
+        enabled?: T;
+        variant?: T;
+        intensity?: T;
+      };
+  fluidOverlay?:
+    | T
+    | {
+        enabled?: T;
+        intensity?: T;
+        color?: T;
+      };
+  webglEffects?:
+    | T
+    | {
+        distortion?: T;
+        parallax?: T;
+        hover?: T;
+        transition?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "WebGLCarouselBlockType_select".
+ */
+export interface WebGLCarouselBlockTypeSelect<T extends boolean = true> {
+  images?:
+    | T
+    | {
+        image?: T;
+        id?: T;
+      };
+  enablePostProcessing?: T;
+  planeSettings?:
+    | T
+    | {
+        width?: T;
+        height?: T;
+        gap?: T;
       };
   id?: T;
   blockName?: T;
