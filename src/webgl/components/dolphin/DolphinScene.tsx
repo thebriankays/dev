@@ -74,22 +74,45 @@ export function DolphinScene({
   webglEffects = {}
 }: DolphinSceneProps) {
   const waterRef = useRef<Water>(null)
-  const { gl, scene, camera, viewport, size } = useThree()
-  
-  // Initialize scene
-  useEffect(() => {
-    // Ensure the scene uses its own camera and not the parent orthographic camera
-    return () => {
-      // Cleanup
-    }
-  }, [])
+  const skyRef = useRef<any>(null)
+  const { gl, scene } = useThree()
+  const sun = useMemo(() => new THREE.Vector3(), [])
   
   const {
-    cameraDistance = 162,
+    cameraDistance = 300,
     waterColor = '#001e0f',
     skyTurbidity = 10,
-    sunElevation = 2
+    sunElevation = 20
   } = sceneSettings
+  
+  // Initialize sun position and environment
+  useEffect(() => {
+    const phi = THREE.MathUtils.degToRad(90 - sunElevation)
+    const theta = THREE.MathUtils.degToRad(180)
+    sun.setFromSphericalCoords(1, phi, theta)
+    
+    // Update sky sun position
+    if (skyRef.current) {
+      skyRef.current.material.uniforms.sunPosition.value.copy(sun)
+    }
+    
+    // Update water sun direction
+    if (waterRef.current && waterRef.current.material) {
+      waterRef.current.material.uniforms.sunDirection.value.copy(sun).normalize()
+    }
+    
+    // Generate environment map
+    const pmremGenerator = new THREE.PMREMGenerator(gl)
+    pmremGenerator.compileEquirectangularShader()
+    
+    if (skyRef.current) {
+      scene.environment = pmremGenerator.fromScene(skyRef.current).texture
+    }
+    
+    return () => {
+      pmremGenerator.dispose()
+    }
+  }, [sunElevation, sun, gl, scene])
   
   const {
     count = '3',
@@ -154,12 +177,11 @@ export function DolphinScene({
   })
 
   return (
-    <>
-      
+    <group>
       <PerspectiveCamera
         makeDefault
-        position={[3.159, 12.559, cameraDistance]}
-        rotation={[-0.0157, 0.0194, 0.0003]}
+        position={[0, 50, cameraDistance]}
+        rotation={[-0.2, 0, 0]}
         fov={55}
         near={1}
         far={20000}
@@ -178,20 +200,19 @@ export function DolphinScene({
 
       <ambientLight intensity={0.6} />
       <directionalLight 
-        position={[100, 100, 100]} 
-        intensity={1} 
+        position={sun.clone().multiplyScalar(500)} 
+        intensity={1.5} 
         castShadow 
       />
 
       <Sky
-        distance={10000}
+        ref={skyRef}
+        distance={450000}
         turbidity={skyTurbidity}
-        rayleigh={2}
+        rayleigh={3}
         mieCoefficient={0.005}
-        mieDirectionalG={0.8}
-        sunPosition={[100, 20, 100]}
-        inclination={0.6}
-        azimuth={0.25}
+        mieDirectionalG={0.7}
+        sunPosition={sun}
       />
 
       {/* @ts-ignore - Water is extended but TypeScript doesn't know */}
@@ -211,7 +232,7 @@ export function DolphinScene({
             alpha: 0.9,
           }
         ]}
-        position={[0, -5, 0]}
+        position={[0, 0, 0]}
         rotation-x={-Math.PI / 2}
       />
 
@@ -226,6 +247,6 @@ export function DolphinScene({
           />
         ))}
       </Suspense>
-    </>
+    </group>
   )
 }

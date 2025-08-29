@@ -1,24 +1,18 @@
 'use client'
 
-import { useFrame } from '@react-three/fiber'
-import { useRef } from 'react'
-import * as THREE from 'three'
+import { useEffect } from 'react'
+import { useThree } from '@react-three/fiber'
 
 export function PreserveBackgroundRenderer() {
-  const clearedRef = useRef(false)
+  const { gl, camera } = useThree()
   
-  // Clear depth buffer once per frame to ensure proper layering
-  useFrame(({ gl }) => {
-    if (!clearedRef.current) {
-      const ctx = gl.getContext()
-      ctx.clear(ctx.DEPTH_BUFFER_BIT)
-      clearedRef.current = true
-      // Reset flag next frame
-      requestAnimationFrame(() => {
-        clearedRef.current = false
-      })
-    }
-  }, -1000) // High priority to run first
+  useEffect(() => {
+    // Ensure autoClear is disabled to preserve Whatamesh background
+    gl.autoClear = false
+    
+    // Enable all layers on camera to see Whatamesh
+    camera.layers.enableAll()
+  }, [gl, camera])
   
   return null
 }

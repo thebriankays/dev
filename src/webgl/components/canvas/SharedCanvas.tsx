@@ -39,7 +39,7 @@ export function SharedCanvas({
   
   return (
     <>
-      <div className={`webgl-canvas ${interactive ? 'interactive' : ''} ${className || ''}`} style={style}>
+      <div className={`webgl-canvas ${interactive ? 'interactive' : ''} ${className || ''}`} style={{ ...style, pointerEvents: interactive ? 'auto' : 'none' }}>
         <Canvas
           ref={canvasRef}
           gl={{
@@ -53,10 +53,7 @@ export function SharedCanvas({
           onCreated={(state) => {
             const { gl } = state
             gl.setClearColor(0x000000, 0)
-            gl.autoClear = true // Let R3F handle clearing by default
-            gl.autoClearColor = false // But don't clear color buffer
-            gl.autoClearDepth = true // Clear depth for proper layering
-            gl.autoClearStencil = false
+            gl.autoClear = false // Disable auto clearing to preserve Whatamesh
             gl.outputColorSpace = THREE.SRGBColorSpace
             gl.toneMapping = THREE.NoToneMapping
             
@@ -68,7 +65,6 @@ export function SharedCanvas({
           camera={{ position: [0, 0, 1000], near: -5000, far: 5000, zoom: 1 }}
           frameloop="demand"
           style={{
-            pointerEvents: interactive ? 'auto' : 'none',
             position: 'fixed',
             top: 0,
             left: 0,

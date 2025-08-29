@@ -46,12 +46,12 @@ export function ThreeDCarousel({
   }
 
   return (
-    <group position={[0, 0, -300]} renderOrder={1}>
+    <group position={[0, 0, -100]} renderOrder={1}>
       {/* Position back and set render order to ensure proper layering */}
-      <Rig rotation={[0, 0, 0.15]} scale={120}>
+      <Rig rotation={[0, 0, 0.15]} scale={200}>
         <Carousel images={images} radius={radius} />
       </Rig>
-      {showBanner && <Banner position={[0, -30, 0]} scale={120} bannerImage={bannerImage} />}
+      {showBanner && <Banner position={[0, -50, 0]} scale={200} bannerImage={bannerImage} />}
     </group>
   )
 }
@@ -238,8 +238,8 @@ function Banner({ position, bannerImage, scale = 1 }: BannerProps) {
   
   useFrame((state, delta) => {
     if (ref.current && ref.current.material) {
-      ref.current.material.time.value += delta * 4
-      ref.current.material.map.offset.x += delta / 2
+      ref.current.material.time.value += delta
+      ref.current.material.map.offset.x += delta * 0.1
     }
   })
   

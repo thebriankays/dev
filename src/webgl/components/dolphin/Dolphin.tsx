@@ -21,7 +21,7 @@ const ease = CustomEase.create(
   'M0,0,C0.042,0.224,0.268,0.35,0.524,0.528,0.708,0.656,0.876,0.808,1,1'
 )
 
-export function Dolphin({ curve, delay = 0, index, animationSpeed = 6 }: DolphinProps) {
+export function Dolphin({ curve, delay = 0, index, animationSpeed = 8 }: DolphinProps) {
   const { scene } = useGLTF('/dolphin.glb')
   const meshRef = useRef<THREE.Mesh>(null)
   const playHead = useRef({ value: 0 })
@@ -38,7 +38,7 @@ export function Dolphin({ curve, delay = 0, index, animationSpeed = 6 }: Dolphin
   }, [scene])
 
   const { numPoints, dataTexture, lengthRatio, objSize } = useMemo(() => {
-    const numPoints = 511
+    const numPoints = 150 // Reduced from 511 for better performance
     const cPoints = curve.getSpacedPoints(numPoints)
     const cObjects = curve.computeFrenetFrames(numPoints, true)
 
@@ -84,7 +84,7 @@ export function Dolphin({ curve, delay = 0, index, animationSpeed = 6 }: Dolphin
     dataTextureRef.current = dataTexture
     
     const tl = gsap.timeline({ repeat: -1, repeatDelay: 1 })
-    tl.to(playHead.current, { value: 1, duration: animationSpeed * 2, ease }, delay)
+    tl.to(playHead.current, { value: 1, duration: animationSpeed, ease }, delay)
     
     return () => {
       tl.kill()
