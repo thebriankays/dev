@@ -60,6 +60,18 @@ export const Destinations: CollectionConfig = {
     components: {
       // ...glassCollectionComponents,
       beforeListTable: ['@/components/BulkAddButton/BulkAddButton'],
+      views: {
+        edit: {
+          exploreMap: {
+            Component: '@/components/admin/ExploreView',
+            path: '/explore',
+            tab: {
+              label: 'Explore 3D Map',
+              order: 200,
+            },
+          },
+        },
+      },
     },
   },
   defaultPopulate: {

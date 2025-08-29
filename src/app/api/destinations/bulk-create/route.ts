@@ -1,192 +1,143 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
-import { DestinationContentGenerator } from '@/lib/ai/content-generator'
-import { GoogleMapsService } from '@/lib/external-apis/google-maps'
 
 export async function POST(request: NextRequest) {
   try {
     const payload = await getPayload({ config })
-    const generator = new DestinationContentGenerator(payload)
     
     const body = await request.json()
-    const { destinations, generateContent = true, options = {} } = body
+    const { destinations } = body
 
     if (!destinations || !Array.isArray(destinations) || destinations.length === 0) {
       return NextResponse.json(
-        { error: 'Destinations array is required' },
+        { error: 'No destinations provided' },
         { status: 400 }
       )
     }
 
-    const results = []
-    const errors = []
-
-    // Initialize Google Maps service if API key is available
-    let googleMapsService: GoogleMapsService | null = null
-    if (process.env.GOOGLE_MAPS_API_KEY) {
-      googleMapsService = new GoogleMapsService({
-        apiKey: process.env.GOOGLE_MAPS_API_KEY
-      })
+    const results = {
+      created: 0,
+      errors: [] as string[],
+      destinations: [] as any[],
     }
 
-    for (const destinationName of destinations) {
-      try {
-        let placeDetails = null
-        let countryId = null
-        let regionId = null
-
-        // Get place details from Google Maps
-        if (googleMapsService) {
-          placeDetails = await googleMapsService.searchPlace(destinationName)
-        }
-
-        // Find or create country
-        if (placeDetails?.country) {
-          const existingCountry = await payload.find({
-            collection: 'countries',
-            where: {
-              name: {
-                equals: placeDetails.country
-              }
-            }
-          })
-
-          if (existingCountry.docs.length > 0) {
-            const firstCountry = existingCountry.docs[0]
-            if (firstCountry) {
-              countryId = firstCountry.id
-            }
-          } else {
-            // Create new country
-            const newCountry = await payload.create({
-              collection: 'countries',
-              data: {
-                name: placeDetails.country,
-                code: '', // Would need to map country name to code
-                continent: 'asia' // Default continent, would need proper mapping
-              }
-            })
-            countryId = newCountry.id
-          }
-        }
-
-        // Find or create region
-        if (placeDetails?.region && countryId) {
-          const existingRegion = await payload.find({
-            collection: 'regions',
-            where: {
-              and: [
-                {
-                  name: {
-                    equals: placeDetails.region
-                  }
-                },
-                {
-                  country: {
-                    equals: countryId
-                  }
-                }
-              ]
-            }
-          })
-
-          if (existingRegion.docs.length > 0) {
-            const firstRegion = existingRegion.docs[0]
-            if (firstRegion) {
-              regionId = firstRegion.id
-            }
-          } else {
-            // Create new region
-            const newRegion = await payload.create({
-              collection: 'regions',
-              data: {
-                name: placeDetails.region,
-                country: countryId,
-                type: 'region'
-              }
-            })
-            regionId = newRegion.id
-          }
-        }
-
-        // Create destination
-        const destinationData: any = {
-          name: destinationName,
-          slug: destinationName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-          status: 'draft',
-          aiGenerated: generateContent,
-        }
-
-        if (placeDetails) {
-          destinationData.coordinates = placeDetails.coordinates
-          destinationData.googlePlaceId = placeDetails.placeId
-          destinationData.timezone = placeDetails.timezone
-        }
-
-        if (countryId) {
-          destinationData.country = countryId
-        }
-
-        if (regionId) {
-          destinationData.region = regionId
-        }
-
-        const newDestination = await payload.create({
-          collection: 'destinations',
-          data: destinationData
-        })
-
-        // Generate AI content if requested
-        if (generateContent) {
-          const contentRequest = {
-            destinationId: String(newDestination.id),
-            destinationName: destinationName,
-            country: placeDetails?.country || '',
-            sections: ['basic-description', 'short-description'],
-            options
-          }
-
+    // Process destinations in batches to avoid overwhelming the database
+    const batchSize = 10
+    for (let i = 0; i < destinations.length; i += batchSize) {
+      const batch = destinations.slice(i, i + batchSize)
+      
+      await Promise.all(
+        batch.map(async (dest) => {
           try {
-            await generator.generateCompleteDestination(contentRequest)
-          } catch (contentError) {
-            console.error(`Error generating content for ${destinationName}:`, contentError)
-            // Continue with next destination even if content generation fails
+            // Check if destination already exists
+            const existing = await payload.find({
+              collection: 'destinations',
+              where: {
+                or: [
+                  { 'locationData.placeID': { equals: dest.locationData?.placeID } },
+                  {
+                    and: [
+                      { title: { equals: dest.title } },
+                      { city: { equals: dest.city } },
+                    ],
+                  },
+                ],
+              },
+              limit: 1,
+            })
+
+            if (existing.docs.length > 0) {
+              results.errors.push(`Destination "${dest.title}" already exists`)
+              return
+            }
+
+            // Prepare the destination data
+            const destData: any = {
+              title: dest.title,
+              locationData: dest.locationData,
+              city: dest.city,
+              continent: dest.continent,
+              lat: dest.lat,
+              lng: dest.lng,
+              googleMapsUri: dest.googleMapsUri,
+              content: [
+                {
+                  type: 'paragraph',
+                  children: [
+                    {
+                      text: `Welcome to ${dest.title}! This destination is located at coordinates ${dest.lat}, ${dest.lng}.`,
+                    },
+                  ],
+                },
+              ],
+            }
+
+            // If we have country data, try to find and link the country relation
+            if (dest.locationData?.tempCountryData?.countryCode) {
+              const countryCode = dest.locationData.tempCountryData.countryCode
+              
+              // Find country by code
+              const country = await payload.find({
+                collection: 'countries',
+                where: {
+                  code: { equals: countryCode },
+                },
+                limit: 1,
+              })
+
+              if (country.docs.length > 0) {
+                destData.countryRelation = country.docs[0].id
+                
+                // Also set currency and language relations if available
+                if (country.docs[0].currencies && country.docs[0].currencies.length > 0) {
+                  destData.currencyRelation = country.docs[0].currencies[0]
+                }
+                
+                if (country.docs[0].languages && country.docs[0].languages.length > 0) {
+                  destData.languagesRelation = country.docs[0].languages
+                }
+              }
+            }
+
+            // Create the destination
+            const created = await payload.create({
+              collection: 'destinations',
+              data: destData,
+            })
+
+            // Skip AI content generation for now since the module is not available
+            // This can be added back later when the AI content generator is implemented
+
+            results.created++
+            results.destinations.push({
+              id: created.id,
+              title: created.title,
+              slug: created.slug,
+            })
+          } catch (error) {
+            console.error('Error creating destination:', error)
+            results.errors.push(
+              `Failed to create "${dest.title}": ${error instanceof Error ? error.message : 'Unknown error'}`
+            )
           }
-        }
-
-        results.push({
-          name: destinationName,
-          id: newDestination.id,
-          status: 'created',
-          placeDetails: placeDetails ? {
-            coordinates: placeDetails.coordinates,
-            country: placeDetails.country,
-            region: placeDetails.region
-          } : null
         })
-
-      } catch (error) {
-        console.error(`Error creating destination ${destinationName}:`, error)
-        errors.push({
-          name: destinationName,
-          error: error instanceof Error ? error.message : 'Unknown error'
-        })
-      }
+      )
     }
 
     return NextResponse.json({
-      success: errors.length === 0,
-      created: results.length,
-      failed: errors.length,
-      results,
-      errors
+      created: results.created,
+      errors: results.errors,
+      destinations: results.destinations,
+      message: `Successfully created ${results.created} of ${destinations.length} destinations`,
     })
-
   } catch (error) {
-    console.error('Error in bulk destination creation:', error)
+    console.error('Bulk create error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        error: 'Failed to process bulk creation',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
     )
   }

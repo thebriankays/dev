@@ -1,6 +1,5 @@
 import type { CollectionConfig } from 'payload'
 import { slugField } from '@/fields/slug'
-// import { glassCollectionComponents } from '@/components/admin/collectionOverrides'
 
 export const TravelItineraries: CollectionConfig = {
   slug: 'travel-itineraries',
@@ -15,7 +14,20 @@ export const TravelItineraries: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'status', 'travelDates', 'createdAt'],
-    // components: glassCollectionComponents,
+    components: {
+      views: {
+        edit: {
+          viewItinerary: {
+            Component: '@/components/admin/ItineraryView',
+            path: '/view-itinerary',
+            tab: {
+              label: 'View Itinerary',
+              order: 200,
+            },
+          },
+        },
+      },
+    },
   },
 
   fields: [
@@ -136,6 +148,9 @@ export const TravelItineraries: CollectionConfig = {
         },
         {
           label: 'Story Chapters',
+          admin: {
+            condition: (data) => data?.enable3DStorytelling,
+          },
           fields: [
             {
               name: 'storyChapters',
@@ -174,40 +189,10 @@ export const TravelItineraries: CollectionConfig = {
                   },
                 },
                 {
-                  name: 'locationType',
-                  type: 'radio',
-                  defaultValue: 'coordinates',
-                  options: [
-                    { label: 'Search for Location', value: 'search' },
-                    { label: 'Enter Coordinates', value: 'coordinates' },
-                    { label: 'Use Destination', value: 'destination' },
-                  ],
-                },
-                {
-                  name: 'locationSearch',
-                  type: 'text',
-                  admin: {
-                    placeholder: 'e.g., Eiffel Tower, Paris',
-                    condition: (data, siblingData) => siblingData?.locationType === 'search',
-                    description: 'Search for a place (we\'ll fetch coordinates)',
-                    components: {
-                      afterInput: ['@/components/admin/GeocodeLocationButton'],
-                    },
-                  },
-                },
-                {
-                  name: 'destination',
-                  type: 'relationship',
-                  relationTo: 'destinations',
-                  admin: {
-                    condition: (data, siblingData) => siblingData?.locationType === 'destination',
-                  },
-                },
-                {
                   name: 'coordinates',
                   type: 'group',
                   admin: {
-                    condition: (data, siblingData) => siblingData?.locationType === 'coordinates',
+                    description: 'Location coordinates (set via map above)',
                   },
                   fields: [
                     {
@@ -310,7 +295,7 @@ export const TravelItineraries: CollectionConfig = {
                   type: 'group',
                   label: 'Camera Settings',
                   admin: {
-                    description: 'Optional: Override automatic camera positioning',
+                    description: 'Set via the 3D map interface above',
                   },
                   fields: [
                     {
@@ -461,42 +446,32 @@ export const TravelItineraries: CollectionConfig = {
   ],
 
   indexes: [
-    // Unique slug
     {
       fields: ['slug'],
       unique: true,
     },
-    // For filtering by status
     {
       fields: ['status'],
     },
-    // For user's itineraries
     {
       fields: ['user', 'status'],
     },
-    // For date-based queries
     {
       fields: ['travelDates.startDate'],
     },
     {
       fields: ['travelDates.endDate'],
     },
-    // For filtering by travel preferences
     {
       fields: ['groupType', 'budgetRange'],
     },
-    // For 3D storytelling feature
     {
       fields: ['enable3DStorytelling'],
     },
-    // For share tokens
     {
       fields: ['shareToken'],
       unique: true,
-      // Note: sparse option is not supported in Payload's index type
-      // Null values will be handled by the application logic
     },
-    // Compound index for common queries
     {
       fields: ['status', 'user', 'travelDates.startDate'],
     },
@@ -521,17 +496,6 @@ export const TravelItineraries: CollectionConfig = {
         if (!data.shareToken && operation === 'create') {
           data.shareToken = Math.random().toString(36).substring(2, 15) + 
                            Math.random().toString(36).substring(2, 15)
-        }
-
-        // Geocode locations if needed
-        if (data.storyChapters && Array.isArray(data.storyChapters)) {
-          for (const chapter of data.storyChapters) {
-            if (chapter.locationType === 'search' && chapter.locationSearch && !chapter.coordinates) {
-              // In a real implementation, you would call Google Geocoding API here
-              // For now, we'll just set a flag that geocoding is needed
-              chapter._needsGeocoding = true
-            }
-          }
         }
 
         return data

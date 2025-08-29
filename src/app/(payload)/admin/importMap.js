@@ -18,7 +18,7 @@ import { SlugComponent as SlugComponent_92cc057d0a2abb4f6cf0307edf59f986 } from 
 import { HorizontalRuleFeatureClient as HorizontalRuleFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { BlocksFeatureClient as BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { CurrencyAdmin as CurrencyAdmin_160a60e658412107b5e4cd848a3b6808 } from '@/components/CurrencyAdmin'
-import { default as default_355ecf8c86a73b89c8a37a8793535e32 } from '@/components/admin/GeocodeLocationButton'
+import { default as default_43a9820c764954adef3d35ae23501cdd } from '@/components/admin/ItineraryView'
 import { default as default_ab754fc32442c02c126925d0ed04cd07 } from '@/fields/ColorPicker/ColorPickerClient'
 import { default as default_d2ac97d4deb9ea8b162d975a40d12a2b } from '@/components/admin/SeedExperienceTypesButton'
 import { default as default_1b8c3be827333680fcc442db3a4297ef } from '@/components/admin/fields/StoryChapterField/GenerateChaptersButton'
@@ -29,6 +29,7 @@ import { default as default_ff9f2acb59dabef41f6e95fb18b700d3 } from '@/component
 import { default as default_b6983606a70f3ad5a7d99132abff5d45 } from '@/components/BulkAddButton/LanguagesCell'
 import { default as default_1a10acf99c27819f1b2777d0272ed276 } from '@/components/MapCenterPicker/MapCenterPicker'
 import { default as default_a09b6f1bddcad2eace9fb2dd1d618406 } from '@/components/BulkAddButton/BulkAddButton'
+import { default as default_b4d770d1126435b598c275b3fd44fb3d } from '@/components/admin/ExploreView'
 import { LinkToDoc as LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
 import { ReindexButton as ReindexButton_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
 import { RowLabel as RowLabel_ec255a65fa6fa8d1faeb09cf35284224 } from '@/Header/RowLabel'
@@ -59,7 +60,7 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#HorizontalRuleFeatureClient": HorizontalRuleFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#BlocksFeatureClient": BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@/components/CurrencyAdmin#CurrencyAdmin": CurrencyAdmin_160a60e658412107b5e4cd848a3b6808,
-  "@/components/admin/GeocodeLocationButton#default": default_355ecf8c86a73b89c8a37a8793535e32,
+  "@/components/admin/ItineraryView#default": default_43a9820c764954adef3d35ae23501cdd,
   "@/fields/ColorPicker/ColorPickerClient#default": default_ab754fc32442c02c126925d0ed04cd07,
   "@/components/admin/SeedExperienceTypesButton#default": default_d2ac97d4deb9ea8b162d975a40d12a2b,
   "@/components/admin/fields/StoryChapterField/GenerateChaptersButton#default": default_1b8c3be827333680fcc442db3a4297ef,
@@ -70,6 +71,7 @@ export const importMap = {
   "@/components/BulkAddButton/LanguagesCell#default": default_b6983606a70f3ad5a7d99132abff5d45,
   "@/components/MapCenterPicker/MapCenterPicker#default": default_1a10acf99c27819f1b2777d0272ed276,
   "@/components/BulkAddButton/BulkAddButton#default": default_a09b6f1bddcad2eace9fb2dd1d618406,
+  "@/components/admin/ExploreView#default": default_b4d770d1126435b598c275b3fd44fb3d,
   "@payloadcms/plugin-search/client#LinkToDoc": LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634,
   "@payloadcms/plugin-search/client#ReindexButton": ReindexButton_aead06e4cbf6b2620c5c51c9ab283634,
   "@/Header/RowLabel#RowLabel": RowLabel_ec255a65fa6fa8d1faeb09cf35284224,

@@ -2536,13 +2536,10 @@ export interface TravelItinerary {
          * When this happens in the itinerary
          */
         dateTime?: string | null;
-        locationType?: ('search' | 'coordinates' | 'destination') | null;
         /**
-         * Search for a place (we'll fetch coordinates)
+         * Location coordinates (set via map above)
          */
-        locationSearch?: string | null;
-        destination?: (number | null) | Destination;
-        coordinates?: {
+        coordinates: {
           lat: number;
           lng: number;
         };
@@ -2562,7 +2559,7 @@ export interface TravelItinerary {
           showLocationMarker?: boolean | null;
         };
         /**
-         * Optional: Override automatic camera positioning
+         * Set via the 3D map interface above
          */
         cameraOptions?: {
           useCustomCamera?: boolean | null;
@@ -5089,9 +5086,6 @@ export interface TravelItinerariesSelect<T extends boolean = true> {
         title?: T;
         content?: T;
         dateTime?: T;
-        locationType?: T;
-        locationSearch?: T;
-        destination?: T;
         coordinates?:
           | T
           | {

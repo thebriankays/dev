@@ -94,35 +94,47 @@
     "@tailwindcss/typography": "^0.5.13",
     "@testing-library/react": "16.3.0",
     "@types/escape-html": "^1.0.2",
+    "@types/google.maps": "^3.58.1",
     "@types/node": "22.5.4",
     "@types/react": "19.1.8",
     "@types/react-dom": "19.1.6",
     "@types/three": "^0.179.0",
-    "@vitejs/plugin-react": "4.5.2",
+    "@vitest/ui": "2.0.3",
     "autoprefixer": "^10.4.19",
-    "copyfiles": "^2.4.1",
-    "eslint": "^9.16.0",
-    "eslint-config-next": "15.4.4",
-    "jsdom": "26.1.0",
-    "playwright": "1.54.1",
-    "playwright-core": "1.54.1",
+    "eslint": "9.16.0",
+    "eslint-config-next": "^15.0.4",
+    "eslint-plugin-payload": "^0.13.0",
+    "eslint-plugin-react": "^7.34.2",
+    "glslify-loader": "^2.0.0",
+    "payload-admin-bar": "^1.0.6",
     "postcss": "^8.4.38",
-    "prettier": "^3.4.2",
+    "prettier": "^3.2.5",
     "raw-loader": "^4.0.2",
+    "sass": "^1.77.2",
     "tailwindcss": "^3.4.3",
-    "typescript": "5.7.3",
-    "vite-tsconfig-paths": "5.1.4",
-    "vitest": "3.2.3"
+    "typescript": "5.5.4",
+    "vitest": "2.0.3"
   },
   "engines": {
-    "node": "^18.20.2 || >=20.9.0",
-    "pnpm": "^9 || ^10"
+    "node": "^18.20.2 || ^20.9.0 || ^22.11.0 || >=23.0.0"
   },
   "pnpm": {
-    "onlyBuiltDependencies": [
-      "sharp",
-      "esbuild",
-      "unrs-resolver"
-    ]
-  }
+    "overrides": {
+      "@lexical/table": "0.21.1",
+      "@lexical/react": "0.21.1",
+      "@lexical/selection": "0.21.1",
+      "@lexical/utils": "0.21.1",
+      "lexical": "0.21.1"
+    },
+    "peerDependencyRules": {
+      "allowedVersions": {
+        "react": "19.x",
+        "react-dom": "19.x"
+      },
+      "ignoreMissing": [
+        "webpack"
+      ]
+    }
+  },
+  "packageManager": "pnpm@9.15.3"
 }
