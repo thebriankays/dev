@@ -53,9 +53,13 @@ export function SharedCanvas({
           onCreated={(state) => {
             const { gl } = state
             gl.setClearColor(0x000000, 0)
-            gl.autoClear = false // Keep disabled to preserve background
+            gl.autoClear = true // Let R3F handle clearing by default
+            gl.autoClearColor = false // But don't clear color buffer
+            gl.autoClearDepth = true // Clear depth for proper layering
+            gl.autoClearStencil = false
             gl.outputColorSpace = THREE.SRGBColorSpace
             gl.toneMapping = THREE.NoToneMapping
+            
             // Store R3F state globally for invalidation
             ;(window as any).__r3f = state
           }}
@@ -79,7 +83,7 @@ export function SharedCanvas({
           {/* Background gradient - render first so it's behind everything */}
           {background === 'whatamesh' && <WhatameshBackground {...backgroundProps} />}
           
-          {/* Custom renderer to preserve background while handling View clearing */}
+          {/* Preserve background when rendering Views */}
           <PreserveBackgroundRenderer />
           
           <FlowmapProvider>

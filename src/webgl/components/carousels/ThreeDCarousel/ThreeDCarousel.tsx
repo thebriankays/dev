@@ -7,6 +7,7 @@ import { Image, useTexture } from '@react-three/drei'
 import { easing } from 'maath'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { useAnimation } from '@/providers/Animation'
 import './util' // This ensures extend() is called
 import type { BentPlaneGeometry, MeshSineMaterial } from './util'
 import type { Media } from '@/payload-types'
@@ -58,32 +59,35 @@ export function ThreeDCarousel({
 function Rig(props: { children: React.ReactNode; rotation: [number, number, number]; scale?: number }) {
   const ref = useRef<THREE.Group>(null)
   const { gl } = useThree()
+  const { lenis } = useAnimation()
   const [isDragging, setIsDragging] = useState(false)
   const dragStartX = useRef(0)
   const dragOffset = useRef(0)
   const scrollProgress = useRef(0)
   const currentRotation = useRef(0)
   
-  // Setup GSAP ScrollTrigger
+  // Setup scroll handling
   useEffect(() => {
-    const trigger = ScrollTrigger.create({
-      trigger: document.body,
-      scroller: document.body,
-      start: 'top top',
-      end: '+=400%', // 4 pages of scroll as per scrollPages prop
-      scrub: 1,
-      onUpdate: (self) => {
-        scrollProgress.current = self.progress * Math.PI * 4 // 2 full rotations
-        if (!isDragging && ref.current) {
-          currentRotation.current = scrollProgress.current + dragOffset.current
-        }
+    if (!lenis) return
+    
+    const handleScroll = () => {
+      // Get scroll progress (0-1) based on total scrollable height
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight
+      const progress = lenis.scroll / scrollHeight
+      
+      // Convert to rotation (2 full rotations over the scroll distance)
+      scrollProgress.current = progress * Math.PI * 4
+      if (!isDragging && ref.current) {
+        currentRotation.current = scrollProgress.current + dragOffset.current
       }
-    })
+    }
+    
+    lenis.on('scroll', handleScroll)
     
     return () => {
-      trigger.kill()
+      lenis.off('scroll', handleScroll)
     }
-  }, [isDragging])
+  }, [lenis, isDragging])
   
   // Drag handling
   useEffect(() => {

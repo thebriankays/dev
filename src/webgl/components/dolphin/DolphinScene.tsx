@@ -76,15 +76,13 @@ export function DolphinScene({
   const waterRef = useRef<Water>(null)
   const { gl, scene, camera, viewport, size } = useThree()
   
-  // Debug camera and viewport
+  // Initialize scene
   useEffect(() => {
-    console.log('DolphinScene debug:', {
-      camera: camera.type,
-      viewport,
-      size,
-      isPerspective: camera.isPerspectiveCamera
-    })
-  }, [camera, viewport, size])
+    // Ensure the scene uses its own camera and not the parent orthographic camera
+    return () => {
+      // Cleanup
+    }
+  }, [])
   
   const {
     cameraDistance = 162,
@@ -150,27 +148,13 @@ export function DolphinScene({
   }, [gl])
 
   useFrame((state, delta) => {
-    if (waterRef.current) {
+    if (waterRef.current && waterRef.current.material && waterRef.current.material.uniforms) {
       waterRef.current.material.uniforms.time.value += delta
     }
   })
 
   return (
     <>
-      {/* Set scene background to create sky color */}
-      <color attach="background" args={['#87CEEB']} />
-      
-      {/* Debug mesh to ensure scene is rendering */}
-      <mesh position={[0, 20, 0]}>
-        <boxGeometry args={[40, 40, 40]} />
-        <meshStandardMaterial color="red" wireframe />
-      </mesh>
-      
-      {/* Additional debug sphere */}
-      <mesh position={[50, 20, 0]}>
-        <sphereGeometry args={[20, 32, 16]} />
-        <meshStandardMaterial color="yellow" />
-      </mesh>
       
       <PerspectiveCamera
         makeDefault
@@ -205,7 +189,9 @@ export function DolphinScene({
         rayleigh={2}
         mieCoefficient={0.005}
         mieDirectionalG={0.8}
-        sunPosition={[0, Math.PI / 180 * sunElevation, Math.PI]}
+        sunPosition={[100, 20, 100]}
+        inclination={0.6}
+        azimuth={0.25}
       />
 
       {/* @ts-ignore - Water is extended but TypeScript doesn't know */}
@@ -217,11 +203,12 @@ export function DolphinScene({
             textureWidth: 512,
             textureHeight: 512,
             waterNormals,
-            sunDirection: new THREE.Vector3(),
+            sunDirection: new THREE.Vector3(0.7, 0.7, 0),
             sunColor: 0xffffff,
             waterColor: new THREE.Color(waterColor).getHex(),
             distortionScale: 3.7,
-            fog: scene.fog !== undefined,
+            fog: false,
+            alpha: 0.9,
           }
         ]}
         position={[0, -5, 0]}

@@ -125,8 +125,8 @@ export function Whatamesh({
       vertexShader,
       fragmentShader,
       transparent: false,
-      depthWrite: true,
-      depthTest: true,
+      depthWrite: false,
+      depthTest: false,
     })
   }, []) // Empty dependency array - create material only once
   
@@ -200,9 +200,10 @@ export function Whatamesh({
   return (
     <mesh 
       ref={meshRef}
-      position={[0, 0, -1000]} // Position far behind content
+      position={[0, 0, -2000]} // Position far behind content
       scale={meshScale as [number, number, number]}
-      renderOrder={-1000} // Ensure it renders first
+      renderOrder={-9999} // Ensure it renders first
+      frustumCulled={false} // Always render
     >
       <planeGeometry args={[1, 1, segments[0], segments[1]]} />
       <primitive object={material} attach="material" />
