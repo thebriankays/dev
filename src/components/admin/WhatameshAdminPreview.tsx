@@ -4,6 +4,7 @@ import React, { useRef, useEffect, useState } from 'react'
 import { useFormFields, useForm } from '@payloadcms/ui'
 import type { GroupFieldClientComponent } from 'payload'
 import { Canvas } from '@react-three/fiber'
+import * as THREE from 'three'
 import { Whatamesh } from '@/webgl/components/backgrounds/Whatamesh'
 import GradientPresetSelector from '../GradientPresetSelector/GradientPresetSelector'
 
@@ -52,8 +53,7 @@ export const WhatameshAdminPreview: GroupFieldClientComponent = ({ field, path }
   
   // Read the current whatamesh settings from the form
   const formFields = useFormFields((fields) => {
-    const bgType = (fields as any)?.['background.type']?.value
-    const whatameshData = (fields as any)?.['background.whatamesh']?.value || {}
+    const whatameshData = fields?.['background.whatamesh'] || {}
     const colors = whatameshData.colors || [
       { color: '#dca8d8' },
       { color: '#a3d3f9' },
@@ -62,7 +62,6 @@ export const WhatameshAdminPreview: GroupFieldClientComponent = ({ field, path }
     ]
     
     return {
-      bgType,
       colors: colors.map((c: any) => c.color || '#000000') as string[],
       animate: whatameshData.animate !== false,
       speed: whatameshData.speed || 0.5,
@@ -73,34 +72,9 @@ export const WhatameshAdminPreview: GroupFieldClientComponent = ({ field, path }
   
   // Force Canvas re-mount when colors change
   useEffect(() => {
+    console.log('Whatamesh preview colors changed:', formFields.colors)
     setCanvasKey(prev => prev + 1)
   }, [formFields.colors.join(',')])
-  
-  // Set CSS variables on document.documentElement so Whatamesh can read them
-  useEffect(() => {
-    const root = document.documentElement
-    
-    // Store original values to restore later
-    const originalColors: string[] = []
-    for (let i = 1; i <= 4; i++) {
-      const varName = `--gradient-color-${i}`
-      originalColors.push(getComputedStyle(root).getPropertyValue(varName))
-    }
-    
-    // Set the new colors
-    formFields.colors.forEach((color, i) => {
-      root.style.setProperty(`--gradient-color-${i + 1}`, color)
-    })
-    
-    // Cleanup: restore original colors when component unmounts
-    return () => {
-      originalColors.forEach((color, i) => {
-        if (color) {
-          root.style.setProperty(`--gradient-color-${i + 1}`, color)
-        }
-      })
-    }
-  }, [formFields.colors])
   
   const updateColor = (index: number, color: string) => {
     const newColors = formFields.colors.map((c: string, i: number) => ({ 
@@ -119,10 +93,18 @@ export const WhatameshAdminPreview: GroupFieldClientComponent = ({ field, path }
       color: getRandomColor() 
     }))
     
+    // Update colors
     dispatchFields({
       type: 'UPDATE',
       path: 'background.whatamesh.colors',
       value: newColors,
+    })
+    
+    // Also randomize seed to create more variation
+    dispatchFields({
+      type: 'UPDATE',
+      path: 'background.whatamesh.seed',
+      value: Math.floor(Math.random() * 100),
     })
   }
   
@@ -165,11 +147,18 @@ export const WhatameshAdminPreview: GroupFieldClientComponent = ({ field, path }
               height: '100%',
             }}
             frameloop="always"
+            gl={{
+              antialias: true,
+              toneMapping: THREE.NoToneMapping,
+              outputColorSpace: THREE.SRGBColorSpace,
+            }}
           >
             <Whatamesh 
               colors={formFields.colors}
-              amplitude={320 * formFields.intensity}
+              amplitude={320}
               speed={formFields.speed}
+              freqX={0.00014}
+              freqY={0.00029}
               seed={formFields.seed}
               darkenTop={false}
               shadowPower={5}

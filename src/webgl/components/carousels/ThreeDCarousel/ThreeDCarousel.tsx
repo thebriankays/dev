@@ -3,11 +3,15 @@
 import * as THREE from 'three'
 import { useRef, useState, useEffect } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
-import { Image, Environment, ScrollControls, useScroll, useTexture } from '@react-three/drei'
+import { Image, useTexture } from '@react-three/drei'
 import { easing } from 'maath'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import './util' // This ensures extend() is called
 import type { BentPlaneGeometry, MeshSineMaterial } from './util'
 import type { Media } from '@/payload-types'
+
+gsap.registerPlugin(ScrollTrigger)
 
 interface ThreeDCarouselProps {
   items: Array<{
@@ -41,45 +45,66 @@ export function ThreeDCarousel({
   }
 
   return (
-    <group position={[0, 0, -500]}>
-      {/* Position far back to not interfere with other content */}
-      <ScrollControls pages={scrollPages} infinite>
-        <Rig rotation={[0, 0, 0.15]} scale={50}>
-          <Carousel images={images} radius={radius} />
-        </Rig>
-        {showBanner && <Banner position={[0, -7.5, 0]} scale={50} bannerImage={bannerImage} />}
-      </ScrollControls>
+    <group position={[0, 0, -300]} renderOrder={1}>
+      {/* Position back and set render order to ensure proper layering */}
+      <Rig rotation={[0, 0, 0.15]} scale={150}>
+        <Carousel images={images} radius={radius} />
+      </Rig>
+      {showBanner && <Banner position={[0, -37.5, 0]} scale={150} bannerImage={bannerImage} />}
     </group>
   )
 }
 
 function Rig(props: { children: React.ReactNode; rotation: [number, number, number]; scale?: number }) {
   const ref = useRef<THREE.Group>(null)
-  const scroll = useScroll()
-  const { gl, size } = useThree()
+  const { gl } = useThree()
   const [isDragging, setIsDragging] = useState(false)
   const dragStartX = useRef(0)
-  const dragStartRotation = useRef(0)
-  const targetRotation = useRef(0)
+  const dragOffset = useRef(0)
+  const scrollProgress = useRef(0)
+  const currentRotation = useRef(0)
   
+  // Setup GSAP ScrollTrigger
+  useEffect(() => {
+    const trigger = ScrollTrigger.create({
+      trigger: document.body,
+      scroller: document.body,
+      start: 'top top',
+      end: '+=400%', // 4 pages of scroll as per scrollPages prop
+      scrub: 1,
+      onUpdate: (self) => {
+        scrollProgress.current = self.progress * Math.PI * 4 // 2 full rotations
+        if (!isDragging && ref.current) {
+          currentRotation.current = scrollProgress.current + dragOffset.current
+        }
+      }
+    })
+    
+    return () => {
+      trigger.kill()
+    }
+  }, [isDragging])
+  
+  // Drag handling
   useEffect(() => {
     const canvas = gl.domElement
     
     const handlePointerDown = (e: PointerEvent) => {
-      setIsDragging(true)
-      dragStartX.current = e.clientX
-      if (ref.current) {
-        dragStartRotation.current = ref.current.rotation.y
+      if (e.button === 0) {
+        setIsDragging(true)
+        dragStartX.current = e.clientX
+        canvas.style.cursor = 'grabbing'
       }
-      canvas.style.cursor = 'grabbing'
     }
     
     const handlePointerMove = (e: PointerEvent) => {
-      if (!isDragging || !ref.current) return
+      if (!isDragging) return
       
       const deltaX = e.clientX - dragStartX.current
-      const rotationSpeed = 0.01
-      targetRotation.current = dragStartRotation.current + (deltaX * rotationSpeed)
+      const rotationDelta = (deltaX / window.innerWidth) * Math.PI * 2
+      dragOffset.current += rotationDelta
+      dragStartX.current = e.clientX
+      currentRotation.current = scrollProgress.current + dragOffset.current
     }
     
     const handlePointerUp = () => {
@@ -87,28 +112,32 @@ function Rig(props: { children: React.ReactNode; rotation: [number, number, numb
       canvas.style.cursor = 'grab'
     }
     
+    canvas.style.cursor = 'grab'
     canvas.addEventListener('pointerdown', handlePointerDown)
     window.addEventListener('pointermove', handlePointerMove)
     window.addEventListener('pointerup', handlePointerUp)
+    window.addEventListener('pointerleave', handlePointerUp)
     
     return () => {
       canvas.removeEventListener('pointerdown', handlePointerDown)
       window.removeEventListener('pointermove', handlePointerMove)
       window.removeEventListener('pointerup', handlePointerUp)
+      window.removeEventListener('pointerleave', handlePointerUp)
     }
   }, [gl, isDragging])
   
   useFrame((state, delta) => {
     if (ref.current) {
-      if (isDragging) {
-        // Apply drag rotation
-        easing.damp(ref.current.rotation, 'y', targetRotation.current, 0.2, delta)
-      } else {
-        // Apply scroll rotation
-        ref.current.rotation.y = -scroll.offset * (Math.PI * 2)
-      }
+      // Smoothly interpolate to target rotation
+      easing.damp(
+        ref.current.rotation,
+        'y',
+        -currentRotation.current, // Negative for correct rotation direction
+        0.1,
+        delta
+      )
     }
-    state.events.update?.() // Raycasts every frame rather than on pointer-move
+    state.events.update?.() // Raycasts every frame
   })
   
   return <group ref={ref} {...props} />
@@ -203,11 +232,9 @@ function Banner({ position, bannerImage, scale = 1 }: BannerProps) {
   const texture = useTexture(textureUrl)
   texture.wrapS = texture.wrapT = THREE.RepeatWrapping
   
-  const scroll = useScroll()
-  
   useFrame((state, delta) => {
     if (ref.current && ref.current.material) {
-      ref.current.material.time.value += Math.abs(scroll.delta) * 4
+      ref.current.material.time.value += delta * 4
       ref.current.material.map.offset.x += delta / 2
     }
   })

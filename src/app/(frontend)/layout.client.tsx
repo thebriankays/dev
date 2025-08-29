@@ -31,6 +31,7 @@ export function ClientLayout({ children, siteSettings }: ClientLayoutProps) {
       <SharedCanvas 
         render={true} 
         postprocessing={false}
+        interactive={true}
         background={backgroundType as 'whatamesh' | 'none'}
         backgroundProps={backgroundProps}
       />

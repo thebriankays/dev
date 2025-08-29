@@ -61,9 +61,10 @@ export function Dolphin({ curve, delay = 0, index, animationSpeed = 3 }: Dolphin
       dataArray,
       numPoints + 1,
       4,
-      THREE.RGBFormat,
+      THREE.RGBAFormat,
       THREE.FloatType
     )
+    tex.internalFormat = 'RGBA32F'
     tex.magFilter = THREE.NearestFilter
     tex.needsUpdate = true
 

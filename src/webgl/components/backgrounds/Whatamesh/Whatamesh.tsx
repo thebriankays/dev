@@ -202,7 +202,7 @@ export function Whatamesh({
       ref={meshRef}
       position={[0, 0, -1000]} // Position far behind content
       scale={meshScale as [number, number, number]}
-      renderOrder={-1} // Ensure it renders first
+      renderOrder={-1000} // Ensure it renders first
     >
       <planeGeometry args={[1, 1, segments[0], segments[1]]} />
       <primitive object={material} attach="material" />

@@ -146,8 +146,26 @@ export function DolphinScene({
   })
 
   return (
-    <group position={[0, -50, -200]} scale={2}>
-      {/* Position the scene appropriately for orthographic camera */}
+    <>
+      <PerspectiveCamera
+        makeDefault
+        position={[3.159, 12.559, cameraDistance]}
+        rotation={[-0.0157, 0.0194, 0.0003]}
+        fov={55}
+        near={1}
+        far={20000}
+      />
+      
+      {enableOrbitControls && (
+        <OrbitControls
+          maxPolarAngle={Math.PI * 0.495}
+          target={[0, 10, 0]}
+          minDistance={40}
+          maxDistance={200}
+          autoRotate={autoRotate}
+          autoRotateSpeed={rotationSpeed}
+        />
+      )}
 
       <ambientLight intensity={0.6} />
 
@@ -190,6 +208,6 @@ export function DolphinScene({
           />
         ))}
       </Suspense>
-    </group>
+    </>
   )
 }

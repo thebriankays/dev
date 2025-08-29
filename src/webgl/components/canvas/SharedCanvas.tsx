@@ -52,7 +52,7 @@ export function SharedCanvas({
           onCreated={(state) => {
             const { gl } = state
             gl.setClearColor(0x000000, 0)
-            gl.autoClear = true
+            gl.autoClear = false // Don't auto clear to preserve background
             gl.outputColorSpace = THREE.SRGBColorSpace
             gl.toneMapping = THREE.NoToneMapping
             // Store R3F state globally for invalidation
