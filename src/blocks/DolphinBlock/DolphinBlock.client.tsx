@@ -8,11 +8,13 @@ export const DolphinBlockClient: React.FC<
   Pick<DolphinBlockProps, 'sceneSettings' | 'dolphins' | 'interaction' | 'webglEffects'>
 > = ({ sceneSettings, dolphins, interaction, webglEffects }) => {
   return (
-    <DolphinScene
-      sceneSettings={sceneSettings}
-      dolphins={dolphins}
-      interaction={interaction}
-      webglEffects={webglEffects}
-    />
+    <group>
+      <DolphinScene
+        sceneSettings={sceneSettings}
+        dolphins={dolphins}
+        interaction={interaction}
+        webglEffects={webglEffects}
+      />
+    </group>
   )
 }

@@ -10,6 +10,7 @@ import { PostProcessing } from '../postprocessing'
 import { RAF } from '../raf'
 import { Preload } from '../preload'
 import { WhatameshBackground } from '../backgrounds/Whatamesh'
+import { PreserveBackgroundRenderer } from './PreserveBackgroundRenderer'
 import './canvas.scss'
 
 interface SharedCanvasProps {
@@ -52,7 +53,7 @@ export function SharedCanvas({
           onCreated={(state) => {
             const { gl } = state
             gl.setClearColor(0x000000, 0)
-            gl.autoClear = false // Don't auto clear to preserve background
+            gl.autoClear = false // Keep disabled to preserve background
             gl.outputColorSpace = THREE.SRGBColorSpace
             gl.toneMapping = THREE.NoToneMapping
             // Store R3F state globally for invalidation
@@ -77,6 +78,10 @@ export function SharedCanvas({
           
           {/* Background gradient - render first so it's behind everything */}
           {background === 'whatamesh' && <WhatameshBackground {...backgroundProps} />}
+          
+          {/* Custom renderer to preserve background while handling View clearing */}
+          <PreserveBackgroundRenderer />
+          
           <FlowmapProvider>
             <View.Port />
             <Suspense fallback={null}>

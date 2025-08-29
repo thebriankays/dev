@@ -53,7 +53,12 @@ export const WhatameshAdminPreview: GroupFieldClientComponent = ({ field, path }
   
   // Read the current whatamesh settings from the form
   const formFields = useFormFields((fields) => {
-    const whatameshData = fields?.['background.whatamesh'] || {}
+    // Debug log to see the field structure
+    console.log('Form fields structure:', fields)
+    
+    // Access nested fields correctly
+    const backgroundData = fields?.background || {}
+    const whatameshData = backgroundData?.whatamesh || {}
     const colors = whatameshData.colors || [
       { color: '#dca8d8' },
       { color: '#a3d3f9' },

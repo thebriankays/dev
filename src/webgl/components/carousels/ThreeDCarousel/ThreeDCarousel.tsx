@@ -47,10 +47,10 @@ export function ThreeDCarousel({
   return (
     <group position={[0, 0, -300]} renderOrder={1}>
       {/* Position back and set render order to ensure proper layering */}
-      <Rig rotation={[0, 0, 0.15]} scale={150}>
+      <Rig rotation={[0, 0, 0.15]} scale={120}>
         <Carousel images={images} radius={radius} />
       </Rig>
-      {showBanner && <Banner position={[0, -37.5, 0]} scale={150} bannerImage={bannerImage} />}
+      {showBanner && <Banner position={[0, -30, 0]} scale={120} bannerImage={bannerImage} />}
     </group>
   )
 }

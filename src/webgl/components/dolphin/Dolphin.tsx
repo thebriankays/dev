@@ -43,17 +43,18 @@ export function Dolphin({ curve, delay = 0, index, animationSpeed = 3 }: Dolphin
     const cObjects = curve.computeFrenetFrames(numPoints, true)
 
     const data: number[] = []
+    // For RGBA format, we need 4 values per pixel
     cPoints.forEach((v) => {
-      data.push(v.x, v.y, v.z)
+      data.push(v.x, v.y, v.z, 1.0)
     })
     cObjects.binormals.forEach((v) => {
-      data.push(v.x, v.y, v.z)
+      data.push(v.x, v.y, v.z, 1.0)
     })
     cObjects.normals.forEach((v) => {
-      data.push(v.x, v.y, v.z)
+      data.push(v.x, v.y, v.z, 1.0)
     })
     cObjects.tangents.forEach((v) => {
-      data.push(v.x, v.y, v.z)
+      data.push(v.x, v.y, v.z, 1.0)
     })
 
     const dataArray = new Float32Array(data)

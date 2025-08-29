@@ -125,8 +125,8 @@ export function Whatamesh({
       vertexShader,
       fragmentShader,
       transparent: false,
-      depthWrite: false,
-      depthTest: false,
+      depthWrite: true,
+      depthTest: true,
     })
   }, []) // Empty dependency array - create material only once
   

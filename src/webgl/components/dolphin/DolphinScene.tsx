@@ -74,7 +74,17 @@ export function DolphinScene({
   webglEffects = {}
 }: DolphinSceneProps) {
   const waterRef = useRef<Water>(null)
-  const { gl, scene } = useThree()
+  const { gl, scene, camera, viewport, size } = useThree()
+  
+  // Debug camera and viewport
+  useEffect(() => {
+    console.log('DolphinScene debug:', {
+      camera: camera.type,
+      viewport,
+      size,
+      isPerspective: camera.isPerspectiveCamera
+    })
+  }, [camera, viewport, size])
   
   const {
     cameraDistance = 162,
@@ -147,6 +157,21 @@ export function DolphinScene({
 
   return (
     <>
+      {/* Set scene background to create sky color */}
+      <color attach="background" args={['#87CEEB']} />
+      
+      {/* Debug mesh to ensure scene is rendering */}
+      <mesh position={[0, 20, 0]}>
+        <boxGeometry args={[40, 40, 40]} />
+        <meshStandardMaterial color="red" wireframe />
+      </mesh>
+      
+      {/* Additional debug sphere */}
+      <mesh position={[50, 20, 0]}>
+        <sphereGeometry args={[20, 32, 16]} />
+        <meshStandardMaterial color="yellow" />
+      </mesh>
+      
       <PerspectiveCamera
         makeDefault
         position={[3.159, 12.559, cameraDistance]}
@@ -168,6 +193,11 @@ export function DolphinScene({
       )}
 
       <ambientLight intensity={0.6} />
+      <directionalLight 
+        position={[100, 100, 100]} 
+        intensity={1} 
+        castShadow 
+      />
 
       <Sky
         distance={10000}
@@ -194,6 +224,7 @@ export function DolphinScene({
             fog: scene.fog !== undefined,
           }
         ]}
+        position={[0, -5, 0]}
         rotation-x={-Math.PI / 2}
       />
 

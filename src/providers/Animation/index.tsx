@@ -72,7 +72,6 @@ export function AnimationProvider({ children }: { children: ReactNode }) {
   const tempusRef = useRef<Tempus | null>(null)
   const scrollRef = useRef(0)
   const velocityRef = useRef(0)
-  const [, forceUpdate] = React.useReducer(x => x + 1, 0)
   
   // Create a default requestRender function
   const requestRenderRef = useRef<() => void>(() => {})
@@ -145,7 +144,6 @@ export function AnimationProvider({ children }: { children: ReactNode }) {
       lenisRef.current?.raf(time)
       hamoRef.current?.update(time)
       tempusRef.current?.update(time)
-      forceUpdate()
       requestAnimationFrame(raf)
     }
 
