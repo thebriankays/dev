@@ -41,7 +41,8 @@ export function ThreeDCarousel({
   }
 
   return (
-    <group position={[0, 0, -100]}>
+    <group position={[0, 0, -500]}>
+      {/* Position far back to not interfere with other content */}
       <ScrollControls pages={scrollPages} infinite>
         <Rig rotation={[0, 0, 0.15]} scale={50}>
           <Carousel images={images} radius={radius} />
