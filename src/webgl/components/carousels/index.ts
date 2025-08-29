@@ -1,4 +1,4 @@
-export { WebGLCarousel } from './WebGLCarousel'
+export { default as WebGLCarousel } from './WebGLCarousel'
 export { ThreeDCarousel } from './ThreeDCarousel'
 
 export type {
