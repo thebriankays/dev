@@ -56,7 +56,7 @@ export function Storytelling({ itinerary }: StorytellingProps) {
     )
   }
   const mapContainerRef = useRef<HTMLDivElement>(null)
-  const mapInstance = useRef<google.maps.Map | null>(null)
+  const mapInstance = useRef<any>(null) // Map3DElement type
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0)
   const [status, setStatus] = useState('loading')
@@ -92,20 +92,27 @@ export function Storytelling({ itinerary }: StorytellingProps) {
     if (!mapInstance.current) return
     
     setCurrentChapterIndex(index)
-    const map = mapInstance.current
+    const map = mapInstance.current as any // Map3DElement type
     const chapter = chapters[index]
     const location = chapter.location || chapter.coordinates
     
     if (location) {
-      // Animate camera to chapter location
+      // Animate camera to chapter location (Map3DElement uses properties, not methods)
+      // Add altitude to location for Map3DElement
+      const locationWithAltitude = {
+        lat: location.lat,
+        lng: location.lng,
+        altitude: 0
+      }
+      
       gsap.to({}, {
         duration: 2,
         ease: 'power2.inOut',
         onUpdate: function() {
-          map.setCenter(location)
-          map.setZoom(chapter.camera?.zoom || 17)
-          map.setTilt(chapter.camera?.tilt || 65)
-          map.setHeading(chapter.camera?.heading || 0)
+          map.center = locationWithAltitude
+          map.range = chapter.camera?.range || 1500 // Use range for 3D instead of zoom
+          map.tilt = chapter.camera?.tilt || 65
+          map.heading = chapter.camera?.heading || 0
         }
       })
     }
@@ -149,34 +156,41 @@ export function Storytelling({ itinerary }: StorytellingProps) {
         console.log('Loading Google Maps libraries...')
         const loader = new Loader({
           apiKey,
-          version: 'weekly',
-          libraries: ['marker', 'places'],
+          version: 'alpha', // Required for 3D photorealistic tiles
+          libraries: ['maps3d', 'marker'], // maps3d for Map3DElement
           mapIds: mapId ? [mapId] : []
         })
 
         await loader.load()
         console.log('Google Maps libraries loaded')
         
+        // Load maps3d for Map3DElement and marker library
+        const { Map3DElement } = await google.maps.importLibrary("maps3d") as any
         const { AdvancedMarkerElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary
-        console.log('Marker library loaded')
+        console.log('Maps3d and Marker libraries loaded')
 
         const firstChapter = chapters[0]
         const initialLocation = firstChapter.location || firstChapter.coordinates || { lat: 48.8584, lng: 2.2945 }
-        console.log('Initial location:', initialLocation)
+        // Add altitude property for Map3DElement
+        const centerWithAltitude = {
+          lat: initialLocation.lat,
+          lng: initialLocation.lng,
+          altitude: 0
+        }
+        console.log('Initial location with altitude:', centerWithAltitude)
 
-        // Create standard Google Maps with 3D tiles
-        console.log('Creating map instance...')
-        const map = new google.maps.Map(mapContainerRef.current, {
-          center: initialLocation,
-          zoom: firstChapter.camera?.zoom || 17,
+        // Use Map3DElement for real 3D photorealistic tiles
+        console.log('Creating Map3DElement instance...')
+        const map = new Map3DElement({
+          center: centerWithAltitude,
+          range: 1500, // Use range instead of zoom for 3D
           tilt: firstChapter.camera?.tilt || 65,
           heading: firstChapter.camera?.heading || 0,
-          mapId: mapId || '', // Enables 3D tiles
-          disableDefaultUI: true,
-          gestureHandling: 'greedy',
-          tiltInteractionEnabled: true,
-          headingInteractionEnabled: true,
+          mapId: mapId || '',
         })
+        
+        // Append Map3DElement to container
+        mapContainerRef.current.appendChild(map)
 
         mapInstance.current = map
         console.log('Map created successfully:', map)
@@ -232,6 +246,10 @@ export function Storytelling({ itinerary }: StorytellingProps) {
     return () => {
       mounted = false;
       clearMarkers()
+      // Clean up Map3DElement if it exists
+      if (mapInstance.current && mapContainerRef.current && mapContainerRef.current.contains(mapInstance.current)) {
+        mapContainerRef.current.removeChild(mapInstance.current)
+      }
     }
   }, []) // Run once on mount
 

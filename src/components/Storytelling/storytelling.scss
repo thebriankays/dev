@@ -40,6 +40,22 @@
     z-index: 100;
   }
 
+  /* Info Panel */
+  &__panel {
+    position: absolute;
+    bottom: 30px;
+    left: 30px;
+    background: rgba(0, 0, 0, 0.9);
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 400px;
+    color: white;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    z-index: 500;
+    pointer-events: auto;
+  }
+
   /* Cover Page */
   &__cover {
     width: 100vw;
@@ -151,14 +167,69 @@
 
   /* Controls */
   &__controls {
-    position: absolute;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
+    margin-top: 20px;
     display: flex;
-    gap: 12px;
-    align-items: center;
-    z-index: 30;
+    gap: 10px;
+    position: relative;
+    z-index: 501;
+  }
+
+  &__control-btn {
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    pointer-events: auto;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    &--play {
+      background: #4285f4;
+      border-color: #4285f4;
+
+      &:hover {
+        background: #357ae8;
+      }
+    }
+  }
+
+  /* Timeline */
+  &__timeline {
+    margin-top: 20px;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    position: relative;
+    z-index: 501;
+  }
+
+  &__timeline-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    padding: 0;
+    pointer-events: auto;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.5);
+      transform: scale(1.2);
+    }
+
+    &--active {
+      background: #4285f4;
+      transform: scale(1.5);
+    }
   }
 
   &__control-btn {

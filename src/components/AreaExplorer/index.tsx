@@ -90,13 +90,8 @@ export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
 
     return () => {
       mounted = false;
-      // Clean up map instance
-      if (map) {
-        // Google Maps doesn't have a destroy method, but we can clear the container
-        if (mapContainerRef.current) {
-          mapContainerRef.current.innerHTML = ''
-        }
-      }
+      // Don't try to manipulate the DOM - just clear the reference
+      mapInstance.current = null;
     }
   }, []) // Empty dependency to run only once
 
