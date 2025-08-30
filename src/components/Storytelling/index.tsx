@@ -57,7 +57,6 @@ export function Storytelling({ itinerary }: StorytellingProps) {
   }
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<any>(null) // Map3DElement type
-  const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0)
   const [status, setStatus] = useState('loading')
   const [isPlaying, setIsPlaying] = useState(false)
@@ -75,44 +74,48 @@ export function Storytelling({ itinerary }: StorytellingProps) {
     console.log('Chapters available:', chapters.length)
   }, [status, showCover, chapters.length])
 
-  // Clear markers
-  const clearMarkers = useCallback(() => {
-    if (markersRef.current && Array.isArray(markersRef.current)) {
-      markersRef.current.forEach(marker => {
-        if (marker && marker.map) {
-          marker.map = null
-        }
-      })
-      markersRef.current = []
-    }
-  }, [])
-
   // Go to specific chapter
   const goToChapter = useCallback((index: number) => {
     if (!mapInstance.current) return
     
     setCurrentChapterIndex(index)
-    const map = mapInstance.current as any // Map3DElement type
+    const map = mapInstance.current // Map3DElement
     const chapter = chapters[index]
     const location = chapter.location || chapter.coordinates
     
     if (location) {
-      // Animate camera to chapter location (Map3DElement uses properties, not methods)
-      // Add altitude to location for Map3DElement
-      const locationWithAltitude = {
-        lat: location.lat,
-        lng: location.lng,
-        altitude: 0
+      console.log(`Navigating to chapter ${index + 1}: ${chapter.title}`, location)
+      
+      // Animate camera properties for Map3DElement
+      const cameraProps = {
+        lat: map.center?.lat || location.lat,
+        lng: map.center?.lng || location.lng,
+        range: map.range || 1500,
+        tilt: map.tilt || 65,
+        heading: map.heading || 0
       }
       
-      gsap.to({}, {
+      gsap.to(cameraProps, {
+        lat: location.lat,
+        lng: location.lng,
+        range: chapter.camera?.range || 1500,
+        tilt: chapter.camera?.tilt || 65,
+        heading: chapter.camera?.heading || 0,
         duration: 2,
         ease: 'power2.inOut',
         onUpdate: function() {
-          map.center = locationWithAltitude
-          map.range = chapter.camera?.range || 1500 // Use range for 3D instead of zoom
-          map.tilt = chapter.camera?.tilt || 65
-          map.heading = chapter.camera?.heading || 0
+          // Update Map3DElement properties during animation
+          map.center = {
+            lat: cameraProps.lat,
+            lng: cameraProps.lng,
+            altitude: 0
+          }
+          map.range = cameraProps.range
+          map.tilt = cameraProps.tilt
+          map.heading = cameraProps.heading
+        },
+        onComplete: function() {
+          console.log('Animation complete for chapter', index + 1)
         }
       })
     }
@@ -156,73 +159,61 @@ export function Storytelling({ itinerary }: StorytellingProps) {
         console.log('Loading Google Maps libraries...')
         const loader = new Loader({
           apiKey,
-          version: 'alpha', // Required for 3D photorealistic tiles
-          libraries: ['maps3d', 'marker'], // maps3d for Map3DElement
+          version: 'alpha', // Required for Map3DElement
+          libraries: ['maps3d'],
           mapIds: mapId ? [mapId] : []
         })
 
-        await loader.load()
-        console.log('Google Maps libraries loaded')
-        
-        // Load maps3d for Map3DElement and marker library
-        const { Map3DElement } = await google.maps.importLibrary("maps3d") as any
-        const { AdvancedMarkerElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary
-        console.log('Maps3d and Marker libraries loaded')
+        // Use importLibrary instead of deprecated load() method
+        const { Map3DElement } = await loader.importLibrary("maps3d") as any
+        console.log('Maps3d library loaded')
 
         const firstChapter = chapters[0]
         const initialLocation = firstChapter.location || firstChapter.coordinates || { lat: 48.8584, lng: 2.2945 }
-        // Add altitude property for Map3DElement
-        const centerWithAltitude = {
-          lat: initialLocation.lat,
-          lng: initialLocation.lng,
-          altitude: 0
-        }
-        console.log('Initial location with altitude:', centerWithAltitude)
+        console.log('Initial location:', initialLocation)
 
-        // Use Map3DElement for real 3D photorealistic tiles
+        // Create Map3DElement for photorealistic 3D tiles
         console.log('Creating Map3DElement instance...')
+        console.log('Using Map ID:', mapId)
+        
         const map = new Map3DElement({
-          center: centerWithAltitude,
-          range: 1500, // Use range instead of zoom for 3D
+          center: {
+            lat: initialLocation.lat,
+            lng: initialLocation.lng,
+            altitude: 0
+          },
+          range: 1500,
           tilt: firstChapter.camera?.tilt || 65,
           heading: firstChapter.camera?.heading || 0,
           mapId: mapId || '',
         })
         
-        // Append Map3DElement to container
+        // Listen for initialization errors
+        map.addEventListener('gmp-error', (event: any) => {
+          const { code, message } = event.detail || {}
+          console.error(`Map3DElement error: [${code}] ${message}`)
+          console.error('Make sure your Map ID is created with:')
+          console.error('1. Map Type: Vector')
+          console.error('2. Tilt checkbox: Enabled')
+          console.error('3. Rotation checkbox: Enabled')
+          setStatus('error')
+        })
+        
+        // Set explicit dimensions
+        map.style.width = '100%'
+        map.style.height = '100%'
+        map.style.display = 'block'
+        map.style.position = 'absolute'
+        
+        // Append to container
         mapContainerRef.current.appendChild(map)
 
         mapInstance.current = map
         console.log('Map created successfully:', map)
-
-        // Create markers for all chapters
-        console.log('Creating markers...')
-        clearMarkers()
-        for (let i = 0; i < chapters.length; i++) {
-          const chapter = chapters[i]
-          const location = chapter.location || chapter.coordinates
-          if (!location) continue
-
-          const markerContent = document.createElement('div')
-          markerContent.className = 'storytelling__marker'
-          markerContent.innerHTML = `
-            <div class="storytelling__marker-number">${i + 1}</div>
-          `
-
-          const marker = new AdvancedMarkerElement({
-            map: map,
-            position: location,
-            content: markerContent,
-            title: chapter.title
-          })
-
-          marker.addListener('click', () => {
-            goToChapter(i)
-          })
-
-          markersRef.current.push(marker)
-        }
-        console.log('Markers created:', markersRef.current.length)
+        
+        // Note: Standard Maps API with 3D vector buildings
+        // Map3DElement didn't work even with demo Map ID
+        // This provides 3D buildings but not photorealistic tiles
 
         if (mounted) {
           console.log('Setting status to ready and showing cover...')
@@ -245,29 +236,38 @@ export function Storytelling({ itinerary }: StorytellingProps) {
 
     return () => {
       mounted = false;
-      clearMarkers()
-      // Clean up Map3DElement if it exists
-      if (mapInstance.current && mapContainerRef.current && mapContainerRef.current.contains(mapInstance.current)) {
-        mapContainerRef.current.removeChild(mapInstance.current)
+      // Clean up Map3DElement
+      if (mapContainerRef.current) {
+        mapContainerRef.current.innerHTML = ''
       }
+      mapInstance.current = null
     }
   }, []) // Run once on mount
 
   // Auto-play functionality
   useEffect(() => {
-    if (!isPlaying || chapters.length === 0) return
-
+    if (!isPlaying || chapters.length === 0) {
+      console.log('Auto-play stopped:', { isPlaying, chaptersLength: chapters.length })
+      return
+    }
+    
+    console.log('Auto-play active, scheduling next chapter...')
     const timer = setTimeout(() => {
       const nextIndex = (currentChapterIndex + 1) % chapters.length
+      console.log(`Auto-advancing from chapter ${currentChapterIndex + 1} to ${nextIndex + 1}`)
       goToChapter(nextIndex)
       
       // Stop at the end if not looping
       if (nextIndex === 0) {
+        console.log('Reached end, stopping auto-play')
         setIsPlaying(false)
       }
     }, (currentChapter?.duration || 10) * 1000)
 
-    return () => clearTimeout(timer)
+    return () => {
+      console.log('Clearing auto-play timer')
+      clearTimeout(timer)
+    }
   }, [isPlaying, currentChapterIndex, chapters.length, currentChapter, goToChapter])
 
   const handleStart = () => {
@@ -289,7 +289,21 @@ export function Storytelling({ itinerary }: StorytellingProps) {
   }
 
   const togglePlay = () => {
-    setIsPlaying(!isPlaying)
+    console.log('Toggle play clicked, current state:', isPlaying)
+    if (!isPlaying) {
+      // Start playing - immediately advance to trigger animation
+      setIsPlaying(true)
+      // If at the last chapter, restart from beginning
+      if (currentChapterIndex === chapters.length - 1) {
+        goToChapter(0)
+      } else {
+        // Otherwise advance to next chapter immediately
+        goToChapter(currentChapterIndex + 1)
+      }
+    } else {
+      // Stop playing
+      setIsPlaying(false)
+    }
   }
 
   if (status === 'error') {
@@ -318,7 +332,7 @@ export function Storytelling({ itinerary }: StorytellingProps) {
         </div>
       )}
       
-      <div className={`storytelling__container ${config.theme === 'light' ? 'storytelling__container--light' : ''} ${showCover ? 'storytelling__container--hidden' : ''}`}>
+      <div className={`storytelling__container ${config.theme === 'light' ? 'storytelling__container--light' : ''}`}>
         <div ref={mapContainerRef} className="storytelling__map">
           {/* Map renders here */}
         </div>
@@ -360,6 +374,15 @@ export function Storytelling({ itinerary }: StorytellingProps) {
                 disabled={chapters.length === 0}
               >
                 Next →
+              </button>
+              
+              {/* Debug button to test direct navigation */}
+              <button 
+                className="storytelling__control-btn"
+                onClick={() => goToChapter(1)}
+                style={{ marginLeft: '10px', background: '#4CAF50' }}
+              >
+                Go to Ch.2 (Test)
               </button>
             </div>
           )}
