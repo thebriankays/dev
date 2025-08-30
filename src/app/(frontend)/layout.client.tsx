@@ -2,6 +2,7 @@
 
 import React from 'react'
 import dynamic from 'next/dynamic'
+import { usePathname } from 'next/navigation'
 import type { SiteSettings } from '@/payload-types'
 
 const SharedCanvas = dynamic(
@@ -15,6 +16,11 @@ interface ClientLayoutProps {
 }
 
 export function ClientLayout({ children, siteSettings }: ClientLayoutProps) {
+  const pathname = usePathname()
+  
+  // Don't render SharedCanvas on memory-intensive map pages
+  const shouldRenderCanvas = !pathname.startsWith('/explore') && !pathname.startsWith('/itinerary')
+  
   const backgroundType = siteSettings?.background?.type || 'whatamesh'
   const whatameshSettings = siteSettings?.background?.whatamesh
   
@@ -28,13 +34,15 @@ export function ClientLayout({ children, siteSettings }: ClientLayoutProps) {
 
   return (
     <>
-      <SharedCanvas 
-        render={true} 
-        postprocessing={false}
-        interactive={true}
-        background={backgroundType as 'whatamesh' | 'none'}
-        backgroundProps={backgroundProps}
-      />
+      {shouldRenderCanvas && (
+        <SharedCanvas 
+          render={true} 
+          postprocessing={false}
+          interactive={true}
+          background={backgroundType as 'whatamesh' | 'none'}
+          backgroundProps={backgroundProps}
+        />
+      )}
       {children}
     </>
   )
