@@ -1,8 +1,5 @@
 'use client'
 
-// IMPORTANT: Import setup before anything else to extend THREE namespace
-import './setup-r3f-globe'
-
 import React, { useRef, useMemo, useEffect, useState, forwardRef, useImperativeHandle } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
