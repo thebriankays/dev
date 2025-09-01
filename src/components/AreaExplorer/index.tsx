@@ -1,329 +1,153 @@
 'use client'
 
-import React, { useRef, useState, useCallback, useEffect } from 'react'
-import * as Cesium from 'cesium'
-import { CesiumViewer, CesiumViewerRef } from '@/components/CesiumViewer'
-import { loadGoogleMaps } from '@/lib/google-maps/loader'
+import React, { useState, useRef, useEffect } from 'react'
+import { usePlacesWidget } from 'react-google-autocomplete'
+import { CesiumViewer, CesiumViewerHandle } from '@/components/CesiumViewer'
+import { useDebounce } from '@/hooks/useDebounce'
 import './area-explorer.scss'
 
-interface AreaExplorerProps {
-  initialLocation?: {
-    lat: number
-    lng: number
-    name?: string
-  }
-}
+// List of available place types for the user to select
+const POI_TYPES = [
+  'restaurant', 'cafe', 'park', 'museum', 'lodging', 'store', 'tourist_attraction'
+];
 
-export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
-  const cesiumRef = useRef<CesiumViewerRef>(null)
-  const [isReady, setIsReady] = useState(false)
-  const [currentLocation, setCurrentLocation] = useState(initialLocation || { lat: 37.7749, lng: -122.4194, name: 'San Francisco' })
-  const [searchInput, setSearchInput] = useState('')
-  const [isSearching, setIsSearching] = useState(false)
-  const [isAutoRotating, setIsAutoRotating] = useState(false)
-  const autoRotateRef = useRef<number | null>(null)
-  const searchInputRef = useRef<HTMLInputElement>(null)
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
+export function AreaExplorer() {
+  const viewerRef = useRef<CesiumViewerHandle>(null);
+  const [isMapReady, setMapReady] = useState(false);
+  
+  // Camera State
+  const [orbitType, setOrbitType] = useState<'dynamic' | 'fixed'>('dynamic');
+  const [cameraSpeed, setCameraSpeed] = useState(50);
+  const debouncedSpeed = useDebounce(cameraSpeed, 200);
+  const [isOrbiting, setIsOrbiting] = useState(false);
 
-  const handleViewerReady = useCallback((viewer: Cesium.Viewer) => {
-    console.log('Cesium viewer ready for AreaExplorer')
-    setIsReady(true)
-    
-    // Enable mouse controls for free exploration
-    viewer.scene.screenSpaceCameraController.enableRotate = true
-    viewer.scene.screenSpaceCameraController.enableTranslate = true
-    viewer.scene.screenSpaceCameraController.enableZoom = true
-    viewer.scene.screenSpaceCameraController.enableTilt = true
-    viewer.scene.screenSpaceCameraController.enableLook = true
-  }, [])
-
-  const handleCameraControl = useCallback((action: string) => {
-    const viewer = cesiumRef.current?.viewer
-    if (!viewer) return
-
-    const camera = viewer.camera
-    const currentHeading = camera.heading
-    const currentPitch = camera.pitch
-    const currentPosition = camera.positionCartographic
-
-    switch (action) {
-      case 'rotateLeft':
-        camera.setView({
-          orientation: {
-            heading: currentHeading - Cesium.Math.toRadians(15),
-            pitch: currentPitch,
-            roll: 0
-          }
-        })
-        break
-      
-      case 'rotateRight':
-        camera.setView({
-          orientation: {
-            heading: currentHeading + Cesium.Math.toRadians(15),
-            pitch: currentPitch,
-            roll: 0
-          }
-        })
-        break
-      
-      case 'tiltUp':
-        camera.setView({
-          orientation: {
-            heading: currentHeading,
-            pitch: Math.min(currentPitch + Cesium.Math.toRadians(10), 0),
-            roll: 0
-          }
-        })
-        break
-      
-      case 'tiltDown':
-        camera.setView({
-          orientation: {
-            heading: currentHeading,
-            pitch: Math.max(currentPitch - Cesium.Math.toRadians(10), -Cesium.Math.PI_OVER_TWO),
-            roll: 0
-          }
-        })
-        break
-      
-      case 'zoomIn':
-        camera.zoomIn(currentPosition.height * 0.5)
-        break
-      
-      case 'zoomOut':
-        camera.zoomOut(currentPosition.height * 0.5)
-        break
-      
-      case 'reset':
-        cesiumRef.current?.flyTo({
-          lat: currentLocation.lat,
-          lng: currentLocation.lng,
-          altitude: 1500,
-          heading: 0,
-          pitch: -45,
-          duration: 1.5
-        })
-        break
-    }
-  }, [currentLocation])
-
-  const handleSearch = useCallback((e: React.FormEvent) => {
-    e.preventDefault()
-    // Google Places Autocomplete handles the search
-  }, [])
-
-  const startAutoRotate = useCallback(() => {
-    const viewer = cesiumRef.current?.viewer
-    if (!viewer || autoRotateRef.current) return
-
-    setIsAutoRotating(true)
-    
-    const animate = () => {
-      const camera = viewer.camera
-      
-      // Rotate around the current center point
-      const currentHeading = camera.heading
-      camera.setView({
-        orientation: {
-          heading: currentHeading + Cesium.Math.toRadians(0.2), // Rotate 0.2 degrees per frame
-          pitch: camera.pitch,
-          roll: 0
-        }
-      })
-
-      autoRotateRef.current = requestAnimationFrame(animate)
-    }
-    
-    animate()
-  }, [])
-
-  const stopAutoRotate = useCallback(() => {
-    if (autoRotateRef.current) {
-      cancelAnimationFrame(autoRotateRef.current)
-      autoRotateRef.current = null
-    }
-    setIsAutoRotating(false)
-  }, [])
-
-  // Initialize Google Places Autocomplete
-  useEffect(() => {
-    const initAutocomplete = async () => {
-      try {
-        await loadGoogleMaps()
-        
-        if (searchInputRef.current && window.google) {
-          // Create autocomplete instance
-          const autocomplete = new window.google.maps.places.Autocomplete(searchInputRef.current, {
-            fields: ['geometry', 'name', 'formatted_address'],
-            types: ['geocode', 'establishment']
-          })
-          
-          // Add listener for place selection
-          autocomplete.addListener('place_changed', () => {
-            const place = autocomplete.getPlace()
-            
-            if (place.geometry && place.geometry.location) {
-              const lat = place.geometry.location.lat()
-              const lng = place.geometry.location.lng()
-              const name = place.name || place.formatted_address || 'Selected Location'
-              
-              // Update location and fly to it
-              setCurrentLocation({ lat, lng, name })
-              setSearchInput(name)
-              
-              if (cesiumRef.current) {
-                cesiumRef.current.flyTo({
-                  lat,
-                  lng,
-                  altitude: 1500,
-                  heading: 0,
-                  pitch: -45,
-                  duration: 2
-                })
-              }
-            }
-          })
-          
-          autocompleteRef.current = autocomplete
-        }
-      } catch (error) {
-        console.error('Failed to initialize Google Places Autocomplete:', error)
+  // Places State
+  const [selectedLocation, setSelectedLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [selectedPois, setSelectedPois] = useState<string[]>([]);
+  
+  // Google Places Autocomplete Hook
+  const { ref: placesRef } = usePlacesWidget<HTMLInputElement>({
+    apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+    onPlaceSelected: (place: any) => {
+      const location = place.geometry?.location;
+      if (location) {
+        const newLocation = { lat: location.lat(), lng: location.lng() };
+        setSelectedLocation(newLocation);
+        viewerRef.current?.flyTo(newLocation);
       }
+    },
+    options: {
+      types: ['(cities)'],
     }
-    
-    initAutocomplete()
-  }, [])
+  });
 
-  // Cleanup on unmount
+  // Effect to control camera orbit
   useEffect(() => {
-    return () => {
-      if (autoRotateRef.current) {
-        cancelAnimationFrame(autoRotateRef.current)
-      }
+    if (isMapReady && isOrbiting) {
+      viewerRef.current?.startOrbit(orbitType, debouncedSpeed);
+    } else {
+      viewerRef.current?.stopOrbit();
     }
-  }, [])
+  }, [isMapReady, isOrbiting, orbitType, debouncedSpeed]);
+
+  // Effect to fetch and display places when POIs or location change
+  useEffect(() => {
+    if (!isMapReady || !selectedLocation || selectedPois.length === 0) {
+      viewerRef.current?.clearMarkers();
+      return;
+    }
+
+    // Use a dummy div to access the Google Places service
+    const mapDiv = document.createElement('div');
+    const placesService = new google.maps.places.PlacesService(mapDiv);
+
+    viewerRef.current?.clearMarkers();
+
+    placesService.nearbySearch({
+      location: selectedLocation,
+      radius: 2000, // 2km radius
+      type: selectedPois[0] || 'restaurant', // Google Places API expects a single type, not an array
+    }, (results, status) => {
+      if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+        results.forEach(place => {
+          viewerRef.current?.addPlaceMarker(place);
+        });
+      }
+    });
+
+  }, [isMapReady, selectedLocation, selectedPois]);
+
+
+  const handlePoiToggle = (poiType: string) => {
+    setSelectedPois(prev => 
+      prev.includes(poiType)
+        ? prev.filter(p => p !== poiType)
+        : [...prev, poiType]
+    );
+  };
 
   return (
     <div className="area-explorer__container">
-      <div className="area-explorer__map-wrapper">
-        <CesiumViewer
-          ref={cesiumRef}
-          onViewerReady={handleViewerReady}
-          initialLocation={{
-            lat: currentLocation.lat,
-            lng: currentLocation.lng,
-            altitude: 1500,
-            pitch: -45
-          }}
-        />
-      </div>
+      <CesiumViewer ref={viewerRef} onLoad={() => setMapReady(true)} />
 
       <div className="area-explorer__controls">
         <div className="area-explorer__search-section">
-          <h3>Search Location</h3>
-          <form onSubmit={handleSearch} className="area-explorer__search-form">
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Enter city, address, or landmark..."
-              className="area-explorer__search-input"
-              disabled={!isReady}
-            />
-            <button 
-              type="submit" 
-              disabled={!isReady}
-              className="area-explorer__search-button"
-              style={{ display: 'none' }} // Hide since autocomplete handles search
-            >
-              Search
-            </button>
-          </form>
+          <h3>Choose Location</h3>
+          <input
+            ref={placesRef}
+            className="area-explorer__search-input"
+            placeholder="Enter a city or location"
+          />
         </div>
 
         <div className="area-explorer__camera-section">
-          <h3>3D Map Controls</h3>
-          <div className="area-explorer__auto-rotate-control">
+          <h3>Camera Settings</h3>
+          <div className="area-explorer__orbit-toggle">
             <button 
-              onClick={isAutoRotating ? stopAutoRotate : startAutoRotate}
-              disabled={!isReady}
-              className={`area-explorer__auto-rotate-btn ${isAutoRotating ? 'area-explorer__auto-rotate-btn--active' : ''}`}
+              onClick={() => setIsOrbiting(prev => !prev)}
+              className={`area-explorer__play-btn ${isOrbiting ? 'active' : ''}`}
             >
-              {isAutoRotating ? '⏸ Stop Auto-Rotate' : '▶ Start Auto-Rotate'}
+              {isOrbiting ? 'Stop Orbit' : 'Start Auto-Orbit'}
             </button>
           </div>
-          <div className="area-explorer__camera-controls">
-            <button 
-              onClick={() => handleCameraControl('rotateLeft')} 
-              disabled={!isReady || isAutoRotating}
-            >
-              ← Rotate Left
-            </button>
-            <button 
-              onClick={() => handleCameraControl('rotateRight')} 
-              disabled={!isReady || isAutoRotating}
-            >
-              Rotate Right →
-            </button>
-            <button 
-              onClick={() => handleCameraControl('tiltUp')} 
-              disabled={!isReady}
-            >
-              ↑ Tilt Up
-            </button>
-            <button 
-              onClick={() => handleCameraControl('tiltDown')} 
-              disabled={!isReady}
-            >
-              ↓ Tilt Down
-            </button>
-            <button 
-              onClick={() => handleCameraControl('zoomIn')} 
-              disabled={!isReady}
-            >
-              + Zoom In
-            </button>
-            <button 
-              onClick={() => handleCameraControl('zoomOut')} 
-              disabled={!isReady}
-            >
-              - Zoom Out
-            </button>
-            <button 
-              onClick={() => handleCameraControl('reset')} 
-              disabled={!isReady}
-            >
-              ⟲ Reset View
-            </button>
+
+          <div className="area-explorer__radio-group">
+            <label>
+              <input type="radio" value="dynamic" checked={orbitType === 'dynamic'} onChange={() => setOrbitType('dynamic')} />
+              Dynamic Orbit
+            </label>
+            <label>
+              <input type="radio" value="fixed" checked={orbitType === 'fixed'} onChange={() => setOrbitType('fixed')} />
+              Fixed Orbit
+            </label>
           </div>
+          
+          <label className="area-explorer__slider-label">Speed</label>
+          <input
+            type="range"
+            min="1"
+            max="100"
+            value={cameraSpeed}
+            onChange={(e) => setCameraSpeed(Number(e.target.value))}
+            className="area-explorer__slider"
+          />
         </div>
 
-        {currentLocation && (
-          <div className="area-explorer__location-info">
-            <h3>Current Location</h3>
-            <p className="area-explorer__location-name">
-              {currentLocation.name || 'Custom Location'}
-            </p>
-            <p className="area-explorer__location-coords">
-              Lat: {currentLocation.lat.toFixed(6)}<br/>
-              Lng: {currentLocation.lng.toFixed(6)}
-            </p>
+        <div className="area-explorer__poi-section">
+          <h3>Place Types</h3>
+          <div className="area-explorer__poi-types">
+            {POI_TYPES.map(poi => (
+              <button 
+                key={poi}
+                onClick={() => handlePoiToggle(poi)}
+                className={`area-explorer__poi-btn ${selectedPois.includes(poi) ? 'active' : ''}`}
+              >
+                {poi.replace(/_/g, ' ')}
+              </button>
+            ))}
           </div>
-        )}
-
-        <div className="area-explorer__info">
-          <h3>Navigation Tips</h3>
-          <ul>
-            <li>Left click + drag to pan</li>
-            <li>Right click + drag to rotate/tilt</li>
-            <li>Scroll to zoom in/out</li>
-            <li>Middle click + drag to rotate view</li>
-            <li>Use controls for precise movement</li>
-          </ul>
         </div>
       </div>
     </div>
-  )
+  );
 }

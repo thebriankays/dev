@@ -1,152 +1,171 @@
-/* AreaExplorer Component Styles - BEM Scoped */
-
 .area-explorer {
   &__container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    overflow: hidden;
-    background: #000;
-    z-index: 10;
-  }
-
-  &__map-wrapper {
-    flex: 1;
     position: relative;
-    height: 100%;
     width: 100%;
+    height: 100vh;
     overflow: hidden;
-  }
-
-  &__map {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
-  }
-
-  &__overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    font-size: 1.5rem;
-    z-index: 10;
   }
 
   &__controls {
+    position: absolute;
+    top: 20px;
+    left: 20px;
     width: 320px;
+    max-width: calc(100% - 40px);
     background: rgba(255, 255, 255, 0.95);
-    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
-    overflow-y: auto;
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-  }
+    z-index: 1000;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
 
-  &__search-section,
-  &__poi-section,
-  &__camera-section,
-  &__places-section,
-  &__location-info,
-  &__info {
     h3 {
       margin: 0 0 12px 0;
-      font-size: 1.1rem;
-      color: #333;
+      font-size: 16px;
       font-weight: 600;
+      color: #333;
     }
   }
 
-  &__location-info {
-    background: #f8f9fa;
-    padding: 16px;
-    border-radius: 8px;
-  }
-
-  &__location-name {
-    font-size: 16px;
-    font-weight: 500;
-    color: #333;
-    margin: 0 0 8px 0;
-  }
-
-  &__location-coords {
-    font-size: 13px;
-    color: #666;
-    line-height: 1.5;
-    margin: 0;
-  }
-
-  &__info {
-    ul {
-      margin: 0;
-      padding-left: 20px;
-      
-      li {
-        font-size: 13px;
-        color: #666;
-        line-height: 1.8;
-      }
-    }
-  }
-
-  &__search-form {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 12px;
+  &__search-section {
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 20px;
   }
 
   &__search-input {
-    flex: 1;
+    width: 100%;
     padding: 10px 12px;
-    border: 2px solid #e0e0e0;
+    border: 1px solid #ddd;
     border-radius: 8px;
     font-size: 14px;
-    transition: border-color 0.3s;
+    transition: border-color 0.2s, box-shadow 0.2s;
 
     &:focus {
       outline: none;
       border-color: #4285f4;
+      box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1);
     }
 
-    &:disabled {
-      background-color: #f5f5f5;
-      cursor: not-allowed;
+    &::placeholder {
+      color: #999;
     }
   }
 
-  &__search-button {
-    padding: 10px 20px;
-    background: #4285f4;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s;
-    white-space: nowrap;
+  &__camera-section {
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 20px;
+  }
 
-    &:hover:not(:disabled) {
-      background: #3367d6;
-      transform: translateY(-1px);
+  &__orbit-toggle {
+    margin-bottom: 16px;
+  }
+
+  &__play-btn {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.2s;
+
+    &:hover {
+      background-color: #e8eaed;
     }
 
-    &:disabled {
-      background: #cccccc;
-      cursor: not-allowed;
+    &.active {
+      background-color: #dc3545;
+      color: white;
+      border-color: #dc3545;
+
+      &:hover {
+        background-color: #c82333;
+      }
+    }
+  }
+
+  &__radio-group {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 16px;
+    font-size: 14px;
+    
+    label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      color: #555;
+
+      input[type="radio"] {
+        cursor: pointer;
+      }
+    }
+  }
+
+  &__slider-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #555;
+    font-weight: 500;
+  }
+  
+  &__slider {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #ddd;
+    outline: none;
+    transition: background 0.2s;
+
+    &:hover {
+      background: #ccc;
+    }
+
+    &::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #4285f4;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s;
+
+      &:hover {
+        transform: scale(1.1);
+      }
+    }
+
+    &::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #4285f4;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s;
+
+      &:hover {
+        transform: scale(1.1);
+      }
+    }
+  }
+
+  &__poi-section {
+    h3 {
+      margin-bottom: 12px;
     }
   }
 
@@ -158,202 +177,46 @@
 
   &__poi-btn {
     padding: 6px 12px;
-    background: white;
-    border: 2px solid #e0e0e0;
+    border: 1px solid #ddd;
     border-radius: 20px;
+    background-color: white;
+    color: #555;
     font-size: 13px;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.2s;
     text-transform: capitalize;
 
     &:hover {
-      background: #f5f5f5;
-    }
-
-    &--active {
-      background: #4285f4;
-      color: white;
+      background-color: #f8f9fa;
       border-color: #4285f4;
     }
-  }
 
-  &__auto-rotate-control {
-    margin-bottom: 12px;
-  }
-
-  &__auto-rotate-btn {
-    width: 100%;
-    padding: 12px;
-    background: #4285f4;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s;
-
-    &:hover:not(:disabled) {
-      background: #3367d6;
-      transform: translateY(-1px);
-    }
-
-    &:disabled {
-      background: #cccccc;
-      cursor: not-allowed;
-    }
-
-    &--active {
-      background: #ea4335;
-      
-      &:hover:not(:disabled) {
-        background: #d33b2c;
-      }
-    }
-  }
-
-  &__camera-controls {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-
-    button {
-      padding: 10px;
-      background: white;
-      border: 1px solid #e0e0e0;
-      border-radius: 6px;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.2s;
+    &.active {
+      background-color: #4285f4;
+      color: white;
+      border-color: #4285f4;
 
       &:hover {
-        background: #f5f5f5;
-        transform: translateY(-1px);
-      }
-
-      &:active {
-        transform: translateY(0);
+        background-color: #357ae8;
       }
     }
   }
 
-  &__places-list {
-    max-height: 300px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  &__place-item {
-    padding: 12px;
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    &:hover {
-      background: #f8f9fa;
-      transform: translateX(4px);
-    }
-  }
-
-  &__place-name {
-    font-size: 14px;
-    color: #333;
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  &__place-rating {
-    color: #fbbc04;
-    font-size: 13px;
-    white-space: nowrap;
-    margin-left: 8px;
-  }
-
-  /* Custom marker styles */
-  &__marker {
-    transform: translate(-50%, -100%);
-
-    &-pin {
-      background: #4285f4;
-      border-radius: 50% 50% 50% 0;
-      width: 30px;
-      height: 30px;
-      position: relative;
-      transform: rotate(-45deg);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-    }
-
-    &-label {
-      position: absolute;
-      top: -30px;
-      left: 15px;
-      background: white;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      white-space: nowrap;
-      transform: rotate(45deg);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-      font-weight: 500;
-    }
-  }
-}
-
-/* Google Places Autocomplete styling */
-.pac-container {
-  z-index: 10001; // Ensure it appears above the map
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  font-family: inherit;
-  margin-top: 4px;
-  
-  .pac-item {
-    padding: 10px 12px;
-    border: none;
-    cursor: pointer;
-    
-    &:hover {
-      background-color: #f5f5f5;
-    }
-    
-    .pac-icon {
-      display: none; // Hide the icon for cleaner look
-    }
-    
-    .pac-item-query {
-      font-size: 14px;
-      color: #333;
-    }
-  }
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .area-explorer {
+  // Responsive styles
+  @media (max-width: 768px) {
     &__controls {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      width: auto;
-      height: 40vh;
-      max-height: 400px;
-      border-radius: 20px 20px 0 0;
-      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+      width: 280px;
+      padding: 16px;
+      top: 10px;
+      left: 10px;
     }
+  }
 
-    &__map-wrapper {
-      height: 60vh;
+  @media (max-width: 480px) {
+    &__controls {
+      width: calc(100% - 20px);
+      left: 10px;
+      right: 10px;
     }
   }
 }

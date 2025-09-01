@@ -57,7 +57,7 @@ export const ImageMedia: React.FC<MediaProps> = (props) => {
         .join(', ')
 
   return (
-    <picture className={cn(pictureClassName, fill && 'relative')}>
+    <picture className={cn(pictureClassName, fill && 'relative h-full w-full')}>
       <NextImage
         alt={alt || ''}
         className={cn(imgClassName)}
