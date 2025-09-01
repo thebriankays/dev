@@ -4,12 +4,20 @@ import React from 'react'
 import { useFormFields } from '@payloadcms/ui'
 import Link from 'next/link'
 
+interface StoryChapter {
+  title?: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
+}
+
 export const ItineraryView: React.FC = () => {
   const { slug, enable3DStorytelling, storyChapters, title } = useFormFields(([fields]) => ({
-    slug: fields.slug?.value as string,
-    enable3DStorytelling: fields.enable3DStorytelling?.value as boolean,
-    storyChapters: fields.storyChapters?.value as Array<Record<string, any>>,
-    title: fields.title?.value as string,
+    slug: fields.slug?.value as string | undefined,
+    enable3DStorytelling: fields.enable3DStorytelling?.value as boolean | undefined,
+    storyChapters: fields.storyChapters?.value as StoryChapter[] | undefined,
+    title: fields.title?.value as string | undefined,
   }))
 
   if (!enable3DStorytelling || !slug) {
@@ -24,7 +32,7 @@ export const ItineraryView: React.FC = () => {
           <h3 style={{ marginBottom: '10px' }}>3D Storytelling View</h3>
           <p style={{ color: '#666', marginBottom: '15px' }}>
             {!enable3DStorytelling 
-              ? 'Enable "3D Storytelling View" in the sidebar to use this feature.'
+              ? 'Enable &quot;3D Storytelling View&quot; in the sidebar to use this feature.'
               : 'Save this itinerary first to generate a preview link.'}
           </p>
           {!enable3DStorytelling && (
@@ -142,7 +150,7 @@ export const ItineraryView: React.FC = () => {
                 maxHeight: '200px',
                 overflowY: 'auto'
               }}>
-                {storyChapters.map((chapter: any, index: number) => (
+                {storyChapters.map((chapter: StoryChapter, index: number) => (
                   <div key={index} style={{ 
                     padding: '8px',
                     borderBottom: index < storyChapters.length - 1 ? '1px solid #e0e0e0' : 'none'

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { Suspense, useEffect, useRef } from 'react'
+import React, { useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { View } from '@react-three/drei'
 import * as THREE from 'three'
@@ -84,9 +84,7 @@ export function SharedCanvas({
           
           <FlowmapProvider>
             <View.Port />
-            <Suspense fallback={null}>
-              <WebGLTunnel.Out />
-            </Suspense>
+            <WebGLTunnel.Out />
             {children}
             {postprocessing && <PostProcessing />}
           </FlowmapProvider>

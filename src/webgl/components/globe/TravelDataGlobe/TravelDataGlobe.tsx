@@ -44,3 +44,4 @@ const TravelDataGlobe = forwardRef<GlobeMethods | undefined, TravelDataGlobeProp
 TravelDataGlobe.displayName = 'TravelDataGlobe'
 
 export default TravelDataGlobe
+export type { GlobeMethods }

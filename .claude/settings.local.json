@@ -28,7 +28,9 @@
       "Bash(npm run typecheck:*)",
       "Bash(pnpm view:*)",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(npm ls:*)",
+      "Bash(npm run:*)"
     ],
     "deny": []
   }

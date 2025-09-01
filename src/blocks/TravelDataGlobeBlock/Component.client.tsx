@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef, useCallback, useMemo, Suspense } from 'react'
+import React, { useState, useRef, useCallback, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import { BlockWrapper } from '@/blocks/_shared/BlockWrapper'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -179,35 +179,33 @@ export function TravelDataGlobeBlockClient(props: TravelDataGlobeBlockProps) {
 
   // WebGL content for the shared canvas
   const webglContent = (
-    <Suspense fallback={null}>
-      <TravelDataGlobe
-        ref={globeRef}
-        polygons={currentPolygons}
-        borders={borders}
-        airports={currentView === 'airports' ? airports : []}
-        restaurants={currentView === 'michelinRestaurants' ? restaurants : []}
-        globeImageUrl={blockConfig.globeImageUrl || '/earth-blue-marble.jpg'}
-        bumpImageUrl={blockConfig.bumpImageUrl || '/earth-topology.png'}
-        autoRotateSpeed={blockConfig.autoRotateSpeed || 0.5}
-        atmosphereColor={blockConfig.atmosphereColor || '#3a7ca5'}
-        atmosphereAltitude={blockConfig.atmosphereAltitude || 0.15}
-        onCountryClick={handleCountryClick}
-        onAirportClick={(airport) => {
-          setSelectedAirport(airport)
-          setShowDetails(true)
-        }}
-        onRestaurantClick={(restaurant) => {
-          setSelectedRestaurant(restaurant)
-          setShowDetails(true)
-        }}
-        onCountryHover={setHoveredCountry}
-        selectedCountry={selectedCountry}
-        hoveredCountry={hoveredCountry}
-        currentView={currentView}
-        visaArcs={visaArcs}
-        showMarkers={showDetails}
-      />
-    </Suspense>
+    <TravelDataGlobe
+      ref={globeRef}
+      polygons={currentPolygons}
+      borders={borders}
+      airports={currentView === 'airports' ? airports : []}
+      restaurants={currentView === 'michelinRestaurants' ? restaurants : []}
+      globeImageUrl={blockConfig.globeImageUrl || '/earth-blue-marble.jpg'}
+      bumpImageUrl={blockConfig.bumpImageUrl || '/earth-topology.png'}
+      autoRotateSpeed={blockConfig.autoRotateSpeed || 0.5}
+      atmosphereColor={blockConfig.atmosphereColor || '#3a7ca5'}
+      atmosphereAltitude={blockConfig.atmosphereAltitude || 0.15}
+      onCountryClick={handleCountryClick}
+      onAirportClick={(airport) => {
+        setSelectedAirport(airport)
+        setShowDetails(true)
+      }}
+      onRestaurantClick={(restaurant) => {
+        setSelectedRestaurant(restaurant)
+        setShowDetails(true)
+      }}
+      onCountryHover={setHoveredCountry}
+      selectedCountry={selectedCountry}
+      hoveredCountry={hoveredCountry}
+      currentView={currentView}
+      visaArcs={visaArcs}
+      showMarkers={showDetails}
+    />
   )
   
   return (
