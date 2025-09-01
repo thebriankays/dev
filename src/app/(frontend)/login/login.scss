@@ -20,11 +20,12 @@
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 2;
+    z-index: 10;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 2rem;
+    pointer-events: none; // Allow events to pass through to background
     
     // Move form down a bit to better frame with the alien head
     padding-bottom: 10vh;

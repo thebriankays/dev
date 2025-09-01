@@ -10,6 +10,7 @@
   position: relative;
   width: 100%;
   height: 100%;
+  min-height: 100vh;
   overflow: hidden;
   
   &__canvas {
@@ -18,7 +19,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 1; // Base layer
+    z-index: 2; // Middle layer - 3D model renders here
   }
 
   // Back text layer (solid white, behind model)
@@ -27,9 +28,9 @@
     top: 45%;
     left: 50%;
     transform: translate(-50%, -50%);
-    z-index: 0; // Behind canvas
+    z-index: 1; // Behind 3D model
     font-family: 'AlienRobot', sans-serif;
-    font-size: 16vh;
+    font-size: clamp(6vh, 12vw, 16vh); // Responsive sizing that fits screen width
     font-weight: normal;
     text-align: center;
     line-height: 1.0;
@@ -37,6 +38,10 @@
     white-space: nowrap;
     pointer-events: none;
     user-select: none;
+    width: 90vw; // Constrain width
+    max-width: 90vw;
+    overflow: hidden;
+    text-overflow: clip;
   }
 
   // Front text layer (stroke only, above model)
@@ -45,50 +50,42 @@
     top: 45%;
     left: 50%;
     transform: translate(-50%, -50%);
-    z-index: 3; // Above everything
+    z-index: 3; // Above 3D model
     font-family: 'AlienRobot', sans-serif;
-    font-size: 16vh;
+    font-size: clamp(6vh, 12vw, 16vh); // Match back text size
     font-weight: normal;
     text-align: center;
     line-height: 1.0;
     color: transparent;
-    -webkit-text-stroke: 0.5vh white;
+    -webkit-text-stroke: clamp(0.2vh, 0.4vw, 0.5vh) white;
     white-space: nowrap;
     pointer-events: none;
     user-select: none;
-  }
-
-  // Responsive font sizing
-  @media (max-width: 1200px) {
-    &__text-back,
-    &__text-front {
-      font-size: 14vh;
-    }
+    width: 90vw; // Constrain width
+    max-width: 90vw;
+    overflow: hidden;
+    text-overflow: clip;
     
-    &__text-front {
-      -webkit-text-stroke: 0.4vh white;
-    }
+    // Ensure the outline is crisp and visible
+    paint-order: stroke fill;
+    -webkit-text-stroke-width: clamp(0.2vh, 0.4vw, 0.5vh);
+    -webkit-text-stroke-color: white;
   }
 
-  @media (max-width: 768px) {
-    &__text-back,
-    &__text-front {
-      font-size: 10vh;
-    }
-    
-    &__text-front {
-      -webkit-text-stroke: 0.3vh white;
-    }
-  }
-
+  // Additional responsive tweaks for very small screens
   @media (max-width: 480px) {
     &__text-back,
     &__text-front {
-      font-size: 8vh;
+      font-size: clamp(4vh, 15vw, 8vh);
+      top: 40%; // Move text higher on mobile
     }
-    
+  }
+  
+  // For ultra-wide screens, prevent text from getting too large
+  @media (min-width: 1920px) {
+    &__text-back,
     &__text-front {
-      -webkit-text-stroke: 0.25vh white;
+      font-size: clamp(12vh, 8vw, 18vh);
     }
   }
 }

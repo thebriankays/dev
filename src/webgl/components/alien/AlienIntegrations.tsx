@@ -8,14 +8,15 @@ import './alien.scss'
 interface AlienIntegrationsProps {
   showText?: boolean
   className?: string
+  interactive?: boolean
 }
 
-export function AlienIntegrations({ showText = true, className = '' }: AlienIntegrationsProps) {
+export function AlienIntegrations({ showText = true, className = '', interactive = true }: AlienIntegrationsProps) {
   return (
     <div className={`alien-integrations ${className}`}>
       {/* WebGL content using shared canvas */}
       <div className="alien-integrations__canvas">
-        <ViewportRenderer interactive={true}>
+        <ViewportRenderer interactive={interactive}>
           <AlienScene />
         </ViewportRenderer>
       </div>

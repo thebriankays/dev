@@ -33,7 +33,7 @@ export function ViewportRenderer({
       />
       <WebGLTunnel>
         <View track={ref as React.RefObject<HTMLElement>}>
-          <PerspectiveCamera makeDefault />
+          <PerspectiveCamera makeDefault position={[0, 0, 10]} fov={50} />
           {children}
         </View>
       </WebGLTunnel>

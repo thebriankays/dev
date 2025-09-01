@@ -104,9 +104,16 @@ export function AlienHead() {
     }
   })
 
-  // Check if the model has loaded
+  // Show a fallback mesh if model isn't loaded
   if (!centeredGeometry) {
-    return null
+    return (
+      <group ref={meshRef} position={[0, 0.5, 0]}>
+        <mesh>
+          <sphereGeometry args={[1, 32, 32]} />
+          <meshBasicMaterial color="red" />
+        </mesh>
+      </group>
+    )
   }
 
   return (

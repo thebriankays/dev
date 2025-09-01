@@ -18,10 +18,12 @@ interface ClientLayoutProps {
 export function ClientLayout({ children, siteSettings }: ClientLayoutProps) {
   const pathname = usePathname()
   
-  // Don't render SharedCanvas on memory-intensive map pages
+  // Always render SharedCanvas but conditionally set background
   const shouldRenderCanvas = !pathname.startsWith('/explore') && !pathname.startsWith('/itinerary')
+  const isLoginPage = pathname === '/login'
   
-  const backgroundType = siteSettings?.background?.type || 'whatamesh'
+  // Use no background on login page to let AlienIntegrations take over
+  const backgroundType = isLoginPage ? 'none' : (siteSettings?.background?.type || 'whatamesh')
   const whatameshSettings = siteSettings?.background?.whatamesh
   
   const backgroundProps = whatameshSettings ? {

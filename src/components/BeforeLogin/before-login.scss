@@ -1,0 +1,115 @@
+// BeforeLogin component styles for admin login
+.before-login {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  z-index: 1;
+  
+  // Hide Payload branding and UI elements
+  & ~ * {
+    .payload-logo,
+    .nav-logo,
+    [class*="logo"],
+    .branding {
+      display: none !important;
+    }
+  }
+}
+
+// Global overrides for Payload login template when BeforeLogin is present  
+// Use multiple selectors to ensure we catch the login form
+.template-default.login,
+body.template-default.login,
+.payload-app.login {
+  .app-header,
+  .payload-logo,
+  .nav-logo,
+  [class*="logo"],
+  .branding {
+    display: none !important;
+  }
+  
+  // Make login form container work with fullscreen background
+  .login-wrap,
+  .login,
+  [class*="login"] {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 9999 !important;  // Ultra high z-index
+    background: rgba(255, 0, 0, 0.8) !important; // Bright red background to debug visibility
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    border: 3px solid white !important; // White border to make it obvious
+    margin: 0 !important;
+    max-width: 400px !important;
+    width: 90vw !important;
+    padding: 2rem !important;
+    
+    // Ensure form elements are visible
+    input, button, label, div, span, p, h1, h2, h3 {
+      position: relative !important;
+      z-index: 10000 !important;
+      background: rgba(255, 255, 255, 0.9) !important;
+      border: 2px solid black !important;
+      color: black !important;
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      
+      &::placeholder {
+        color: rgba(0, 0, 0, 0.7) !important;
+      }
+      
+      &:focus {
+        background: white !important;
+        border-color: red !important;
+        outline: 2px solid blue !important;
+      }
+    }
+    
+    button {
+      background: red !important;
+      color: white !important;
+      &:hover {
+        background: darkred !important;
+      }
+    }
+  }
+  
+  .login-form {
+    background: yellow !important; // Bright yellow to debug
+    position: relative !important;
+    z-index: 10001 !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+}
+
+// Fallback for older browsers without :has() support
+.template-default.login {
+  &.alien-login {
+    .app-header,
+    .payload-logo,
+    .nav-logo,
+    [class*="logo"],
+    .branding {
+      display: none !important;
+    }
+    
+    .login-wrap,
+    .login {
+      position: relative;
+      z-index: 1001;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+  }
+}
