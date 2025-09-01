@@ -11,21 +11,22 @@ import { Tempus } from '@/webgl/libs/tempus'
 gsap.registerPlugin(ScrollTrigger)
 
 // Try to import SplitText if available (premium plugin)
-let SplitText: any = null
+let SplitText: typeof gsap.plugins.SplitText | null = null
 try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const SplitTextModule = require('gsap/SplitText')
   SplitText = SplitTextModule.SplitText || SplitTextModule.default
   if (SplitText) {
     gsap.registerPlugin(SplitText)
   }
-} catch (e) {
+} catch {
   console.log('GSAP SplitText not available - using manual text splitting')
 }
 
 interface AnimationContextValue {
   gsap: typeof gsap
   ScrollTrigger: typeof ScrollTrigger
-  SplitText: any
+  SplitText: typeof gsap.plugins.SplitText | null
   lenis: Lenis | null
   hamo: Hamo | null
   tempus: Tempus | null
@@ -49,19 +50,20 @@ export const useGSAP = (
   callback: (context: gsap.Context, requestRender: () => void) => void,
   deps: React.DependencyList = []
 ) => {
-  const animation = useAnimation()
   const contextRef = useRef<gsap.Context | null>(null)
   const canvasContext = useContext(AnimationContext)
+  const callbackRef = useRef(callback)
+  callbackRef.current = callback
   
   useLayoutEffect(() => {
     contextRef.current = gsap.context(() => {
-      callback(contextRef.current!, canvasContext?.requestRender || (() => {}))
+      callbackRef.current(contextRef.current!, canvasContext?.requestRender || (() => {}))
     })
 
     return () => {
       contextRef.current?.revert()
     }
-  }, deps)
+  }, [canvasContext?.requestRender, ...deps])
 
   return contextRef.current
 }
@@ -79,10 +81,11 @@ export function AnimationProvider({ children }: { children: ReactNode }) {
   // Try to get the actual requestRender from Canvas context if available
   useEffect(() => {
     // This will run after the component mounts, avoiding the SSR issue
-    if (typeof window !== 'undefined' && (window as any).__r3f) {
+    if (typeof window !== 'undefined' && (window as unknown as { __r3f?: { invalidate: () => void } }).__r3f) {
       requestRenderRef.current = () => {
-        if ((window as any).__r3f) {
-          (window as any).__r3f.invalidate()
+        const r3f = (window as unknown as { __r3f?: { invalidate: () => void } }).__r3f
+        if (r3f) {
+          r3f.invalidate()
         }
       }
     }
@@ -99,6 +102,32 @@ export function AnimationProvider({ children }: { children: ReactNode }) {
       wheelMultiplier: 1,
       touchMultiplier: 2,
       infinite: false,
+      // Prevent smooth scroll on Payload admin elements and scrollable containers
+      prevent: (node: HTMLElement) => {
+        // Check if the element or its parents have specific classes or attributes
+        let element: HTMLElement | null = node
+        while (element) {
+          // Check for Payload admin classes or scrollable elements
+          if (element.classList?.contains('payload__modal-container') ||
+              element.classList?.contains('payload__scroll-container') ||
+              element.classList?.contains('payload-scrollbar') ||
+              element.classList?.contains('monaco-editor') ||
+              element.getAttribute?.('data-lenis-prevent') !== null ||
+              element.getAttribute?.('data-payload-scroll') !== null) {
+            return true
+          }
+          
+          // Check if element has overflow scroll/auto
+          const style = window.getComputedStyle(element)
+          if ((style.overflowY === 'scroll' || style.overflowY === 'auto') && 
+              element.scrollHeight > element.clientHeight) {
+            return true
+          }
+          
+          element = element.parentElement
+        }
+        return false
+      },
     })
 
     // Initialize Hamo animation library
@@ -108,7 +137,7 @@ export function AnimationProvider({ children }: { children: ReactNode }) {
     tempusRef.current = new Tempus()
 
     // Sync Lenis with ScrollTrigger
-    lenisRef.current.on('scroll', (e: any) => {
+    lenisRef.current.on('scroll', (e: { animatedScroll: number; velocity: number }) => {
       scrollRef.current = e.animatedScroll
       velocityRef.current = e.velocity
       ScrollTrigger.update()
@@ -118,7 +147,7 @@ export function AnimationProvider({ children }: { children: ReactNode }) {
 
     // Update ScrollTrigger on Lenis scroll
     ScrollTrigger.scrollerProxy(document.body, {
-      scrollTop(value?: any) {
+      scrollTop(value?: number) {
         if (arguments.length && lenisRef.current) {
           // Use scrollTo instead of setting scroll directly
           lenisRef.current.scrollTo(value as number, { immediate: true })
@@ -140,14 +169,15 @@ export function AnimationProvider({ children }: { children: ReactNode }) {
     })
 
     // RAF loop
+    let rafId: number
     const raf = (time: number) => {
       lenisRef.current?.raf(time)
       hamoRef.current?.update(time)
       tempusRef.current?.update(time)
-      requestAnimationFrame(raf)
+      rafId = requestAnimationFrame(raf)
     }
 
-    requestAnimationFrame(raf)
+    rafId = requestAnimationFrame(raf)
 
     // Handle resize
     const handleResize = () => {
@@ -160,8 +190,9 @@ export function AnimationProvider({ children }: { children: ReactNode }) {
       lenisRef.current?.destroy()
       hamoRef.current?.destroy()
       tempusRef.current?.destroy()
-      ScrollTrigger.getAll().forEach((trigger: any) => trigger.kill())
+      ScrollTrigger.getAll().forEach((trigger) => trigger.kill())
       window.removeEventListener('resize', handleResize)
+      cancelAnimationFrame(rafId)
     }
   }, [])
 

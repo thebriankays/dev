@@ -276,7 +276,41 @@ export interface Page {
     | ArchiveBlock
     | FormBlock
     | WebGLTextBlock
-    | TravelGlobeBlock
+    | {
+        blockConfig?: {
+          /**
+           * URL of the image used to wrap the globe (equirectangular projection)
+           */
+          globeImageUrl?: string | null;
+          /**
+           * URL of the bump map for terrain representation
+           */
+          bumpImageUrl?: string | null;
+          /**
+           * Speed of automatic rotation (0 = no rotation)
+           */
+          autoRotateSpeed?: number | null;
+          /**
+           * Color of the atmosphere glow
+           */
+          atmosphereColor?: string | null;
+          /**
+           * Height of atmosphere in globe radius units
+           */
+          atmosphereAltitude?: number | null;
+          /**
+           * Apply glass morphism effect to UI panels
+           */
+          enableGlassEffect?: boolean | null;
+          showTravelAdvisories?: boolean | null;
+          showVisaRequirements?: boolean | null;
+          showAirports?: boolean | null;
+          showMichelinRestaurants?: boolean | null;
+        };
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'travelDataGlobeBlock';
+      }
     | ThreeDCarouselBlock
     | DolphinBlock
     | WebGLCarouselBlockType
@@ -885,91 +919,6 @@ export interface WebGLTextBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'webGLText';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "TravelGlobeBlock".
- */
-export interface TravelGlobeBlock {
-  destinations?:
-    | {
-        id: string;
-        name: string;
-        position: {
-          lat: number;
-          lng: number;
-        };
-        visitors?: number | null;
-        category?: ('city' | 'beach' | 'mountain' | 'historic' | 'adventure') | null;
-        description?: string | null;
-        imageUrl?: string | null;
-      }[]
-    | null;
-  routes?:
-    | {
-        id: string;
-        from: string;
-        to: string;
-        flights?: number | null;
-        type?: ('direct' | 'popular' | 'seasonal') | null;
-      }[]
-    | null;
-  globeSettings?: {
-    interactive?: boolean | null;
-    autoRotate?: boolean | null;
-    rotationSpeed?: number | null;
-    showAtmosphere?: boolean | null;
-    showClouds?: boolean | null;
-    showNightLights?: boolean | null;
-    enableFilters?: boolean | null;
-  };
-  appearance?: {
-    /**
-     * Hex color code for the globe base
-     */
-    globeColor?: string | null;
-    /**
-     * Hex color code for land masses
-     */
-    landColor?: string | null;
-    /**
-     * Hex color code for the atmosphere glow
-     */
-    atmosphereColor?: string | null;
-    /**
-     * Hex color code for destination markers
-     */
-    markerColor?: string | null;
-    /**
-     * Hex color code for flight routes
-     */
-    routeColor?: string | null;
-  };
-  customTextures?: {
-    earthTexture?: (number | null) | Media;
-    bumpTexture?: (number | null) | Media;
-    specularTexture?: (number | null) | Media;
-    cloudTexture?: (number | null) | Media;
-  };
-  glassEffect?: {
-    enabled?: boolean | null;
-    variant?: ('card' | 'panel' | 'subtle' | 'frost' | 'liquid') | null;
-    intensity?: number | null;
-  };
-  fluidOverlay?: {
-    enabled?: boolean | null;
-    intensity?: number | null;
-    color?: string | null;
-  };
-  webglEffects?: {
-    distortion?: number | null;
-    parallax?: number | null;
-    hover?: boolean | null;
-    transition?: ('fade' | 'slide' | 'morph') | null;
-  };
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'travelGlobe';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3864,7 +3813,26 @@ export interface PagesSelect<T extends boolean = true> {
         archive?: T | ArchiveBlockSelect<T>;
         formBlock?: T | FormBlockSelect<T>;
         webGLText?: T | WebGLTextBlockSelect<T>;
-        travelGlobe?: T | TravelGlobeBlockSelect<T>;
+        travelDataGlobeBlock?:
+          | T
+          | {
+              blockConfig?:
+                | T
+                | {
+                    globeImageUrl?: T;
+                    bumpImageUrl?: T;
+                    autoRotateSpeed?: T;
+                    atmosphereColor?: T;
+                    atmosphereAltitude?: T;
+                    enableGlassEffect?: T;
+                    showTravelAdvisories?: T;
+                    showVisaRequirements?: T;
+                    showAirports?: T;
+                    showMichelinRestaurants?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
         threeDCarousel?: T | ThreeDCarouselBlockSelect<T>;
         dolphinBlock?: T | DolphinBlockSelect<T>;
         webglCarousel?: T | WebGLCarouselBlockTypeSelect<T>;
@@ -4012,89 +3980,6 @@ export interface WebGLTextBlockSelect<T extends boolean = true> {
   font?: T;
   animationTrigger?: T;
   secondaryText?: T;
-  glassEffect?:
-    | T
-    | {
-        enabled?: T;
-        variant?: T;
-        intensity?: T;
-      };
-  fluidOverlay?:
-    | T
-    | {
-        enabled?: T;
-        intensity?: T;
-        color?: T;
-      };
-  webglEffects?:
-    | T
-    | {
-        distortion?: T;
-        parallax?: T;
-        hover?: T;
-        transition?: T;
-      };
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "TravelGlobeBlock_select".
- */
-export interface TravelGlobeBlockSelect<T extends boolean = true> {
-  destinations?:
-    | T
-    | {
-        id?: T;
-        name?: T;
-        position?:
-          | T
-          | {
-              lat?: T;
-              lng?: T;
-            };
-        visitors?: T;
-        category?: T;
-        description?: T;
-        imageUrl?: T;
-      };
-  routes?:
-    | T
-    | {
-        id?: T;
-        from?: T;
-        to?: T;
-        flights?: T;
-        type?: T;
-      };
-  globeSettings?:
-    | T
-    | {
-        interactive?: T;
-        autoRotate?: T;
-        rotationSpeed?: T;
-        showAtmosphere?: T;
-        showClouds?: T;
-        showNightLights?: T;
-        enableFilters?: T;
-      };
-  appearance?:
-    | T
-    | {
-        globeColor?: T;
-        landColor?: T;
-        atmosphereColor?: T;
-        markerColor?: T;
-        routeColor?: T;
-      };
-  customTextures?:
-    | T
-    | {
-        earthTexture?: T;
-        bumpTexture?: T;
-        specularTexture?: T;
-        cloudTexture?: T;
-      };
   glassEffect?:
     | T
     | {

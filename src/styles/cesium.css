@@ -1,0 +1,64 @@
+/* Cesium Widget Styles - Custom */
+
+/* CRITICAL: Ensure Cesium fills its container */
+.cesium-viewer {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+  font-family: inherit;
+}
+
+.cesium-widget {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Ensure canvas fills the widget */
+.cesium-widget canvas {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  outline: none;
+}
+
+/* Hide Cesium credits and branding */
+.cesium-viewer .cesium-widget-credits,
+.cesium-credit-logoContainer,
+.cesium-credit-textContainer,
+.cesium-credit-expand-link,
+.cesium-credit-lightbox-overlay,
+.cesium-credit-lightbox {
+  display: none !important;
+}
+
+/* Hide unnecessary UI elements */
+.cesium-viewer-toolbar,
+.cesium-viewer-animationContainer,
+.cesium-viewer-bottom,
+.cesium-viewer-timelineContainer,
+.cesium-viewer-fullscreenContainer,
+.cesium-navigation-help-button,
+.cesium-viewer-vrContainer,
+.cesium-viewer-geocoderContainer,
+.cesium-viewer-homeButtonContainer,
+.cesium-viewer-sceneModePicker,
+.cesium-viewer-projectionPickerContainer,
+.cesium-viewer-baseLayerPickerContainer,
+.cesium-viewer-navigationHelpButtonContainer,
+.cesium-viewer-infoBoxContainer {
+  display: none !important;
+}
+
+/* Ensure performance display is hidden */
+.cesium-performanceDisplay {
+  display: none !important;
+}

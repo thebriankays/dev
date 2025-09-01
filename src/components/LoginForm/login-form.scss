@@ -1,0 +1,141 @@
+@font-face {
+  font-family: 'AlienRobot';
+  src: url('/fonts/AlienRobot.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.login-form {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 2rem;
+
+  &__container {
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  }
+
+  &__title {
+    font-family: 'AlienRobot', sans-serif;
+    font-size: 2.5rem;
+    color: #fff;
+    text-align: center;
+    margin: 0 0 2rem 0;
+    text-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+  }
+
+  &__fields {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  &__field {
+    position: relative;
+  }
+
+  &__input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 0.75rem 0;
+    font-size: 1rem;
+    color: #fff;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 0.05em;
+    transition: all 0.3s ease;
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+      font-family: 'AlienRobot', sans-serif;
+      letter-spacing: 0.1em;
+    }
+
+    &:focus {
+      outline: none;
+      border-bottom-color: #ff00ff;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &__line {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #ff00ff, #00ffff);
+    transition: width 0.3s ease;
+  }
+
+  &__input:focus ~ &__line {
+    width: 100%;
+  }
+
+  &__error {
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid rgba(255, 0, 0, 0.3);
+    border-radius: 4px;
+    padding: 0.75rem;
+    margin-bottom: 1.5rem;
+    color: #ff6b6b;
+    font-size: 0.875rem;
+    text-align: center;
+  }
+
+  &__button {
+    width: 100%;
+    background: linear-gradient(135deg, #ff00ff, #0044ff);
+    border: none;
+    border-radius: 50px;
+    padding: 1rem 2rem;
+    font-family: 'AlienRobot', sans-serif;
+    font-size: 1.25rem;
+    color: #fff;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255, 0, 255, 0.4);
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 0, 255, 0.6);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &__forgot {
+    display: block;
+    text-align: center;
+    margin-top: 1.5rem;
+    color: rgba(255, 255, 255, 0.6);
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: color 0.3s ease;
+
+    &:hover {
+      color: #ff00ff;
+    }
+  }
+}

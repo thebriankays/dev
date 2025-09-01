@@ -25,7 +25,10 @@
       "Bash(cp:*)",
       "WebFetch(domain:drei.docs.pmnd.rs)",
       "Bash(git add:*)",
-      "Bash(npm run typecheck:*)"
+      "Bash(npm run typecheck:*)",
+      "Bash(pnpm view:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ],
     "deny": []
   }

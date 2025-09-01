@@ -48,7 +48,9 @@ export function BlockWrapper({
     glass.applyGlass(ref.current, glassEffect.variant)
     
     return () => {
-      glass.removeGlass(ref.current!)
+      if (ref.current) {
+        glass.removeGlass(ref.current)
+      }
     }
   }, [glassEffect.enabled, glassEffect.variant, glass])
   

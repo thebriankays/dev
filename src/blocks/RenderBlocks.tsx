@@ -9,7 +9,7 @@ import { FormBlock } from '@/blocks/Form/Component'
 import { MediaBlock } from '@/blocks/MediaBlock/Component'
 import { WebGLCarouselBlock } from '@/blocks/WebGLCarousel/Component'
 import { WebGLTextBlock } from '@/blocks/WebGLText/Component'
-import { TravelGlobeComponent } from '@/blocks/TravelGlobe/Component'
+import { TravelDataGlobeBlock } from '@/blocks/TravelDataGlobeBlock/Component'
 import { ThreeDCarouselBlock } from '@/blocks/ThreeDCarousel/Component'
 import { DolphinBlock } from '@/blocks/DolphinBlock/Component'
 
@@ -21,7 +21,7 @@ const blockComponents = {
   mediaBlock: MediaBlock,
   webglCarousel: WebGLCarouselBlock,
   webGLText: WebGLTextBlock,
-  travelGlobe: TravelGlobeComponent,
+  travelDataGlobeBlock: TravelDataGlobeBlock,
   threeDCarousel: ThreeDCarouselBlock,
   dolphinBlock: DolphinBlock,
 } as const

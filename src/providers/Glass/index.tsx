@@ -70,6 +70,7 @@ export function GlassProvider({ children }: { children: ReactNode }) {
   }
 
   const removeGlass = (element: HTMLElement) => {
+    if (!element) return
     const variant = element.getAttribute('data-glass')
     element.classList.remove('glass-effect')
     if (variant) {

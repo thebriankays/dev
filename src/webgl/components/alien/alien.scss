@@ -1,0 +1,94 @@
+/* Import AlienRobot font */
+@font-face {
+  font-family: 'AlienRobot';
+  src: url('/fonts/AlienRobot.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.alien-integrations {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  
+  &__canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1; // Base layer
+  }
+
+  // Back text layer (solid white, behind model)
+  &__text-back {
+    position: absolute;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 0; // Behind canvas
+    font-family: 'AlienRobot', sans-serif;
+    font-size: 16vh;
+    font-weight: normal;
+    text-align: center;
+    line-height: 1.0;
+    color: white;
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  // Front text layer (stroke only, above model)
+  &__text-front {
+    position: absolute;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 3; // Above everything
+    font-family: 'AlienRobot', sans-serif;
+    font-size: 16vh;
+    font-weight: normal;
+    text-align: center;
+    line-height: 1.0;
+    color: transparent;
+    -webkit-text-stroke: 0.5vh white;
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  // Responsive font sizing
+  @media (max-width: 1200px) {
+    &__text-back,
+    &__text-front {
+      font-size: 14vh;
+    }
+    
+    &__text-front {
+      -webkit-text-stroke: 0.4vh white;
+    }
+  }
+
+  @media (max-width: 768px) {
+    &__text-back,
+    &__text-front {
+      font-size: 10vh;
+    }
+    
+    &__text-front {
+      -webkit-text-stroke: 0.3vh white;
+    }
+  }
+
+  @media (max-width: 480px) {
+    &__text-back,
+    &__text-front {
+      font-size: 8vh;
+    }
+    
+    &__text-front {
+      -webkit-text-stroke: 0.25vh white;
+    }
+  }
+}

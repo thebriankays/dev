@@ -1,7 +1,9 @@
 'use client'
 
-import React, { useEffect, useRef, useState, useCallback } from 'react'
-import { Loader } from '@googlemaps/js-api-loader'
+import React, { useRef, useState, useCallback, useEffect } from 'react'
+import * as Cesium from 'cesium'
+import { CesiumViewer, CesiumViewerRef } from '@/components/CesiumViewer'
+import { loadGoogleMaps } from '@/lib/google-maps/loader'
 import './area-explorer.scss'
 
 interface AreaExplorerProps {
@@ -13,167 +15,286 @@ interface AreaExplorerProps {
 }
 
 export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
-  const mapContainerRef = useRef<HTMLDivElement>(null)
-  const mapInstance = useRef<google.maps.Map | null>(null)
-  const [status, setStatus] = useState('loading')
-  const [currentLocation, setCurrentLocation] = useState(initialLocation)
+  const cesiumRef = useRef<CesiumViewerRef>(null)
+  const [isReady, setIsReady] = useState(false)
+  const [currentLocation, setCurrentLocation] = useState(initialLocation || { lat: 37.7749, lng: -122.4194, name: 'San Francisco' })
+  const [searchInput, setSearchInput] = useState('')
+  const [isSearching, setIsSearching] = useState(false)
+  const [isAutoRotating, setIsAutoRotating] = useState(false)
+  const autoRotateRef = useRef<number | null>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
 
-  useEffect(() => {
-    let mounted = true;
-    let map: google.maps.Map | null = null;
+  const handleViewerReady = useCallback((viewer: Cesium.Viewer) => {
+    console.log('Cesium viewer ready for AreaExplorer')
+    setIsReady(true)
     
-    const initMap = async () => {
-      if (!mapContainerRef.current || !mounted) return
+    // Enable mouse controls for free exploration
+    viewer.scene.screenSpaceCameraController.enableRotate = true
+    viewer.scene.screenSpaceCameraController.enableTranslate = true
+    viewer.scene.screenSpaceCameraController.enableZoom = true
+    viewer.scene.screenSpaceCameraController.enableTilt = true
+    viewer.scene.screenSpaceCameraController.enableLook = true
+  }, [])
 
-      try {
-        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-        const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID
-        
-        if (!apiKey) {
-          throw new Error('Google Maps API key is missing')
-        }
-        
-        const loader = new Loader({
-          apiKey,
-          version: 'weekly',
-          libraries: ['marker', 'core'],
-          mapIds: mapId ? [mapId] : []
-        })
+  const handleCameraControl = useCallback((action: string) => {
+    const viewer = cesiumRef.current?.viewer
+    if (!viewer) return
 
-        await loader.load()
-
-        // Default to San Francisco if no initial location
-        const defaultLocation = { lat: 37.7749, lng: -122.4194 }
-        const centerLocation = initialLocation && 
-          typeof initialLocation.lat === 'number' && 
-          typeof initialLocation.lng === 'number' 
-          ? initialLocation 
-          : defaultLocation
-
-        // Create standard Google Maps with 3D tiles enabled via mapId
-        map = new google.maps.Map(mapContainerRef.current, {
-          center: centerLocation,
-          zoom: 17,
-          tilt: 65,
-          heading: 0,
-          mapId: mapId || '', // This enables 3D tiles
-          disableDefaultUI: false,
-          gestureHandling: 'greedy',
-          // Enable 3D controls
-          tiltInteractionEnabled: true,
-          headingInteractionEnabled: true,
-          streetViewControl: false,
-          mapTypeControl: false,
-          fullscreenControl: true,
-          zoomControl: true,
-          zoomControlOptions: {
-            position: google.maps.ControlPosition.RIGHT_CENTER
-          }
-        })
-
-        mapInstance.current = map
-        console.log('Map created successfully with 3D tiles enabled')
-
-        if (mounted) {
-          setStatus('ready')
-          setCurrentLocation(centerLocation)
-        }
-      } catch (error) {
-        console.error('Failed to initialize Area Explorer:', error)
-        if (mounted) {
-          setStatus('error')
-        }
-      }
-    }
-
-    initMap()
-
-    return () => {
-      mounted = false;
-      // Don't try to manipulate the DOM - just clear the reference
-      mapInstance.current = null;
-    }
-  }, []) // Empty dependency to run only once
-
-  const handleCameraControl = (action: string) => {
-    if (!mapInstance.current) return
-
-    const map = mapInstance.current
-    const currentHeading = map.getHeading() || 0
-    const currentTilt = map.getTilt() || 0
-    const currentZoom = map.getZoom() || 17
+    const camera = viewer.camera
+    const currentHeading = camera.heading
+    const currentPitch = camera.pitch
+    const currentPosition = camera.positionCartographic
 
     switch (action) {
       case 'rotateLeft':
-        map.setHeading(currentHeading - 30)
+        camera.setView({
+          orientation: {
+            heading: currentHeading - Cesium.Math.toRadians(15),
+            pitch: currentPitch,
+            roll: 0
+          }
+        })
         break
+      
       case 'rotateRight':
-        map.setHeading(currentHeading + 30)
+        camera.setView({
+          orientation: {
+            heading: currentHeading + Cesium.Math.toRadians(15),
+            pitch: currentPitch,
+            roll: 0
+          }
+        })
         break
+      
       case 'tiltUp':
-        map.setTilt(Math.min(currentTilt + 10, 67.5))
+        camera.setView({
+          orientation: {
+            heading: currentHeading,
+            pitch: Math.min(currentPitch + Cesium.Math.toRadians(10), 0),
+            roll: 0
+          }
+        })
         break
+      
       case 'tiltDown':
-        map.setTilt(Math.max(currentTilt - 10, 0))
+        camera.setView({
+          orientation: {
+            heading: currentHeading,
+            pitch: Math.max(currentPitch - Cesium.Math.toRadians(10), -Cesium.Math.PI_OVER_TWO),
+            roll: 0
+          }
+        })
         break
+      
       case 'zoomIn':
-        map.setZoom(Math.min(currentZoom + 1, 21))
+        camera.zoomIn(currentPosition.height * 0.5)
         break
+      
       case 'zoomOut':
-        map.setZoom(Math.max(currentZoom - 1, 10))
+        camera.zoomOut(currentPosition.height * 0.5)
         break
+      
       case 'reset':
-        if (currentLocation) {
-          map.setCenter(currentLocation)
-          map.setZoom(17)
-          map.setTilt(65)
-          map.setHeading(0)
-        }
+        cesiumRef.current?.flyTo({
+          lat: currentLocation.lat,
+          lng: currentLocation.lng,
+          altitude: 1500,
+          heading: 0,
+          pitch: -45,
+          duration: 1.5
+        })
         break
     }
-  }
+  }, [currentLocation])
 
-  if (status === 'error') {
-    return (
-      <div className="area-explorer__container">
-        <div className="area-explorer__overlay">
-          Failed to load Google Maps. Please check your API key and try again.
-        </div>
-      </div>
-    )
-  }
+  const handleSearch = useCallback((e: React.FormEvent) => {
+    e.preventDefault()
+    // Google Places Autocomplete handles the search
+  }, [])
+
+  const startAutoRotate = useCallback(() => {
+    const viewer = cesiumRef.current?.viewer
+    if (!viewer || autoRotateRef.current) return
+
+    setIsAutoRotating(true)
+    
+    const animate = () => {
+      const camera = viewer.camera
+      
+      // Rotate around the current center point
+      const currentHeading = camera.heading
+      camera.setView({
+        orientation: {
+          heading: currentHeading + Cesium.Math.toRadians(0.2), // Rotate 0.2 degrees per frame
+          pitch: camera.pitch,
+          roll: 0
+        }
+      })
+
+      autoRotateRef.current = requestAnimationFrame(animate)
+    }
+    
+    animate()
+  }, [])
+
+  const stopAutoRotate = useCallback(() => {
+    if (autoRotateRef.current) {
+      cancelAnimationFrame(autoRotateRef.current)
+      autoRotateRef.current = null
+    }
+    setIsAutoRotating(false)
+  }, [])
+
+  // Initialize Google Places Autocomplete
+  useEffect(() => {
+    const initAutocomplete = async () => {
+      try {
+        await loadGoogleMaps()
+        
+        if (searchInputRef.current && window.google) {
+          // Create autocomplete instance
+          const autocomplete = new window.google.maps.places.Autocomplete(searchInputRef.current, {
+            fields: ['geometry', 'name', 'formatted_address'],
+            types: ['geocode', 'establishment']
+          })
+          
+          // Add listener for place selection
+          autocomplete.addListener('place_changed', () => {
+            const place = autocomplete.getPlace()
+            
+            if (place.geometry && place.geometry.location) {
+              const lat = place.geometry.location.lat()
+              const lng = place.geometry.location.lng()
+              const name = place.name || place.formatted_address || 'Selected Location'
+              
+              // Update location and fly to it
+              setCurrentLocation({ lat, lng, name })
+              setSearchInput(name)
+              
+              if (cesiumRef.current) {
+                cesiumRef.current.flyTo({
+                  lat,
+                  lng,
+                  altitude: 1500,
+                  heading: 0,
+                  pitch: -45,
+                  duration: 2
+                })
+              }
+            }
+          })
+          
+          autocompleteRef.current = autocomplete
+        }
+      } catch (error) {
+        console.error('Failed to initialize Google Places Autocomplete:', error)
+      }
+    }
+    
+    initAutocomplete()
+  }, [])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (autoRotateRef.current) {
+        cancelAnimationFrame(autoRotateRef.current)
+      }
+    }
+  }, [])
 
   return (
     <div className="area-explorer__container">
-      <div ref={mapContainerRef} className="area-explorer__map-wrapper">
-        {status === 'loading' && (
-          <div className="area-explorer__overlay">Loading 3D Map...</div>
-        )}
+      <div className="area-explorer__map-wrapper">
+        <CesiumViewer
+          ref={cesiumRef}
+          onViewerReady={handleViewerReady}
+          initialLocation={{
+            lat: currentLocation.lat,
+            lng: currentLocation.lng,
+            altitude: 1500,
+            pitch: -45
+          }}
+        />
       </div>
 
       <div className="area-explorer__controls">
+        <div className="area-explorer__search-section">
+          <h3>Search Location</h3>
+          <form onSubmit={handleSearch} className="area-explorer__search-form">
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Enter city, address, or landmark..."
+              className="area-explorer__search-input"
+              disabled={!isReady}
+            />
+            <button 
+              type="submit" 
+              disabled={!isReady}
+              className="area-explorer__search-button"
+              style={{ display: 'none' }} // Hide since autocomplete handles search
+            >
+              Search
+            </button>
+          </form>
+        </div>
+
         <div className="area-explorer__camera-section">
           <h3>3D Map Controls</h3>
+          <div className="area-explorer__auto-rotate-control">
+            <button 
+              onClick={isAutoRotating ? stopAutoRotate : startAutoRotate}
+              disabled={!isReady}
+              className={`area-explorer__auto-rotate-btn ${isAutoRotating ? 'area-explorer__auto-rotate-btn--active' : ''}`}
+            >
+              {isAutoRotating ? '⏸ Stop Auto-Rotate' : '▶ Start Auto-Rotate'}
+            </button>
+          </div>
           <div className="area-explorer__camera-controls">
-            <button onClick={() => handleCameraControl('rotateLeft')}>
+            <button 
+              onClick={() => handleCameraControl('rotateLeft')} 
+              disabled={!isReady || isAutoRotating}
+            >
               ← Rotate Left
             </button>
-            <button onClick={() => handleCameraControl('rotateRight')}>
+            <button 
+              onClick={() => handleCameraControl('rotateRight')} 
+              disabled={!isReady || isAutoRotating}
+            >
               Rotate Right →
             </button>
-            <button onClick={() => handleCameraControl('tiltUp')}>
+            <button 
+              onClick={() => handleCameraControl('tiltUp')} 
+              disabled={!isReady}
+            >
               ↑ Tilt Up
             </button>
-            <button onClick={() => handleCameraControl('tiltDown')}>
+            <button 
+              onClick={() => handleCameraControl('tiltDown')} 
+              disabled={!isReady}
+            >
               ↓ Tilt Down
             </button>
-            <button onClick={() => handleCameraControl('zoomIn')}>
+            <button 
+              onClick={() => handleCameraControl('zoomIn')} 
+              disabled={!isReady}
+            >
               + Zoom In
             </button>
-            <button onClick={() => handleCameraControl('zoomOut')}>
+            <button 
+              onClick={() => handleCameraControl('zoomOut')} 
+              disabled={!isReady}
+            >
               - Zoom Out
             </button>
-            <button onClick={() => handleCameraControl('reset')}>
+            <button 
+              onClick={() => handleCameraControl('reset')} 
+              disabled={!isReady}
+            >
               ⟲ Reset View
             </button>
           </div>
@@ -195,10 +316,11 @@ export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
         <div className="area-explorer__info">
           <h3>Navigation Tips</h3>
           <ul>
-            <li>Drag to pan around the map</li>
+            <li>Left click + drag to pan</li>
+            <li>Right click + drag to rotate/tilt</li>
             <li>Scroll to zoom in/out</li>
-            <li>Ctrl + drag to rotate and tilt</li>
-            <li>Use the controls above for precise movement</li>
+            <li>Middle click + drag to rotate view</li>
+            <li>Use controls for precise movement</li>
           </ul>
         </div>
       </div>

@@ -8,7 +8,7 @@ import { Content } from '../../blocks/Content/config'
 import { FormBlock } from '../../blocks/Form/config'
 import { MediaBlock } from '../../blocks/MediaBlock/config'
 import { WebGLText } from '../../blocks/WebGLText/config'
-import { TravelGlobe } from '../../blocks/TravelGlobe/config'
+import { TravelDataGlobeBlock } from '../../blocks/TravelDataGlobeBlock/config'
 import { ThreeDCarousel } from '../../blocks/ThreeDCarousel/config'
 import { DolphinBlock } from '../../blocks/DolphinBlock/config'
 import { WebGLCarousel } from '../../blocks/WebGLCarousel/config'
@@ -80,7 +80,7 @@ export const Pages: CollectionConfig<'pages'> = {
             {
               name: 'layout',
               type: 'blocks',
-              blocks: [CallToAction, Content, MediaBlock, Archive, FormBlock, WebGLText, TravelGlobe, ThreeDCarousel, DolphinBlock, WebGLCarousel],
+              blocks: [CallToAction, Content, MediaBlock, Archive, FormBlock, WebGLText, TravelDataGlobeBlock, ThreeDCarousel, DolphinBlock, WebGLCarousel],
               required: true,
               admin: {
                 initCollapsed: true,
