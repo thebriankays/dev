@@ -23,3 +23,9 @@ export { default as RichText } from './RichText'
 // Animation Components
 export { SplitText } from './SplitText'
 export type { SplitType } from './SplitText'
+
+// 3D Map Components
+export { AreaExplorer } from './AreaExplorer'
+export { Storytelling } from './Storytelling'
+export { CesiumViewer } from './CesiumViewer'
+export type { CesiumViewerHandle } from './CesiumViewer'

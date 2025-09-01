@@ -5,6 +5,45 @@ import { useField } from '@payloadcms/ui'
 import { Loader } from '@googlemaps/js-api-loader'
 import './itinerary-builder.scss'
 
+// Type definitions for Google Maps 3D Element (beta API)
+// Based on official Google Maps documentation
+interface LatLngLiteral {
+  lat: number
+  lng: number
+}
+
+interface LatLngAltitude extends LatLngLiteral {
+  altitude?: number
+}
+
+interface Map3DElement extends HTMLElement {
+  center: LatLngAltitude | LatLngLiteral
+  heading: number
+  tilt: number
+  range: number
+  roll?: number
+  mode?: string
+  defaultUIDisabled?: boolean
+  bounds?: unknown
+  maxAltitude?: number
+  minAltitude?: number
+  maxHeading?: number
+  minHeading?: number
+  maxTilt?: number
+  minTilt?: number
+}
+
+// Constructor type for Map3DElement
+interface Map3DElementConstructor {
+  new (options?: {
+    center?: LatLngAltitude | LatLngLiteral
+    heading?: number
+    tilt?: number
+    range?: number
+    mode?: string
+  }): Map3DElement
+}
+
 type StoryChapter = {
   id?: string
   title: string
@@ -33,7 +72,8 @@ type StoryChapter = {
 export const ItineraryBuilder: React.FC<{ path: string }> = ({ path }) => {
   const { value: chapters, setValue } = useField<StoryChapter[]>({ path })
   const mapRef = useRef<HTMLDivElement>(null)
-  const mapInstance = useRef<any>(null) // Map3DElement is beta, not in types
+  // Map3DElement is beta API - using custom type
+  const mapInstance = useRef<Map3DElement | null>(null)
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
   const [isMapReady, setIsMapReady] = useState(false)
   const [selectedChapterIndex, setSelectedChapterIndex] = useState<number | null>(null)
@@ -47,6 +87,21 @@ export const ItineraryBuilder: React.FC<{ path: string }> = ({ path }) => {
     })
     markersRef.current = []
   }, [])
+
+  const goToChapter = useCallback((index: number) => {
+    if (!mapInstance.current || !chapters || !chapters[index]) return
+    
+    const chapter = chapters[index]
+    if (!chapter.coordinates) return
+
+    const map3d = mapInstance.current
+    map3d.center = chapter.coordinates
+    map3d.tilt = chapter.cameraOptions?.pitch || 65
+    map3d.heading = chapter.cameraOptions?.heading || 0
+    map3d.range = 1500
+    
+    setSelectedChapterIndex(index)
+  }, [chapters])
 
   const updateMarkers = useCallback(async () => {
     if (!mapInstance.current || !chapters) return
@@ -64,8 +119,10 @@ export const ItineraryBuilder: React.FC<{ path: string }> = ({ path }) => {
         <div class="itinerary-builder-marker-number ${selectedChapterIndex === index ? 'selected' : ''}">${index + 1}</div>
       `
 
+      // Map3DElement doesn't directly support AdvancedMarkerElement
+      // We need to cast it as the marker expects a Map interface
       const marker = new AdvancedMarkerElement({
-        map: mapInstance.current,
+        map: mapInstance.current as unknown as google.maps.Map | null,
         position: chapter.coordinates,
         content: markerContent,
         title: chapter.title
@@ -78,22 +135,11 @@ export const ItineraryBuilder: React.FC<{ path: string }> = ({ path }) => {
 
       markersRef.current.push(marker)
     })
-  }, [chapters, selectedChapterIndex, clearMarkers])
+  }, [chapters, selectedChapterIndex, clearMarkers, goToChapter])
 
-  const goToChapter = useCallback((index: number) => {
-    if (!mapInstance.current || !chapters || !chapters[index]) return
-    
-    const chapter = chapters[index]
-    if (!chapter.coordinates) return
 
-    const map3d = mapInstance.current
-    map3d.center = chapter.coordinates
-    map3d.tilt = chapter.cameraOptions?.pitch || 65
-    map3d.heading = chapter.cameraOptions?.heading || 0
-    map3d.range = 1500
-    
-    setSelectedChapterIndex(index)
-  }, [chapters])
+
+
 
   const initMap = useCallback(async () => {
     if (!mapRef.current) return
@@ -110,8 +156,8 @@ export const ItineraryBuilder: React.FC<{ path: string }> = ({ path }) => {
         loader.importLibrary('places')
       ])
 
-      // Map3DElement is a beta feature, cast to any
-      const Map3DElement = (maps3dLib as any).Map3DElement
+      // Map3DElement is a beta feature
+      const Map3DElement = (maps3dLib as { Map3DElement: Map3DElementConstructor }).Map3DElement
       const { Autocomplete } = placesLib as typeof google.maps.places
 
       // Get initial center from first chapter or default
@@ -158,11 +204,14 @@ export const ItineraryBuilder: React.FC<{ path: string }> = ({ path }) => {
     initMap()
     return () => {
       clearMarkers()
-      if (mapInstance.current && mapRef.current && mapRef.current.contains(mapInstance.current)) {
-        mapRef.current.removeChild(mapInstance.current)
+      // Store ref value in variable to avoid stale closure issues
+      const mapContainer = mapRef.current
+      const map = mapInstance.current
+      if (map && mapContainer && mapContainer.contains(map)) {
+        mapContainer.removeChild(map)
       }
     }
-  }, [])
+  }, [initMap, clearMarkers])
 
   useEffect(() => {
     if (isMapReady) {
@@ -180,7 +229,7 @@ export const ItineraryBuilder: React.FC<{ path: string }> = ({ path }) => {
       id: `chapter_${Date.now()}`,
       title: `Chapter ${currentChapters.length + 1}`,
       content: '',
-      coordinates: map3d.center as { lat: number; lng: number },
+      coordinates: map3d.center as LatLngLiteral,
       cameraOptions: {
         useCustomCamera: true,
         heading: map3d.heading || 0,
@@ -205,7 +254,7 @@ export const ItineraryBuilder: React.FC<{ path: string }> = ({ path }) => {
     
     updatedChapters[index] = {
       ...updatedChapters[index],
-      coordinates: map3d.center as { lat: number; lng: number },
+      coordinates: map3d.center as LatLngLiteral,
       cameraOptions: {
         useCustomCamera: true,
         heading: map3d.heading || 0,
@@ -344,7 +393,7 @@ export const ItineraryBuilder: React.FC<{ path: string }> = ({ path }) => {
           <ol>
             <li>Navigate the 3D map to find locations</li>
             <li>Adjust the camera angle and zoom</li>
-            <li>Click "Add Chapter" to capture the view</li>
+            <li>Click &quot;Add Chapter&quot; to capture the view</li>
             <li>Edit chapter details in the form below</li>
             <li>Reorder or update chapters as needed</li>
           </ol>

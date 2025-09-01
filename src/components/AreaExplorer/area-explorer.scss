@@ -60,6 +60,13 @@
     }
   }
 
+  &__location-name {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 500;
+    color: #1a73e8;
+  }
+
   &__search-section {
     padding: 15px 20px;
     border-bottom: 1px solid #e8eaed;
@@ -380,6 +387,121 @@
       &:last-child {
         margin: 0;
       }
+    }
+  }
+
+  // Place Details Panel
+  &__details-panel {
+    position: relative;
+    padding: 20px;
+    background: #fff;
+    border-top: 1px solid #e8eaed;
+    animation: slideInUp 0.3s ease;
+
+    h3 {
+      margin: 0 0 10px 0;
+      font-size: 16px;
+      font-weight: 500;
+      color: #202124;
+      padding-right: 24px;
+    }
+  }
+
+  &__close-details {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    font-size: 24px;
+    line-height: 1;
+    color: #5f6368;
+    cursor: pointer;
+    transition: color 0.2s;
+
+    &:hover {
+      color: #202124;
+    }
+  }
+
+  &__details-address {
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    color: #5f6368;
+  }
+
+  &__details-rating {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 8px 0;
+    font-size: 14px;
+  }
+
+  &__rating-stars {
+    color: #fbbc05;
+    letter-spacing: 2px;
+  }
+
+  &__rating-value {
+    font-weight: 500;
+    color: #202124;
+  }
+
+  &__rating-count {
+    font-size: 12px;
+    color: #5f6368;
+  }
+
+  &__details-hours {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    font-weight: 500;
+
+    &.open {
+      color: #34a853;
+    }
+
+    &.closed {
+      color: #ea4335;
+    }
+  }
+
+  &__details-price {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    color: #202124;
+  }
+
+  &__details-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+  }
+
+  &__tag {
+    display: inline-block;
+    padding: 4px 8px;
+    background: #f1f3f4;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #5f6368;
+    text-transform: capitalize;
+  }
+
+  // Animations
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
 
