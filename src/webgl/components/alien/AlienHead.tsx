@@ -5,17 +5,30 @@ import { useFrame } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { SimplexNoise, createBlackMatcap, createNeonMatcap, centerGeometry } from './utils'
+import type { GLTF } from 'three-stdlib'
+
+interface AlienGLTF extends GLTF {
+  nodes: {
+    mesh_0?: THREE.Mesh
+  }
+}
+
+interface Presets {
+  transitionLevel: { value: number }
+  black: { value: THREE.Texture }
+  neon: { value: THREE.Texture }
+}
 
 // Three.js component using the optimized model structure
 export function AlienHead() {
   const meshRef = useRef<THREE.Group>(null)
-  const presetsRef = useRef<any>(null)
+  const presetsRef = useRef<Presets>(null)
   
   // Use the new optimized structure with proper typing
-  const gltf = useGLTF('/alien-glass.gltf')
-  const nodes = gltf.nodes as any // Use any to avoid TypeScript issues
+  const gltf = useGLTF('/alien-glass.gltf') as AlienGLTF
+  const nodes = gltf.nodes
   
-  const { blackMatcap, neonMatcap, simplex, presets, centeredGeometry } = useMemo(() => {
+  const { simplex, presets, centeredGeometry } = useMemo(() => {
     const blackMatcap = createBlackMatcap()
     const neonMatcap = createNeonMatcap()
     const simplex = new SimplexNoise()
@@ -34,7 +47,7 @@ export function AlienHead() {
       centerGeometry(centeredGeometry)
     }
     
-    return { blackMatcap, neonMatcap, simplex, presets, centeredGeometry }
+    return { simplex, presets, centeredGeometry }
   }, [nodes])
 
   const material = useMemo(() => {
@@ -45,7 +58,7 @@ export function AlienHead() {
     })
     
     // Apply custom shader with proper typing
-    material.onBeforeCompile = (shader: any) => {
+    material.onBeforeCompile = (shader: { uniforms: any; vertexShader: string; fragmentShader: string }) => {
         shader.uniforms.transitionLevel = presets.transitionLevel
         shader.uniforms.matcap2 = presets.neon
         

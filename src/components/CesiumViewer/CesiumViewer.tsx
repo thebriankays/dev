@@ -9,16 +9,22 @@ import React, {
 } from 'react'
 
 // Type definitions for Cesium
-interface CesiumViewer {
+// Type definitions for Cesium Viewer
+export interface CesiumViewer {
   camera: {
     flyTo: (options: Record<string, unknown>) => void
     setView: (options: Record<string, unknown>) => void
     heading: number
     pitch: number
+    roll?: number
     positionCartographic: {
       longitude: number
       latitude: number
       height: number
+    }
+    changed?: {
+      addEventListener: (callback: () => void) => void
+      removeEventListener: (callback: () => void) => void
     }
   }
   scene: {
@@ -115,6 +121,7 @@ export interface CesiumViewerHandle {
   ) => void
   clearMarkers: () => void
   isReady: () => boolean
+  getViewer: () => CesiumViewer | null
 }
 
 interface CesiumViewerProps {
@@ -320,6 +327,10 @@ export const CesiumViewer = forwardRef<
         isInitializedRef.current &&
         viewerRef.current !== null
       )
+    },
+    
+    getViewer() {
+      return viewerRef.current
     }
   }))
 

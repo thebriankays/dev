@@ -163,12 +163,13 @@ export const ItineraryBuilder: React.FC<{ path: string }> = ({ path }) => {
       // Get initial center from first chapter or default
       const initialCenter = chapters?.[0]?.coordinates || { lat: 48.8584, lng: 2.2945 }
 
-      // Create 3D map
+      // Create 3D map with proper mode
       const map3d = new Map3DElement({
         center: initialCenter,
         range: 1500,
         tilt: 65,
-        heading: 0
+        heading: 0,
+        mode: 'hybrid' // Required for the map to render
       })
 
       mapInstance.current = map3d
@@ -204,7 +205,7 @@ export const ItineraryBuilder: React.FC<{ path: string }> = ({ path }) => {
     initMap()
     return () => {
       clearMarkers()
-      // Store ref value in variable to avoid stale closure issues
+      // Store ref values in variables to avoid stale closure issues
       const mapContainer = mapRef.current
       const map = mapInstance.current
       if (map && mapContainer && mapContainer.contains(map)) {
