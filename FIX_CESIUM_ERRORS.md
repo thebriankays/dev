@@ -35,9 +35,9 @@ pnpm install
 
 ### Step 3: Verify Environment Variables
 
-Your `.env` file already has the Google Maps API key configured ✅:
+Your `.env` file should have the Google Maps API key configured:
 ```
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=AIzaSyAu77G6byW7HdeK80f7O6RpKm3_0AoNoYA
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 ```
 
 Optionally, add a Cesium Ion token (not required, default is provided):
