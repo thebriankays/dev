@@ -1,8 +1,7 @@
 'use client'
 
 import React, { useRef, ReactNode, useEffect } from 'react'
-import { View } from '@react-three/drei'
-import { PerspectiveCamera } from '@react-three/drei'
+import { View, PerspectiveCamera } from '@react-three/drei'
 import { useGlass } from '@/providers/Glass'
 import { useView } from '@/providers/Canvas'
 import { WebGLTunnel } from '@/webgl/components/tunnel'
@@ -39,21 +38,17 @@ export function BlockWrapper({
   disableDefaultCamera = false,
 }: BlockWrapperProps) {
   const ref = useRef<HTMLDivElement>(null)
-  const bounds = useView(ref)
+  useView(ref)
   const glass = useGlass()
-  
+
   useEffect(() => {
     if (!ref.current || !glassEffect.enabled) return
-    
     glass.applyGlass(ref.current, glassEffect.variant)
-    
     return () => {
-      if (ref.current) {
-        glass.removeGlass(ref.current)
-      }
+      if (ref.current) glass.removeGlass(ref.current)
     }
   }, [glassEffect.enabled, glassEffect.variant, glass])
-  
+
   return (
     <>
       <div
@@ -70,14 +65,19 @@ export function BlockWrapper({
         style={{
           position: 'relative',
           width: '100%',
+          minHeight: '100vh',      // <- critical so <View> has real size
         }}
       >
         {children}
       </div>
-      
+
       {webglContent && (
         <WebGLTunnel>
-          <View track={ref as React.RefObject<HTMLElement>}>
+          <View
+            track={ref as React.RefObject<HTMLElement>}
+            className="webgl-view"
+            style={{ pointerEvents: interactive ? 'auto' : 'none' }}
+          >
             {!disableDefaultCamera && (
               <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={50} />
             )}

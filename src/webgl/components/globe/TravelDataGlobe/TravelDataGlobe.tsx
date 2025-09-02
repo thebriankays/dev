@@ -16,32 +16,33 @@ interface TravelDataGlobeProps {
   borders: CountryBorder
   airports: AirportData[]
   restaurants: MichelinRestaurantData[]
-  
+
   globeImageUrl: string
   bumpImageUrl: string
-  
+
   autoRotateSpeed: number
   atmosphereColor: string
-  
+
   onCountryClick: (name: string) => void
   onAirportClick: (airport: AirportData) => void
   onRestaurantClick: (restaurant: MichelinRestaurantData) => void
   onCountryHover: (name: string | null) => void
-  
+
   selectedCountry: string | null
+  selectedCountryCode: string | null
   hoveredCountry: string | null
+  passportCountry: string | null
   currentView: 'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports'
   visaArcs: VisaData[]
+  focusTarget: { lat: number; lng: number } | null
   showMarkers: boolean
 }
 
 const TravelDataGlobe: React.FC<TravelDataGlobeProps> = (props) => {
-  // Just pass through directly - the validation was preventing textures from loading
   return (
     <TravelDataGlobeManual
       {...props}
       visaRequirements={props.visaArcs || []}
-      passportCountry={null}
       atmosphereAltitude={0.15}
     />
   )

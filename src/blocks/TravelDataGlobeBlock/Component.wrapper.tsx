@@ -13,20 +13,18 @@ import {
 import { BlockWrapper } from '@/blocks/_shared/BlockWrapper'
 import VerticalMarquee from '@/components/VerticalMarquee/VerticalMarquee'
 import { AdvisoryDetails } from './components/AdvisoryDetails'
-import type { 
+import type {
   PreparedData,
   AdvisoryCountry,
   CountryVisaData,
   MichelinRestaurantData,
   AirportData,
-  VisaData 
+  VisaData
 } from './types'
 import './styles.scss'
 
-// Lazy load the WebGL component
 const TravelDataGlobe = lazy(() => import('@/webgl/components/globe/TravelDataGlobe/TravelDataGlobe'))
 
-// Loading fallback
 const GlobeLoading = () => (
   <>
     <ambientLight intensity={0.3} />
@@ -41,6 +39,14 @@ interface TravelDataGlobeWrapperProps {
   data: PreparedData
 }
 
+function normalizeName(s: string) {
+  return (s || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
   const {
     advisories,
@@ -53,181 +59,225 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
     blockConfig,
     enabledViews,
   } = data
-  
-  // State for loaded polygon data
+
   const [polygons, setPolygons] = useState(initialPolygons)
   const [borders, setBorders] = useState(initialBorders)
-  
-  // Load GeoJSON data on client side
+
+  // Build quick lookup by code and name for advisories
+  const advisoryByCode = useMemo(() => {
+    const m = new Map<string, AdvisoryCountry>()
+    advisories.forEach(a => a.countryCode && m.set(a.countryCode.toUpperCase(), a))
+    return m
+  }, [advisories])
+  const advisoryByName = useMemo(() => {
+    const m = new Map<string, AdvisoryCountry>()
+    advisories.forEach(a => m.set(normalizeName(a.country), a))
+    return m
+  }, [advisories])
+
+  // Load GeoJSON and *join by ISO_A2 first*, then by name
   useEffect(() => {
     fetch('/datamaps.world.json')
       .then(res => res.json())
-      .then(geoData => {
-        // Transform GeoJSON features to advisory polygons
+      .then((geoData) => {
         const advisoryPolygons = geoData.features.map((feature: any) => {
-          const advisory = advisories.find((a: AdvisoryCountry) => 
-            a.country === feature.properties.name || 
-            a.country === feature.properties.NAME ||
-            a.country === feature.properties.ADMIN
-          )
+          const iso2 =
+            (feature.properties?.iso_a2 || feature.properties?.ISO_A2 || feature.properties?.ISO2 || '').toUpperCase()
+          const rawName =
+            feature.properties?.name || feature.properties?.NAME || feature.properties?.ADMIN || ''
+          const joined =
+            (iso2 && advisoryByCode.get(iso2)) ||
+            advisoryByName.get(normalizeName(rawName))
+
           return {
             type: 'Feature',
             geometry: feature.geometry,
             properties: {
-              name: feature.properties.name || feature.properties.NAME || feature.properties.ADMIN,
-              iso_a2: feature.properties.iso_a2 || feature.properties.ISO_A2 || '',
+              name: rawName,
+              iso_a2: iso2,
             },
-            level: advisory?.level || 1,
+            level: joined?.level ?? 1,
           }
         })
-        
-        // Transform GeoJSON features to visa polygons
+
         const visaPolygons = geoData.features.map((feature: any) => {
-          const visaCountry = visaCountries.find((v: CountryVisaData) => v.countryName === feature.properties.name)
+          const rawName = feature.properties?.name || feature.properties?.NAME || feature.properties?.ADMIN || ''
+          const hasData = visaCountries.some(v => normalizeName(v.countryName) === normalizeName(rawName))
           return {
             type: 'Feature',
             geometry: feature.geometry,
             properties: {
-              name: feature.properties.name,
-              iso_a2: feature.properties.iso_a2 || '',
+              name: rawName,
+              iso_a2: (feature.properties?.iso_a2 || feature.properties?.ISO_A2 || '').toUpperCase(),
             },
-            requirement: visaCountry ? 'visa_required' : 'no_data',
+            requirement: hasData ? 'visa_required' : 'no_data',
           }
         })
-        
-        setPolygons({
-          advisory: advisoryPolygons,
-          visa: visaPolygons,
-        })
-        
-        // Set borders as a single MultiPolygon feature combining all countries
+
+        // Borders
         const allCoordinates = geoData.features
           .filter((f: any) => f.geometry?.type === 'Polygon' || f.geometry?.type === 'MultiPolygon')
-          .map((f: any) => {
-            if (f.geometry.type === 'Polygon') {
-              return f.geometry.coordinates
-            } else {
-              return f.geometry.coordinates[0]
-            }
-          })
-        
+          .map((f: any) => (f.geometry.type === 'Polygon' ? f.geometry.coordinates : f.geometry.coordinates[0]))
+
+        setPolygons({ advisory: advisoryPolygons, visa: visaPolygons })
         setBorders({
           type: 'Feature',
-          geometry: {
-            type: 'MultiPolygon',
-            coordinates: allCoordinates
-          },
-          properties: {
-            iso_a2: 'WORLD',
-            name: 'World Borders'
-          }
+          geometry: { type: 'MultiPolygon', coordinates: allCoordinates },
+          properties: { iso_a2: 'WORLD', name: 'World Borders' },
         })
       })
-      .catch(err => {
-        console.warn('Failed to load GeoJSON data:', err)
-      })
-  }, [advisories, visaCountries])
+      .catch(err => console.warn('Failed to load GeoJSON data:', err))
+  }, [advisories, visaCountries, advisoryByCode, advisoryByName])
 
-  // Minimal client state
-  const [currentView, setCurrentView] = useState<string>(
-    blockConfig.initialView || 'travelAdvisory'
-  )
+  // ---- UI state ----
+  const [currentView, setCurrentView] = useState<string>(blockConfig.initialView || 'travelAdvisory')
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
+  const [selectedCountryCode, setSelectedCountryCode] = useState<string | null>(null)
   const [passportCountry, setPassportCountry] = useState<string | null>(null)
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [showDetails, setShowDetails] = useState(false)
   const [showAdvisoryKey, setShowAdvisoryKey] = useState(false)
+  const [focusTarget, setFocusTarget] = useState<{ lat: number; lng: number } | null>(null)
 
-  // Get current polygons
-  const currentPolygons = useMemo(() => {
-    return currentView === 'visaRequirements' ? polygons.visa : polygons.advisory
-  }, [currentView, polygons])
+  // Reset camera focus when switching views
+  useEffect(() => {
+    setFocusTarget(null)
+  }, [currentView])
 
-  // Get visa arcs
+  const currentPolygons = useMemo(
+    () => (currentView === 'visaRequirements' ? polygons.visa : polygons.advisory),
+    [currentView, polygons],
+  )
+
   const visaArcs = useMemo(() => {
     if (!passportCountry || currentView !== 'visaRequirements') return []
-    const country = visaCountries.find((c: CountryVisaData) => c.countryName === passportCountry)
+    const country = visaCountries.find(c => c.countryName === passportCountry)
     return country?.visaRequirements || []
   }, [passportCountry, currentView, visaCountries])
 
-  // Filter data - the only client-side computation
   const filteredData = useMemo(() => {
-    const query = searchQuery.toLowerCase()
-    
+    const q = searchQuery.toLowerCase()
     switch (currentView) {
       case 'travelAdvisory':
-        return advisories.filter((adv: AdvisoryCountry) => 
-          adv.country.toLowerCase().includes(query)
-        )
+        return advisories.filter(adv => adv.country.toLowerCase().includes(q))
       case 'visaRequirements':
-        return visaCountries.filter((visa: CountryVisaData) => 
-          visa.countryName.toLowerCase().includes(query)
-        )
+        return visaCountries.filter(visa => visa.countryName.toLowerCase().includes(q))
       case 'michelinRestaurants':
-        return restaurants.filter((rest: MichelinRestaurantData) => 
-          rest.name.toLowerCase().includes(query) ||
-          (rest.displayLocation || '').toLowerCase().includes(query) ||
-          rest.cuisine.toLowerCase().includes(query)
+        return restaurants.filter(
+          rest =>
+            rest.name.toLowerCase().includes(q) ||
+            (rest.displayLocation || '').toLowerCase().includes(q) ||
+            rest.cuisine.toLowerCase().includes(q),
         )
       case 'airports':
-        return airports.filter((airport: AirportData) => 
-          airport.code.toLowerCase().includes(query) ||
-          airport.name.toLowerCase().includes(query) ||
-          (airport.displayLocation || '').toLowerCase().includes(query)
+        return airports.filter(
+          airport =>
+            airport.code.toLowerCase().includes(q) ||
+            airport.name.toLowerCase().includes(q) ||
+            (airport.displayLocation || '').toLowerCase().includes(q),
         )
       default:
         return []
     }
   }, [currentView, searchQuery, advisories, visaCountries, restaurants, airports])
 
-  // Handlers
+  // Tab change
   const handleTabChange = useCallback((view: string) => {
     setCurrentView(view)
     setSearchQuery('')
     setShowDetails(false)
     setSelectedCountry(null)
+    setSelectedCountryCode(null)
     setPassportCountry(null)
+    setFocusTarget(null)
   }, [])
 
-  const handleCountryClick = useCallback((countryName: string) => {
-    if (currentView === 'travelAdvisory') {
-      setSelectedCountry(countryName)
-      setShowDetails(true)
-    } else if (currentView === 'visaRequirements') {
-      setPassportCountry(countryName)
-    }
-  }, [currentView])
+  // From GL click (outline)
+  const handleCountryClick = useCallback(
+    (countryName: string) => {
+      if (currentView === 'travelAdvisory') {
+        setSelectedCountry(countryName)
+        // Try to find ISO from our polygons/advisories
+        const poly = currentPolygons.find(p => normalizeName(p.properties?.name) === normalizeName(countryName))
+        const codeGuess = (poly?.properties as any)?.iso_a2 || advisoryByName.get(normalizeName(countryName))?.countryCode || null
+        setSelectedCountryCode(codeGuess || null)
+        setShowDetails(true)
+      } else if (currentView === 'visaRequirements') {
+        setPassportCountry(countryName)
+      }
+    },
+    [currentView, currentPolygons, advisoryByName],
+  )
 
-  const selectedAdvisory = useMemo(() => {
-    if (!selectedCountry) return null
-    return advisories.find((adv: AdvisoryCountry) => adv.country === selectedCountry)
-  }, [selectedCountry, advisories])
+  // From list click (advisories)
+  const handleAdvisoryItemClick = (adv: AdvisoryCountry) => {
+    setSelectedCountry(adv.country)
+    setSelectedCountryCode(adv.countryCode || null)
+    setShowDetails(true)
+  }
 
-  // WebGL content for BlockWrapper - memoize to avoid re-renders
-  const webglContent = useMemo(() => (
-    <Suspense fallback={<GlobeLoading />}>
-      <TravelDataGlobe
-        polygons={currentPolygons}
-        borders={borders}
-        airports={currentView === 'airports' ? airports : []}
-        restaurants={currentView === 'michelinRestaurants' ? restaurants : []}
-        globeImageUrl="/earth-blue-marble.jpg"
-        bumpImageUrl="/earth-topology.png"
-        autoRotateSpeed={0.5}
-        atmosphereColor="#ffffff"
-        onCountryClick={handleCountryClick}
-        onAirportClick={() => {}}
-        onRestaurantClick={() => {}}
-        onCountryHover={setHoveredCountry}
-        selectedCountry={selectedCountry}
-        hoveredCountry={hoveredCountry}
-        currentView={currentView as 'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports'}
-        visaArcs={visaArcs as VisaData[]}
-        showMarkers={true}
-      />
-    </Suspense>
-  ), [currentPolygons, borders, airports, restaurants, currentView, handleCountryClick, selectedCountry, hoveredCountry, visaArcs])
+  const selectedAdvisory = useMemo(
+    () => (selectedCountry ? advisories.find(adv => adv.country === selectedCountry) || null : null),
+    [selectedCountry, advisories],
+  )
+
+  // Focus helpers for lists
+  const focusLatLng = (lat: number, lng: number) => {
+    setFocusTarget({ lat, lng })
+    setShowDetails(false)
+    setSelectedCountry(null)
+    setSelectedCountryCode(null)
+    setPassportCountry(null)
+  }
+
+  // WebGL content
+  const webglContent = useMemo(
+    () => (
+      <Suspense fallback={<GlobeLoading />}>
+        <TravelDataGlobe
+          polygons={currentPolygons}
+          borders={borders}
+          airports={currentView === 'airports' ? airports : []}
+          restaurants={currentView === 'michelinRestaurants' ? restaurants : []}
+          globeImageUrl={blockConfig.globeImageUrl || '/earth-blue-marble.jpg'}
+          bumpImageUrl={blockConfig.bumpImageUrl || '/earth-topology.png'}
+          autoRotateSpeed={blockConfig.autoRotateSpeed ?? 0.5}
+          atmosphereColor={blockConfig.atmosphereColor || '#ffffff'}
+          onCountryClick={handleCountryClick}
+          onAirportClick={(a) => focusLatLng(a.location.lat, a.location.lng)}
+          onRestaurantClick={(r) => focusLatLng(r.location.lat, r.location.lng)}
+          onCountryHover={setHoveredCountry}
+          selectedCountry={selectedCountry}
+          selectedCountryCode={selectedCountryCode}
+          hoveredCountry={hoveredCountry}
+          passportCountry={passportCountry}
+          currentView={currentView as 'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports'}
+          visaArcs={visaArcs as VisaData[]}
+          focusTarget={focusTarget}
+          showMarkers={true}
+        />
+      </Suspense>
+    ),
+    [
+      currentPolygons,
+      borders,
+      airports,
+      restaurants,
+      currentView,
+      handleCountryClick,
+      selectedCountry,
+      selectedCountryCode,
+      hoveredCountry,
+      passportCountry,
+      visaArcs,
+      focusTarget,
+      blockConfig.globeImageUrl,
+      blockConfig.bumpImageUrl,
+      blockConfig.autoRotateSpeed,
+      blockConfig.atmosphereColor,
+    ],
+  )
 
   return (
     <BlockWrapper
@@ -238,15 +288,9 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
       {...blockConfig}
     >
       <div className="tdg-container">
-        {/* Static UI - Most is server-rendered but we need to make interactive */}
-        
         {/* Vertical Marquee */}
         <div className="tdg-vertical-marquee">
-          <VerticalMarquee 
-            text="Sweet Serenity Getaways" 
-            animationSpeed={0.5} 
-            position="left" 
-          />
+          <VerticalMarquee text="Sweet Serenity Getaways" animationSpeed={0.5} position="left" />
         </div>
 
         {/* Tabs */}
@@ -258,40 +302,39 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
                 className={`tdg-tab ${currentView === view ? 'tdg-tab--active' : ''}`}
                 onClick={() => handleTabChange(view)}
               >
-                <FontAwesomeIcon 
+                <FontAwesomeIcon
                   icon={
-                    view === 'travelAdvisory' ? faExclamationTriangle :
-                    view === 'visaRequirements' ? faPassport :
-                    view === 'michelinRestaurants' ? faUtensils :
-                    faPlane
-                  } 
-                  className="tdg-tab-icon" 
+                    view === 'travelAdvisory'
+                      ? faExclamationTriangle
+                      : view === 'visaRequirements'
+                      ? faPassport
+                      : view === 'michelinRestaurants'
+                      ? faUtensils
+                      : faPlane
+                  }
+                  className="tdg-tab-icon"
                 />
                 <span className="tdg-tab-label">
-                  {view === 'travelAdvisory' ? 'Travel Advisories' :
-                   view === 'visaRequirements' ? 'Visa Requirements' :
-                   view === 'michelinRestaurants' ? 'Michelin Restaurants' :
-                   'Airports'}
+                  {view === 'travelAdvisory'
+                    ? 'Travel Advisories'
+                    : view === 'visaRequirements'
+                    ? 'Visa Requirements'
+                    : view === 'michelinRestaurants'
+                    ? 'Michelin Restaurants'
+                    : 'Airports'}
                 </span>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Info Panels */}
+        {/* Panels */}
         <aside className="tdg-info-panels">
           <div className="tdg-info-panel-glass">
-            {/* Panel Header - Changes based on view */}
             <div className="tdg-panel-heading">
               {currentView === 'travelAdvisory' && (
                 <>
-                  <Image 
-                    src="/department-of-state.png" 
-                    alt="U.S. Department of State" 
-                    width={40} 
-                    height={40} 
-                    style={{ opacity: 0.9 }}
-                  />
+                  <Image src="/department-of-state.png" alt="U.S. Department of State" width={40} height={40} style={{ opacity: 0.9, height: 'auto', width: '40px' }} />
                   <span>U.S. Travel Advisories</span>
                 </>
               )}
@@ -315,7 +358,6 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
               )}
             </div>
 
-            {/* Advisory Key - Only for travel advisory view */}
             {currentView === 'travelAdvisory' && (
               <div className="tdg-key-accordion">
                 <button 
@@ -350,7 +392,6 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
               </div>
             )}
 
-            {/* Statistics Bar */}
             <div className="tdg-stats-bar">
               {currentView === 'travelAdvisory' && (
                 <>
@@ -398,145 +439,109 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
             <input
               type="text"
               placeholder={
-                currentView === 'visaRequirements' ? "Search passport countries…" :
-                currentView === 'airports' ? "Search airports…" :
-                currentView === 'michelinRestaurants' ? "Search restaurants…" :
-                "Search countries…"
+                currentView === 'visaRequirements'
+                  ? 'Search passport countries…'
+                  : currentView === 'airports'
+                  ? 'Search airports…'
+                  : currentView === 'michelinRestaurants'
+                  ? 'Search restaurants…'
+                  : 'Search countries…'
               }
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="tdg-search-input"
             />
 
-            {/* List Content */}
+            {/* Lists */}
             <div className="tdg-list-container" data-lenis-prevent>
-              {/* Advisory List */}
-              {currentView === 'travelAdvisory' && (filteredData as AdvisoryCountry[]).map((advisory, idx) => (
-                <div
-                  key={`advisory-${advisory.country}-${idx}`}
-                  onClick={() => {
-                    setSelectedCountry(advisory.country)
-                    setShowDetails(true)
-                  }}
-                  className={`tdg-advisory-item ${selectedCountry === advisory.country ? 'tdg-selected' : ''}`}
-                >
-                  <span className={`tdg-advisory-dot tdg-level-${advisory.level}`}></span>
-                  <div className="tdg-advisory-content">
-                    <div className="tdg-advisory-header">
-                      {advisory.countryFlag && (
-                        <Image 
-                          src={advisory.countryFlag} 
-                          alt={`${advisory.country} flag`} 
-                          width={24} 
-                          height={16} 
-                          className="tdg-flag"
-                          unoptimized
-                        />
-                      )}
-                      <span className="tdg-advisory-country">{advisory.country}</span>
-                      {advisory.isNew && (
-                        <span className="tdg-new-pill" title={`Added ${advisory.dateAdded}`}>
-                          NEW
-                        </span>
-                      )}
+              {currentView === 'travelAdvisory' &&
+                (filteredData as AdvisoryCountry[]).map((advisory, idx) => (
+                  <div
+                    key={`advisory-${advisory.country}-${idx}`}
+                    onClick={() => handleAdvisoryItemClick(advisory)}
+                    className={`tdg-advisory-item ${selectedCountry === advisory.country ? 'tdg-selected' : ''}`}
+                  >
+                    <span className={`tdg-advisory-dot tdg-level-${advisory.level}`} />
+                    <div className="tdg-advisory-content">
+                      <div className="tdg-advisory-header">
+                        {advisory.countryFlag && (
+                          <Image src={advisory.countryFlag} alt={`${advisory.country} flag`} width={24} height={16} className="tdg-flag" unoptimized />
+                        )}
+                        <span className="tdg-advisory-country">{advisory.country}</span>
+                        {advisory.isNew && (
+                          <span className="tdg-new-pill" title={`Added ${advisory.dateAdded}`}>
+                            NEW
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <span className={`tdg-advisory-level tdg-level-${advisory.level}`}>{advisory.levelText || `Level ${advisory.level}`}</span>
+                  </div>
+                ))}
+
+              {currentView === 'visaRequirements' &&
+                (filteredData as CountryVisaData[]).map((country, idx) => (
+                  <div
+                    key={`visa-${country.countryId}-${idx}`}
+                    onClick={() => setPassportCountry(country.countryName)}
+                    className={`tdg-visa-item ${passportCountry === country.countryName ? 'tdg-selected' : ''}`}
+                  >
+                    <div className="tdg-visa-header">
+                      {country.countryFlag && <Image src={country.countryFlag} alt={`${country.countryName} flag`} width={24} height={16} className="tdg-flag" unoptimized />}
+                      <span className="tdg-visa-country">{country.countryName}</span>
+                    </div>
+                    <div className="tdg-visa-stats">
+                      <span className="tdg-visa-count">{country.totalDestinations} destinations</span>
+                      {country.visaFreeCount && country.visaFreeCount > 0 && <span className="tdg-visa-free">{country.visaFreeCount} visa-free</span>}
                     </div>
                   </div>
-                  <span className={`tdg-advisory-level tdg-level-${advisory.level}`}>
-                    {advisory.levelText || `Level ${advisory.level}`}
-                  </span>
-                </div>
-              ))}
+                ))}
 
-              {/* Visa List */}
-              {currentView === 'visaRequirements' && (filteredData as CountryVisaData[]).map((country, idx) => (
-                <div
-                  key={`visa-${country.countryId}-${idx}`}
-                  onClick={() => setPassportCountry(country.countryName)}
-                  className={`tdg-visa-item ${passportCountry === country.countryName ? 'tdg-selected' : ''}`}
-                >
-                  <div className="tdg-visa-header">
-                    {country.countryFlag && (
-                      <Image 
-                        src={country.countryFlag} 
-                        alt={`${country.countryName} flag`} 
-                        width={24} 
-                        height={16} 
-                        className="tdg-flag"
-                        unoptimized
-                      />
-                    )}
-                    <span className="tdg-visa-country">{country.countryName}</span>
+              {currentView === 'michelinRestaurants' &&
+                (filteredData as MichelinRestaurantData[]).map((restaurant, idx) => (
+                  <div
+                    key={`restaurant-${restaurant.id}-${idx}`}
+                    className="tdg-restaurant-item"
+                    onClick={() => focusLatLng(restaurant.location.lat, restaurant.location.lng)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className="tdg-restaurant-header">
+                      <span className="tdg-restaurant-name">{restaurant.name}</span>
+                      {restaurant.greenStar && <span className="tdg-green-star" title="Michelin Green Star">🌿</span>}
+                    </div>
+                    <div className="tdg-restaurant-details">
+                      <span className="tdg-restaurant-rating">{restaurant.displayRating || '⭐'.repeat(restaurant.rating)}</span>
+                      <span className="tdg-restaurant-cuisine">{restaurant.cuisine}</span>
+                    </div>
+                    <div className="tdg-restaurant-location">{restaurant.displayLocation}</div>
                   </div>
-                  <div className="tdg-visa-stats">
-                    <span className="tdg-visa-count">{country.totalDestinations} destinations</span>
-                    {country.visaFreeCount && country.visaFreeCount > 0 && (
-                      <span className="tdg-visa-free">{country.visaFreeCount} visa-free</span>
-                    )}
-                  </div>
-                </div>
-              ))}
+                ))}
 
-              {/* Restaurant List */}
-              {currentView === 'michelinRestaurants' && (filteredData as MichelinRestaurantData[]).map((restaurant, idx) => (
-                <div
-                  key={`restaurant-${restaurant.id}-${idx}`}
-                  className="tdg-restaurant-item"
-                  onClick={() => {
-                    // For restaurants, you might want to show details or zoom to location
-                    console.log('Restaurant clicked:', restaurant)
-                  }}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <div className="tdg-restaurant-header">
-                    <span className="tdg-restaurant-name">{restaurant.name}</span>
-                    {restaurant.greenStar && (
-                      <span className="tdg-green-star" title="Michelin Green Star">🌿</span>
-                    )}
+              {currentView === 'airports' &&
+                (filteredData as AirportData[]).map((airport, idx) => (
+                  <div
+                    key={`airport-${airport.code}-${idx}`}
+                    className="tdg-airport-item"
+                    onClick={() => focusLatLng(airport.location.lat, airport.location.lng)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className="tdg-airport-header">
+                      <span className="tdg-airport-code">{airport.code}</span>
+                      <span className="tdg-airport-name">{airport.name}</span>
+                    </div>
+                    <div className="tdg-airport-location">{airport.displayLocation}</div>
                   </div>
-                  <div className="tdg-restaurant-details">
-                    <span className="tdg-restaurant-rating">{restaurant.displayRating || '⭐'.repeat(restaurant.rating)}</span>
-                    <span className="tdg-restaurant-cuisine">{restaurant.cuisine}</span>
-                  </div>
-                  <div className="tdg-restaurant-location">{restaurant.displayLocation}</div>
-                </div>
-              ))}
-
-              {/* Airport List */}
-              {currentView === 'airports' && (filteredData as AirportData[]).map((airport, idx) => (
-                <div
-                  key={`airport-${airport.code}-${idx}`}
-                  className="tdg-airport-item"
-                  onClick={() => {
-                    // For airports, you might want to show details or zoom to location
-                    console.log('Airport clicked:', airport)
-                  }}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <div className="tdg-airport-header">
-                    <span className="tdg-airport-code">{airport.code}</span>
-                    <span className="tdg-airport-name">{airport.name}</span>
-                  </div>
-                  <div className="tdg-airport-location">{airport.displayLocation}</div>
-                </div>
-              ))}
+                ))}
             </div>
           </div>
         </aside>
 
         {/* Globe Pane */}
         <div className={`tdg-globe-pane ${showDetails ? 'tdg-globe-pane--split' : ''}`}>
-          <div className="tdg-globe-wrapper">
-            {/* Globe renders through BlockWrapper's webglContent */}
-          </div>
+          <div className="tdg-globe-wrapper">{/* GL renders through BlockWrapper */}</div>
         </div>
 
-        {/* Detail Overlay */}
-        {showDetails && selectedAdvisory && (
-          <AdvisoryDetails 
-            advisory={selectedAdvisory} 
-            onClose={() => setShowDetails(false)} 
-          />
-        )}
+        {showDetails && selectedAdvisory && <AdvisoryDetails advisory={selectedAdvisory} onClose={() => setShowDetails(false)} />}
       </div>
     </BlockWrapper>
   )
