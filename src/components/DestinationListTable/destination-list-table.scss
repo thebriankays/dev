@@ -1,0 +1,14 @@
+// Style for clickable rows in the destinations list
+.collection-list__table tbody tr.clickable-row {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  
+  &:hover {
+    background-color: var(--theme-elevation-100);
+  }
+  
+  // Remove individual cell hover effects
+  td {
+    background-color: transparent !important;
+  }
+}

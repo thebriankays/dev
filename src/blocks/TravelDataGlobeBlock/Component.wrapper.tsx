@@ -12,8 +12,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { BlockWrapper } from '@/blocks/_shared/BlockWrapper'
 import VerticalMarquee from '@/components/VerticalMarquee/VerticalMarquee'
-import { View } from '@react-three/drei'
-import { WebGLTunnel } from '@/webgl/components/tunnel'
 
 // Import all the panel and detail components from the proper location
 import { AdvisoryPanel } from '@/components/TravelDataGlobe/AdvisoryPanel'
@@ -55,6 +53,39 @@ function normalizeName(s: string) {
     .trim()
 }
 
+// Helper function to extract centroid from GeoJSON feature
+function getCentroidFromFeature(feature: any): { lat: number; lng: number } | null {
+  try {
+    const geom = feature?.geometry
+    if (!geom) return null
+
+    const collect = (ring: number[][]) => {
+      let sx = 0, sy = 0, n = 0
+      for (const [lng, lat] of ring) {
+        if (Number.isFinite(lat) && Number.isFinite(lng)) {
+          sx += lng
+          sy += lat
+          n++
+        }
+      }
+      if (!n) return null
+      return { lat: sy / n, lng: sx / n }
+    }
+
+    if (geom.type === 'Polygon') {
+      return collect(geom.coordinates[0]) // outer ring
+    }
+    if (geom.type === 'MultiPolygon') {
+      // pick the largest outer ring (most points)
+      const rings = geom.coordinates.map((poly: number[][][]) => poly[0]).sort((a: any, b: any) => b.length - a.length)
+      return collect(rings[0])
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
 interface TravelDataGlobeWrapperProps {
   data: PreparedData
 }
@@ -72,9 +103,11 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
     enabledViews,
   } = data
 
-  const globeRef = useRef<HTMLDivElement>(null)
   const [polygons, setPolygons] = useState(initialPolygons)
   const [borders, setBorders] = useState(initialBorders)
+  
+  // Store centroids for country lookup (needed for visa arcs)
+  const [centroids, setCentroids] = useState<Map<string, { lat: number; lng: number }>>(new Map())
 
   // Build quick lookup by code and name for advisories
   const advisoryByCode = useMemo(() => {
@@ -94,10 +127,21 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
     fetch('/datamaps.world.json')
       .then(res => res.json())
       .then((geoData) => {
+        const localCentroids = new Map<string, { lat: number; lng: number }>()
+        
         const advisoryPolygons = geoData.features.map((feature: any) => {
           const iso2 = (feature.properties?.iso_a2 || feature.properties?.ISO_A2 || feature.properties?.ISO2 || '').toUpperCase()
           const rawName = feature.properties?.name || feature.properties?.NAME || feature.properties?.ADMIN || ''
           const joined = (iso2 && advisoryByCode.get(iso2)) || advisoryByName.get(normalizeName(rawName))
+
+          // Calculate centroid for this country
+          if (feature.geometry) {
+            const centroid = getCentroidFromFeature(feature)
+            if (centroid) {
+              localCentroids.set(normalizeName(rawName), centroid)
+              if (iso2) localCentroids.set(iso2, centroid)
+            }
+          }
 
           return {
             type: 'Feature',
@@ -128,6 +172,7 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
           .filter((f: any) => f.geometry?.type === 'Polygon' || f.geometry?.type === 'MultiPolygon')
           .map((f: any) => (f.geometry.type === 'Polygon' ? f.geometry.coordinates : f.geometry.coordinates[0]))
 
+        setCentroids(localCentroids)
         setPolygons({ advisory: advisoryPolygons, visa: visaPolygons })
         setBorders({
           type: 'Feature',
@@ -152,6 +197,41 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null)
   const [focusTarget, setFocusTarget] = useState<{ lat: number; lng: number } | null>(null)
 
+  // Compute visa arcs based on selected visa country
+  const visaArcs = useMemo(() => {
+    if (!selectedVisaCountry || currentView !== 'visaRequirements') return []
+    
+    const origin = centroids.get(normalizeName(selectedVisaCountry.countryName))
+    if (!origin) return []
+    
+    const arcs: any[] = []
+    
+    // Create arcs to visa-free and visa-on-arrival countries
+    if (selectedVisaCountry.visaRequirements) {
+      selectedVisaCountry.visaRequirements.forEach((req: VisaData) => {
+        // Only show arcs for visa-free or visa-on-arrival
+        if (req.requirement === 'visa_free' || req.requirement === 'visa_on_arrival') {
+          const dest = centroids.get(normalizeName(req.destinationCountry))
+          if (dest) {
+            arcs.push({
+              startLat: origin.lat,
+              startLng: origin.lng,
+              endLat: dest.lat,
+              endLng: dest.lng,
+              color: req.requirement === 'visa_free' ? '#4caf50' : '#ffb300',
+              altitude: 0.2,
+              dashLength: 0.35,
+              dashGap: 0.15,
+              dashAnimateTime: 2000
+            })
+          }
+        }
+      })
+    }
+    
+    return arcs
+  }, [selectedVisaCountry, currentView, centroids])
+
   // Reset focus when switching views
   useEffect(() => {
     setFocusTarget(null)
@@ -162,13 +242,9 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
     [currentView, polygons],
   )
 
-  const visaArcs = useMemo(() => {
-    if (!selectedVisaCountry || currentView !== 'visaRequirements') return []
-    return selectedVisaCountry.visaRequirements || []
-  }, [selectedVisaCountry, currentView])
-
   // Tab change handler
   const handleTabChange = useCallback((view: string) => {
+    console.log('Tab changed to:', view) // Debug log
     setCurrentView(view)
     setSearchQuery('')
     setSelectedAdvisory(null)
@@ -214,11 +290,40 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
     setFocusTarget({ lat: airport.location.lat, lng: airport.location.lng })
   }, [])
 
+  // The WebGL content to render through BlockWrapper
+  const webglContent = (
+    <Suspense fallback={<GlobeLoading />}>
+      <TravelDataGlobe
+        polygons={currentPolygons}
+        borders={borders}
+        airports={currentView === 'airports' ? airports : []}
+        restaurants={currentView === 'michelinRestaurants' ? restaurants : []}
+        globeImageUrl={blockConfig.globeImageUrl || '/earth-blue-marble.jpg'}
+        bumpImageUrl={blockConfig.bumpImageUrl || '/earth-topology.png'}
+        autoRotateSpeed={blockConfig.autoRotateSpeed ?? 0.5}
+        atmosphereColor={blockConfig.atmosphereColor || '#ffffff'}
+        onCountryClick={handleCountryClick}
+        onAirportClick={handleAirportClick}
+        onRestaurantClick={handleRestaurantClick}
+        onCountryHover={setHoveredCountry}
+        selectedCountry={selectedAdvisory?.country || selectedVisaCountry?.countryName || null}
+        selectedCountryCode={selectedAdvisory?.countryCode || null}
+        hoveredCountry={hoveredCountry}
+        passportCountry={selectedVisaCountry?.countryName || null}
+        currentView={currentView as 'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports'}
+        visaArcs={visaArcs}
+        focusTarget={focusTarget}
+        showMarkers={true}
+      />
+    </Suspense>
+  )
+
   return (
     <BlockWrapper
-      className="tdg-block"
+      className="travel-data-globe-block"
       interactive={true}
       disableDefaultCamera={false}
+      webglContent={webglContent}
       {...blockConfig}
     >
       <div className="tdg-container">
@@ -235,6 +340,7 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
                 key={view}
                 className={`tdg-tab ${currentView === view ? 'tdg-tab--active' : ''}`}
                 onClick={() => handleTabChange(view)}
+                type="button"
               >
                 <FontAwesomeIcon
                   icon={
@@ -299,6 +405,7 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
                 <button 
                   className={`tdg-key-toggle ${showAdvisoryKey ? 'tdg-key-toggle--open' : ''}`}
                   onClick={() => setShowAdvisoryKey(!showAdvisoryKey)}
+                  type="button"
                 >
                   <span>Advisory Level Key</span>
                   <FontAwesomeIcon icon={faChevronDown} className="tdg-key-icon" />
@@ -414,42 +521,6 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
             )}
           </div>
         </aside>
-
-        {/* Globe Pane */}
-        <div ref={globeRef} className={`tdg-globe-pane ${
-          selectedAdvisory || selectedVisaCountry || selectedRestaurant || selectedAirport 
-            ? 'tdg-globe-pane--split' 
-            : ''
-        }`}>
-          <WebGLTunnel>
-            <View track={globeRef as React.RefObject<HTMLElement>}>
-              <Suspense fallback={<GlobeLoading />}>
-                <TravelDataGlobe
-                  polygons={currentPolygons}
-                  borders={borders}
-                  airports={currentView === 'airports' ? airports : []}
-                  restaurants={currentView === 'michelinRestaurants' ? restaurants : []}
-                  globeImageUrl={blockConfig.globeImageUrl || '/earth-blue-marble.jpg'}
-                  bumpImageUrl={blockConfig.bumpImageUrl || '/earth-topology.png'}
-                  autoRotateSpeed={blockConfig.autoRotateSpeed ?? 0.5}
-                  atmosphereColor={blockConfig.atmosphereColor || '#ffffff'}
-                  onCountryClick={handleCountryClick}
-                  onAirportClick={handleAirportClick}
-                  onRestaurantClick={handleRestaurantClick}
-                  onCountryHover={setHoveredCountry}
-                  selectedCountry={selectedAdvisory?.country || selectedVisaCountry?.countryName || null}
-                  selectedCountryCode={selectedAdvisory?.countryCode || null}
-                  hoveredCountry={hoveredCountry}
-                  passportCountry={selectedVisaCountry?.countryName || null}
-                  currentView={currentView as 'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports'}
-                  visaArcs={visaArcs as VisaData[]}
-                  focusTarget={focusTarget}
-                  showMarkers={true}
-                />
-              </Suspense>
-            </View>
-          </WebGLTunnel>
-        </div>
 
         {/* Use the proper details components */}
         {selectedAdvisory && (

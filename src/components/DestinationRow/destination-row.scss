@@ -1,0 +1,19 @@
+.destinations-list-row {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  
+  &:hover {
+    background-color: var(--theme-elevation-100);
+  }
+  
+  // Ensure cells don't have their own hover effects that conflict
+  td {
+    background-color: transparent !important;
+  }
+  
+  // Make sure links still work
+  a {
+    position: relative;
+    z-index: 1;
+  }
+}

@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
               title: dest.title,
               locationData: dest.locationData,
               city: dest.city,
+              state: dest.state,
               continent: dest.continent,
               lat: dest.lat,
               lng: dest.lng,
@@ -111,6 +112,28 @@ export async function POST(request: NextRequest) {
                 
                 if (country.docs[0].languages && country.docs[0].languages.length > 0) {
                   destData.languagesRelation = country.docs[0].languages
+                }
+                
+                // Try to find and link the region/state if we have state data
+                if (dest.state) {
+                  const region = await payload.find({
+                    collection: 'regions',
+                    where: {
+                      and: [
+                        { name: { equals: dest.state } },
+                        { country: { equals: country.docs[0].id } },
+                      ],
+                    },
+                    limit: 1,
+                  })
+                  
+                  if (region.docs.length > 0) {
+                    destData.regionRelation = region.docs[0].id
+                  } else {
+                    // If region doesn't exist, we could create it here
+                    // For now, just log it
+                    console.log(`Region "${dest.state}" not found for country ${country.docs[0].name}`)
+                  }
                 }
               }
             }

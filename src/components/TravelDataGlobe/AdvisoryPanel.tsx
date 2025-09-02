@@ -19,8 +19,10 @@ export function AdvisoryPanel({
   selectedCountry,
   onCountryClick,
 }: AdvisoryPanelProps) {
-  const filteredAdvisories = advisories.filter(adv =>
-    adv.country.toLowerCase().includes(searchQuery.toLowerCase())
+  const q = (searchQuery || '').toLowerCase()
+  
+  const filteredAdvisories = (advisories || []).filter(adv =>
+    adv && (adv.country || '').toLowerCase().includes(q)
   )
 
   return (

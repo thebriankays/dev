@@ -18,11 +18,15 @@ export function AirportPanel({
   selectedAirport,
   onAirportClick,
 }: AirportPanelProps) {
-  const filteredAirports = airports.filter(airport =>
-    airport.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    airport.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (airport.displayLocation || '').toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const q = (searchQuery || '').toLowerCase()
+
+  const filteredAirports = (airports || []).filter((airport) => {
+    if (!airport) return false
+    const code = (airport.code || '').toLowerCase()
+    const name = (airport.name || '').toLowerCase()
+    const loc = (airport.displayLocation || '').toLowerCase()
+    return code.includes(q) || name.includes(q) || loc.includes(q)
+  })
 
   return (
     <>
@@ -37,15 +41,15 @@ export function AirportPanel({
       <div className="tdg-list-container" data-lenis-prevent>
         {filteredAirports.map((airport, idx) => (
           <div
-            key={`airport-${airport.code}-${idx}`}
+            key={`airport-${airport.code || idx}-${idx}`}
             className={`tdg-airport-item ${selectedAirport?.code === airport.code ? 'tdg-selected' : ''}`}
             onClick={() => onAirportClick(airport)}
           >
             <div className="tdg-airport-header">
-              <span className="tdg-airport-code">{airport.code}</span>
-              <span className="tdg-airport-name">{airport.name}</span>
+              <span className="tdg-airport-code">{airport.code || '—'}</span>
+              <span className="tdg-airport-name">{airport.name || 'Unnamed airport'}</span>
             </div>
-            <div className="tdg-airport-location">{airport.displayLocation}</div>
+            <div className="tdg-airport-location">{airport.displayLocation || ''}</div>
           </div>
         ))}
       </div>

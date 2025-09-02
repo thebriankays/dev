@@ -94,6 +94,36 @@ export const populateMissingLocationData: CollectionBeforeChangeHook<Destination
         logger.info(
           `[populateMissingLocationData] Matched country: ${country && country.name} (${country && country.code})`,
         )
+        
+        // Try to match region/state if we have state data
+        if (next.state && country?.id && !next.regionRelation) {
+          try {
+            const regions = await req.payload.find({
+              collection: 'regions',
+              where: {
+                and: [
+                  { name: { equals: next.state } },
+                  { country: { equals: country.id } },
+                ],
+              },
+              limit: 1,
+              depth: 0,
+            })
+            
+            if (regions.docs.length > 0) {
+              next.regionRelation = regions.docs[0].id
+              logger.info(
+                `[populateMissingLocationData] Matched region: ${regions.docs[0].name} for country ${country.name}`,
+              )
+            } else {
+              logger.info(
+                `[populateMissingLocationData] Region "${next.state}" not found for country ${country.name}`,
+              )
+            }
+          } catch (error) {
+            logger.error('[populateMissingLocationData] Error matching region:', error)
+          }
+        }
       } else {
         logger.warn(`[populateMissingLocationData] Country not found in database: ${countryCode}`)
       }

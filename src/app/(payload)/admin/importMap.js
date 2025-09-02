@@ -24,11 +24,15 @@ import { default as default_d2ac97d4deb9ea8b162d975a40d12a2b } from '@/component
 import { default as default_1b8c3be827333680fcc442db3a4297ef } from '@/components/admin/fields/StoryChapterField/GenerateChaptersButton'
 import { default as default_b75b9da359ef5cde49aaf148c8b237be } from '@/components/admin/fields/StoryChapterField/DestinationSelect'
 import { default as default_c477714e119f5d026d4d1a0ee4b722b1 } from '@/components/BulkAddButton/FlagCell'
+import { default as default_be243f1b287470bc93d21069716c97a8 } from '@/components/BulkAddButton/TitleCell'
 import { default as default_898bd914cb2f17dd2f6f5c814bdc740f } from '@/fields/GooglePlaces/GooglePlacesFieldExtended'
+import { default as default_4c953e53baaeb0b1f4e13fe0b503f992 } from '@/components/BulkAddButton/ContinentCell'
+import { default as default_fdd8c0f591e33b8df5471ba7567059a2 } from '@/components/BulkAddButton/CityCell'
 import { default as default_ff9f2acb59dabef41f6e95fb18b700d3 } from '@/components/BulkAddButton/CountryCell'
 import { default as default_b6983606a70f3ad5a7d99132abff5d45 } from '@/components/BulkAddButton/LanguagesCell'
 import { default as default_1a10acf99c27819f1b2777d0272ed276 } from '@/components/MapCenterPicker/MapCenterPicker'
 import { default as default_a09b6f1bddcad2eace9fb2dd1d618406 } from '@/components/BulkAddButton/BulkAddButton'
+import { default as default_23c02ad88adb6f52761901e0f893a3f4 } from '@/components/DestinationListTable/DestinationListTable'
 import { default as default_b4d770d1126435b598c275b3fd44fb3d } from '@/components/admin/ExploreView'
 import { LinkToDoc as LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
 import { ReindexButton as ReindexButton_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
@@ -66,11 +70,15 @@ export const importMap = {
   "@/components/admin/fields/StoryChapterField/GenerateChaptersButton#default": default_1b8c3be827333680fcc442db3a4297ef,
   "@/components/admin/fields/StoryChapterField/DestinationSelect#default": default_b75b9da359ef5cde49aaf148c8b237be,
   "@/components/BulkAddButton/FlagCell#default": default_c477714e119f5d026d4d1a0ee4b722b1,
+  "@/components/BulkAddButton/TitleCell#default": default_be243f1b287470bc93d21069716c97a8,
   "@/fields/GooglePlaces/GooglePlacesFieldExtended#default": default_898bd914cb2f17dd2f6f5c814bdc740f,
+  "@/components/BulkAddButton/ContinentCell#default": default_4c953e53baaeb0b1f4e13fe0b503f992,
+  "@/components/BulkAddButton/CityCell#default": default_fdd8c0f591e33b8df5471ba7567059a2,
   "@/components/BulkAddButton/CountryCell#default": default_ff9f2acb59dabef41f6e95fb18b700d3,
   "@/components/BulkAddButton/LanguagesCell#default": default_b6983606a70f3ad5a7d99132abff5d45,
   "@/components/MapCenterPicker/MapCenterPicker#default": default_1a10acf99c27819f1b2777d0272ed276,
   "@/components/BulkAddButton/BulkAddButton#default": default_a09b6f1bddcad2eace9fb2dd1d618406,
+  "@/components/DestinationListTable/DestinationListTable#default": default_23c02ad88adb6f52761901e0f893a3f4,
   "@/components/admin/ExploreView#default": default_b4d770d1126435b598c275b3fd44fb3d,
   "@payloadcms/plugin-search/client#LinkToDoc": LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634,
   "@payloadcms/plugin-search/client#ReindexButton": ReindexButton_aead06e4cbf6b2620c5c51c9ab283634,

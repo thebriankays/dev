@@ -47,7 +47,7 @@ export const Destinations: CollectionConfig = {
 
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'flagSvg', 'country', 'continent', 'updatedAt'],
+    defaultColumns: ['flag', 'title', 'city', 'country', 'continent', 'updatedAt'],
     // Force population of relationships in list view
     listSearchableFields: ['title', 'city', 'countryRelation.name'],
     livePreview: {
@@ -60,7 +60,7 @@ export const Destinations: CollectionConfig = {
     },
     components: {
       // ...glassCollectionComponents,
-      beforeListTable: ['@/components/BulkAddButton/BulkAddButton'],
+      beforeListTable: ['@/components/BulkAddButton/BulkAddButton', '@/components/DestinationListTable/DestinationListTable'],
       views: {
         edit: {
           exploreMap: {
@@ -81,6 +81,10 @@ export const Destinations: CollectionConfig = {
     featuredImage: true,
     title: true,
     flagSvg: true,
+    country: true,
+    state: true,
+    city: true,
+    continent: true,
     // Populate country relationship with its fields but avoid deep nesting
     countryRelation: {
       name: true,
@@ -110,13 +114,21 @@ export const Destinations: CollectionConfig = {
       name: 'flag',
       type: 'ui',
       admin: {
-        disableListColumn: true,
         components: {
           Cell: '@/components/BulkAddButton/FlagCell',
         },
       },
     },
-    { name: 'title', type: 'text', required: true },
+    { 
+      name: 'title', 
+      type: 'text', 
+      required: true,
+      admin: {
+        components: {
+          Cell: '@/components/BulkAddButton/TitleCell',
+        },
+      },
+    },
     {
       type: 'tabs',
       tabs: [
@@ -131,7 +143,6 @@ export const Destinations: CollectionConfig = {
               label: 'Location',
               admin: {
                 description: 'Search for a location using Google Places',
-                hidden: true,
                 disableListColumn: true,
               },
               useExtended: true, // Ensure Extended Component Library is used
@@ -171,9 +182,24 @@ export const Destinations: CollectionConfig = {
                 'South America',
                 'Antarctica',
               ],
+              admin: {
+                components: {
+                  Cell: '@/components/BulkAddButton/ContinentCell',
+                },
+              },
             },
 
-            { name: 'city', type: 'text', label: 'City', index: true },
+            { 
+              name: 'city', 
+              type: 'text', 
+              label: 'City', 
+              index: true,
+              admin: {
+                components: {
+                  Cell: '@/components/BulkAddButton/CityCell',
+                },
+              },
+            },
             { name: 'state', type: 'text', label: 'State/Province', index: true },
             {
               name: 'googleMapsUri',
@@ -242,7 +268,7 @@ export const Destinations: CollectionConfig = {
               label: 'Country',
               admin: {
                 readOnly: true,
-                hidden: true, // Hide this field since we show countryRelation
+                disableListFilter: true,
                 components: {
                   Cell: '@/components/BulkAddButton/CountryCell',
                 },

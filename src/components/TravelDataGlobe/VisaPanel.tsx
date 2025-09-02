@@ -19,8 +19,10 @@ export function VisaPanel({
   selectedCountry,
   onCountryClick,
 }: VisaPanelProps) {
-  const filteredCountries = countries.filter(country =>
-    country.countryName.toLowerCase().includes(searchQuery.toLowerCase())
+  const q = (searchQuery || '').toLowerCase()
+  
+  const filteredCountries = (countries || []).filter(country =>
+    country && (country.countryName || '').toLowerCase().includes(q)
   )
 
   return (

@@ -27,6 +27,8 @@ export type LocationDataValue = {
   country?: string
   continent?: string
   city?: string
+  state?: string
+  googleMapsUri?: string
   isGoodForChildren?: boolean | null
   isGoodForGroups?: boolean | null
   priceLevel?: number | null
@@ -76,7 +78,7 @@ export default function GooglePlacesFieldExtended({
   const { value, setValue } = useField<LocationDataValue>({ path })
   const [_allFields, dispatch] = useAllFormFields()
   const [showPreview, setShowPreview] = useState(false)
-  const placePickerRef = useRef<any>(null)
+  const placePickerRef = useRef<HTMLElement & { value?: any }>(null)
   const [isApiLoaded, setIsApiLoaded] = useState(false)
   const [componentsLoaded, setComponentsLoaded] = useState(false)
 
@@ -102,11 +104,14 @@ export default function GooglePlacesFieldExtended({
           })
         }
         
-        Promise.all([
-          loadScript('https://unpkg.com/@googlemaps/extended-component-library@0.6.11/api_loader.js'),
-          loadScript('https://unpkg.com/@googlemaps/extended-component-library@0.6.11/place_picker.js'),
-          loadScript('https://unpkg.com/@googlemaps/extended-component-library@0.6.11/place_overview.js')
-        ]).then(() => {
+        // Load tslib first as it's a dependency
+        loadScript('https://unpkg.com/tslib@2.6.2/tslib.js').then(() => {
+          return Promise.all([
+            loadScript('https://unpkg.com/@googlemaps/extended-component-library@0.6.11/api_loader.js'),
+            loadScript('https://unpkg.com/@googlemaps/extended-component-library@0.6.11/place_picker.js'),
+            loadScript('https://unpkg.com/@googlemaps/extended-component-library@0.6.11/place_overview.js')
+          ])
+        }).then(() => {
           ExtendedComponentsLoaded = true
           setComponentsLoaded(true)
         }).catch(err => {
@@ -133,11 +138,14 @@ export default function GooglePlacesFieldExtended({
           })
         }
         
-        Promise.all([
-          loadScript('https://unpkg.com/@googlemaps/extended-component-library@0.6.11/api_loader.js'),
-          loadScript('https://unpkg.com/@googlemaps/extended-component-library@0.6.11/place_picker.js'),
-          loadScript('https://unpkg.com/@googlemaps/extended-component-library@0.6.11/place_overview.js')
-        ]).then(() => {
+        // Load tslib first as it's a dependency
+        loadScript('https://unpkg.com/tslib@2.6.2/tslib.js').then(() => {
+          return Promise.all([
+            loadScript('https://unpkg.com/@googlemaps/extended-component-library@0.6.11/api_loader.js'),
+            loadScript('https://unpkg.com/@googlemaps/extended-component-library@0.6.11/place_picker.js'),
+            loadScript('https://unpkg.com/@googlemaps/extended-component-library@0.6.11/place_overview.js')
+          ])
+        }).then(() => {
           ExtendedComponentsLoaded = true
           setComponentsLoaded(true)
         }).catch(err => {
@@ -169,8 +177,8 @@ export default function GooglePlacesFieldExtended({
   )
 
   /* ---------- Handle place selection ---------------------------- */
-  const handlePlaceChange = useCallback(async (event: any) => {
-    const place = event.target.value
+  const handlePlaceChange = useCallback(async (event: CustomEvent<{ value: google.maps.places.Place }>) => {
+    const place = (event.target as HTMLElement & { value?: any }).value
     if (!place || !place.location) return
 
     console.log('Place selected:', place)
@@ -180,7 +188,7 @@ export default function GooglePlacesFieldExtended({
     const lng = typeof place.location.lng === 'function' ? place.location.lng() : place.location.lng
 
     // Get address components
-    const countryComp = place.addressComponents?.find((c: any) =>
+    const countryComp = place.addressComponents?.find((c: google.maps.GeocoderAddressComponent) =>
       c.types.includes('country'),
     )
     const countryName = countryComp?.longText || countryComp?.long_name || ''
@@ -188,12 +196,18 @@ export default function GooglePlacesFieldExtended({
     const continent =
       staticData ? regionToContinentMap[staticData.code] || staticData.region : ''
 
-    const cityComp = place.addressComponents?.find((c: any) =>
+    const cityComp = place.addressComponents?.find((c: google.maps.GeocoderAddressComponent) =>
       ['locality',
        'administrative_area_level_3',
        'administrative_area_level_2'].some(t => c.types.includes(t)),
     )
     const city = cityComp ? (cityComp.longText || cityComp.long_name) : (place.displayName || '')
+
+    // Extract state/province
+    const stateComp = place.addressComponents?.find((c: google.maps.GeocoderAddressComponent) =>
+      c.types.includes('administrative_area_level_1'),
+    )
+    const state = stateComp ? (stateComp.longText || stateComp.long_name) : ''
 
     /* main value -------------------------------------------------- */
     const nextVal: LocationDataValue = {
@@ -203,11 +217,13 @@ export default function GooglePlacesFieldExtended({
       country: staticData ? staticData.label : countryName,
       continent,
       city,
+      state,
+      googleMapsUri: place.googleMapsUri || '',
       priceLevel: place.priceLevel || null,
       rating: place.rating || null,
       user_ratings_total: place.userRatingCount || null,
       reviews: place.reviews || null,
-      photos: place.photos?.map((p: any) => ({
+      photos: place.photos?.map((p: { photo_reference?: string; height?: number; width?: number; html_attributions?: string[] }) => ({
         photo_reference: p.photo_reference || '',
         height: p.height || 0,
         width: p.width || 0,
@@ -239,6 +255,8 @@ export default function GooglePlacesFieldExtended({
     /* mirror to flat fields -------------------------------------- */
     dispatch({ type: 'UPDATE', path: 'continent', value: continent })
     dispatch({ type: 'UPDATE', path: 'city', value: city })
+    dispatch({ type: 'UPDATE', path: 'state', value: state })
+    dispatch({ type: 'UPDATE', path: 'country', value: staticData ? staticData.label : countryName })
 
     /* set title nicely */
     const titleVal =
@@ -270,7 +288,7 @@ export default function GooglePlacesFieldExtended({
       const customEvent = e as CustomEvent
       if (customEvent.detail?.path === path) {
         setValue(undefined)
-        if (placePickerRef.current) {
+        if (placePickerRef.current && 'value' in placePickerRef.current) {
           placePickerRef.current.value = null
         }
       }
@@ -334,6 +352,25 @@ export default function GooglePlacesFieldExtended({
           background: var(--theme-elevation-0);
           padding: 8px 12px;
         }
+        
+        gmpx-place-picker {
+          width: 100%;
+          display: block;
+          --gmpx-color-surface: var(--theme-elevation-0);
+          --gmpx-color-on-surface: var(--theme-text);
+          --gmpx-color-primary: var(--theme-success-500);
+          background: transparent;
+        }
+        
+        gmpx-place-picker input {
+          width: 100%;
+          background: transparent;
+          border: none;
+          outline: none;
+          font-size: inherit;
+          font-family: inherit;
+          color: var(--theme-text);
+        }
 
         .google-places-field-extended__details {
           margin-top: 16px;
@@ -378,7 +415,7 @@ export default function GooglePlacesFieldExtended({
 
       {/* API Loader - only render if API isn't already loaded */}
       {!isApiLoaded && (
-        // @ts-ignore
+        // @ts-expect-error - Google Maps Extended Components are not typed
         <gmpx-api-loader 
           key={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
           solution-channel="GMP_extended_component_library_v0"
@@ -391,7 +428,7 @@ export default function GooglePlacesFieldExtended({
       </label>
 
       {/* Place Picker */}
-      {/* @ts-ignore */}
+      {/* @ts-expect-error - Google Maps Extended Components are not typed */}
       <gmpx-place-picker
         ref={placePickerRef}
         id={path}
@@ -470,7 +507,7 @@ export default function GooglePlacesFieldExtended({
               
               {showPreview && (
                 <div className="google-places-field-extended__preview">
-                  {/* @ts-ignore */}
+                  {/* @ts-expect-error - Google Maps Extended Components are not typed */}
                   <gmpx-place-overview
                     place={value.placeID}
                     size="large"

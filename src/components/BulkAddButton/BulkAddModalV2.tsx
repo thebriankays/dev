@@ -12,6 +12,7 @@ interface SelectedDestination {
   city: string
   country: string
   continent: string
+  state?: string
   lat: number
   lng: number
   placeId: string
@@ -118,7 +119,7 @@ export const BulkAddModalV2: React.FC<BulkAddModalProps> = ({
             const place = new Place({ id: placeId })
             
             // Fetch the place details - pass fields in object format
-            await place.fetchFields({ fields: ['displayName', 'formattedAddress', 'location', 'addressComponents', 'rating', 'googleMapsURI', 'id'] })
+            await place.fetchFields({ fields: ['displayName', 'formattedAddress', 'location', 'addressComponents', 'rating', 'googleMapsURI', 'id', 'priceLevel'] })
             
             console.log('Place details fetched:', place)
             
@@ -189,6 +190,12 @@ export const BulkAddModalV2: React.FC<BulkAddModalProps> = ({
       )
       const city = cityComp?.long_name || place.name || ''
       
+      // Extract state/province
+      const stateComp = addressComponents.find((c: google.maps.GeocoderAddressComponent) =>
+        c.types.includes('administrative_area_level_1')
+      )
+      const state = stateComp?.long_name || ''
+      
       // Determine continent based on country
       const continent = getContinent(countryCode)
       
@@ -197,6 +204,7 @@ export const BulkAddModalV2: React.FC<BulkAddModalProps> = ({
         city,
         country: countryName,
         continent,
+        state,
         lat: place.geometry?.location?.lat() || 0,
         lng: place.geometry?.location?.lng() || 0,
         placeId: place.place_id || '',
@@ -262,6 +270,7 @@ export const BulkAddModalV2: React.FC<BulkAddModalProps> = ({
               country: dest.country,
               continent: dest.continent,
               city: dest.city,
+              state: dest.state,
               rating: dest.rating ?? null,
               priceLevel: dest.priceLevel ?? null,
               tempCountryData: {
@@ -269,6 +278,7 @@ export const BulkAddModalV2: React.FC<BulkAddModalProps> = ({
               },
             },
             city: dest.city,
+            state: dest.state,
             continent: dest.continent,
             lat: dest.lat,
             lng: dest.lng,
@@ -343,6 +353,7 @@ export const BulkAddModalV2: React.FC<BulkAddModalProps> = ({
                 <div key={dest.placeId} className="destination-item">
                   <div className="destination-info">
                     <strong>{dest.displayName || dest.city}</strong>
+                    {dest.state && <span>, {dest.state}</span>}
                     {dest.country && dest.country !== dest.city && (
                       <span>, {dest.country}</span>
                     )}

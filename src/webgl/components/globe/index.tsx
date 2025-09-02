@@ -1,5 +1,2 @@
-'use client'
-
-// Export the new working TravelDataGlobe
-export { default as TravelDataGlobe } from './TravelDataGlobe'
-export type { GlobeMethods } from './TravelDataGlobe/TravelDataGlobe'
+// Export the shared-canvas version from the TravelDataGlobe directory
+export { default as TravelDataGlobe } from './TravelDataGlobe/TravelDataGlobe'

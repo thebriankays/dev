@@ -3,8 +3,10 @@
 import React from 'react'
 
 interface CellComponentProps {
-  cellData: any
-  rowData: any
+  cellData: string | Array<string | { name?: string; [key: string]: unknown }> | null | undefined
+  rowData: {
+    [key: string]: unknown
+  }
 }
 
 const LanguagesCell: React.FC<CellComponentProps> = ({ cellData }) => {
@@ -12,12 +14,15 @@ const LanguagesCell: React.FC<CellComponentProps> = ({ cellData }) => {
     return <span style={{ color: 'var(--theme-text-light)' }}>-</span>
   }
 
-  const languages = cellData.map(lang => {
+  const languages = cellData.map((lang: string | { name?: string }) => {
     if (typeof lang === 'object' && lang.name) {
       return lang.name
     }
-    return lang
-  }).filter(Boolean)
+    if (typeof lang === 'string') {
+      return lang
+    }
+    return null
+  }).filter((lang): lang is string => typeof lang === 'string' && lang.length > 0)
 
   if (languages.length === 0) {
     return <span style={{ color: 'var(--theme-text-light)' }}>-</span>
