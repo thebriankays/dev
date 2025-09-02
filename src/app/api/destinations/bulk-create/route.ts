@@ -61,16 +61,31 @@ export async function POST(request: NextRequest) {
               lat: dest.lat,
               lng: dest.lng,
               googleMapsUri: dest.googleMapsUri,
-              content: [
-                {
-                  type: 'paragraph',
+              content: {
+                root: {
+                  type: 'root',
                   children: [
                     {
-                      text: `Welcome to ${dest.title}! This destination is located at coordinates ${dest.lat}, ${dest.lng}.`,
+                      type: 'paragraph',
+                      version: 1,
+                      children: [
+                        {
+                          type: 'text',
+                          version: 1,
+                          text: `Welcome to ${dest.title}! This destination is located at coordinates ${dest.lat}, ${dest.lng}.`,
+                        },
+                      ],
+                      direction: 'ltr',
+                      format: '',
+                      indent: 0,
                     },
                   ],
+                  direction: 'ltr',
+                  format: '',
+                  indent: 0,
+                  version: 1,
                 },
-              ],
+              },
             }
 
             // If we have country data, try to find and link the country relation

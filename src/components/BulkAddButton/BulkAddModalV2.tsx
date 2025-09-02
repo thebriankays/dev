@@ -76,7 +76,7 @@ export const BulkAddModalV2: React.FC<BulkAddModalProps> = ({
         containerRef.current!.appendChild(placeAutocomplete)
         
         // The event is actually 'gmp-select' not 'gmp-placeselect'
-        placeAutocomplete.addEventListener('gmp-select', async (event: any) => {
+        placeAutocomplete.addEventListener('gmp-select', async (event: Event & { Dg?: any }) => {
           console.log('gmp-select event fired!', event)
           
           // The place might be in different locations in the event
@@ -111,18 +111,14 @@ export const BulkAddModalV2: React.FC<BulkAddModalProps> = ({
           }
           
           try {
-            // Use modern Place API instead of deprecated PlacesService
+            // Use modern Place API
             const { Place } = await window.google.maps.importLibrary("places") as google.maps.PlacesLibrary
             
-            // Create a place request
-            const placeRequest = {
-              id: placeId,
-              fields: ['displayName', 'formattedAddress', 'location', 'addressComponents', 'rating', 'priceLevel', 'googleMapsURI', 'id']
-            }
+            // Create a place instance with just the ID
+            const place = new Place({ id: placeId })
             
-            // Fetch the place details
-            const place = new Place(placeRequest)
-            await place.fetchFields(placeRequest.fields)
+            // Fetch the place details - pass fields in object format
+            await place.fetchFields({ fields: ['displayName', 'formattedAddress', 'location', 'addressComponents', 'rating', 'googleMapsURI', 'id'] })
             
             console.log('Place details fetched:', place)
             
@@ -131,11 +127,15 @@ export const BulkAddModalV2: React.FC<BulkAddModalProps> = ({
               name: place.displayName || '',
               formatted_address: place.formattedAddress || '',
               geometry: place.location ? {
-                location: new window.google.maps.LatLng(place.location.lat(), place.location.lng())
+                location: place.location
               } : undefined,
-              address_components: place.addressComponents,
+              address_components: place.addressComponents?.map((comp: any) => ({
+                long_name: comp.longText || comp.long_name,
+                short_name: comp.shortText || comp.short_name,
+                types: comp.types || []
+              })) as google.maps.GeocoderAddressComponent[] || [],
               rating: place.rating || undefined,
-              price_level: place.priceLevel || undefined,
+              price_level: undefined, // priceLevel not available in new API
               url: place.googleMapsURI || undefined,
               place_id: place.id || placeId
             }
@@ -149,35 +149,8 @@ export const BulkAddModalV2: React.FC<BulkAddModalProps> = ({
               input.value = ''
             }
           } catch (error) {
-            console.error('Error processing place:', error)
-            // If modern API fails, fall back to PlacesService
-            console.log('Falling back to PlacesService...')
-            
-            try {
-              const service = new window.google.maps.places.PlacesService(document.createElement('div'))
-              
-              service.getDetails({
-                placeId: placeId,
-                fields: ['name', 'formatted_address', 'geometry', 'address_components', 'rating', 'price_level', 'url', 'place_id']
-              }, async (place, status) => {
-                if (status === window.google.maps.places.PlacesServiceStatus.OK && place) {
-                  console.log('Place details fetched (fallback):', place)
-                  await handlePlaceFromAutocomplete(place)
-                } else {
-                  console.error('Failed to fetch place details:', status)
-                  setErrorMessage('Failed to fetch place details')
-                }
-              })
-              
-              // Clear the input
-              const input = placeAutocomplete.querySelector('input')
-              if (input) {
-                input.value = ''
-              }
-            } catch (fallbackError) {
-              console.error('Fallback also failed:', fallbackError)
-              setErrorMessage('Failed to process selected place')
-            }
+            console.error('Error processing place with new API:', error)
+            setErrorMessage('Failed to process selected place')
           }
         })
         

@@ -65,13 +65,17 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
       .then(geoData => {
         // Transform GeoJSON features to advisory polygons
         const advisoryPolygons = geoData.features.map((feature: any) => {
-          const advisory = advisories.find((a: AdvisoryCountry) => a.country === feature.properties.name)
+          const advisory = advisories.find((a: AdvisoryCountry) => 
+            a.country === feature.properties.name || 
+            a.country === feature.properties.NAME ||
+            a.country === feature.properties.ADMIN
+          )
           return {
             type: 'Feature',
             geometry: feature.geometry,
             properties: {
-              name: feature.properties.name,
-              iso_a2: feature.properties.iso_a2 || '',
+              name: feature.properties.name || feature.properties.NAME || feature.properties.ADMIN,
+              iso_a2: feature.properties.iso_a2 || feature.properties.ISO_A2 || '',
             },
             level: advisory?.level || 1,
           }
@@ -230,7 +234,7 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
       className="tdg-block"
       webglContent={webglContent}
       interactive={true}
-      disableDefaultCamera={true}
+      disableDefaultCamera={false}
       {...blockConfig}
     >
       <div className="tdg-container">
@@ -239,7 +243,7 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
         {/* Vertical Marquee */}
         <div className="tdg-vertical-marquee">
           <VerticalMarquee 
-            text="Travel Data Globe • 🌍 • Explore the World • 🌎 •" 
+            text="Sweet Serenity Getaways" 
             animationSpeed={0.5} 
             position="left" 
           />
@@ -436,10 +440,10 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
                         </span>
                       )}
                     </div>
-                    <span className={`tdg-advisory-level tdg-level-${advisory.level}`}>
-                      {advisory.levelText || `Level ${advisory.level}`}
-                    </span>
                   </div>
+                  <span className={`tdg-advisory-level tdg-level-${advisory.level}`}>
+                    {advisory.levelText || `Level ${advisory.level}`}
+                  </span>
                 </div>
               ))}
 
@@ -477,6 +481,11 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
                 <div
                   key={`restaurant-${restaurant.id}-${idx}`}
                   className="tdg-restaurant-item"
+                  onClick={() => {
+                    // For restaurants, you might want to show details or zoom to location
+                    console.log('Restaurant clicked:', restaurant)
+                  }}
+                  style={{ cursor: 'pointer' }}
                 >
                   <div className="tdg-restaurant-header">
                     <span className="tdg-restaurant-name">{restaurant.name}</span>
@@ -497,6 +506,11 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
                 <div
                   key={`airport-${airport.code}-${idx}`}
                   className="tdg-airport-item"
+                  onClick={() => {
+                    // For airports, you might want to show details or zoom to location
+                    console.log('Airport clicked:', airport)
+                  }}
+                  style={{ cursor: 'pointer' }}
                 >
                   <div className="tdg-airport-header">
                     <span className="tdg-airport-code">{airport.code}</span>

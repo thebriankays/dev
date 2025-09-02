@@ -1,0 +1,43 @@
+/* Add these fixes to your existing styles.scss or include this file */
+
+/* Fix text wrapping in all lists */
+.tdg-advisory-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.tdg-advisory-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.tdg-advisory-country,
+.tdg-visa-country,
+.tdg-restaurant-name,
+.tdg-airport-name {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 250px !important;
+}
+
+.tdg-visa-header,
+.tdg-restaurant-header,
+.tdg-airport-header {
+  width: 100%;
+  min-width: 0;
+}
+
+.tdg-visa-stats,
+.tdg-restaurant-details,
+.tdg-airport-location {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}

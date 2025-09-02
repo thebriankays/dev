@@ -410,6 +410,28 @@
     font-weight: 500;
     opacity: 1;
   }
+  
+  .tdg-advisory-level {
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+}
+
+.tdg-advisory-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.tdg-advisory-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
 }
 
 .tdg-country-item,
@@ -522,6 +544,7 @@
   text-overflow: ellipsis;
   font-size: 0.875rem;
   color: #e2e8f0;
+  max-width: 200px;
 }
 
 .tdg-country-name,
@@ -530,6 +553,10 @@
   flex: 1;
   font-size: 0.875rem;
   color: #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 250px;
 }
 
 .tdg-new-pill {
@@ -974,6 +1001,37 @@
 }
 
 /* Mobile responsive */
+
+/* FIX TEXT WRAPPING ISSUES */
+.tdg-list-container {
+  * {
+    white-space: nowrap !important;
+  }
+  
+  .tdg-advisory-country,
+  .tdg-visa-country,
+  .tdg-restaurant-name,
+  .tdg-airport-name,
+  .tdg-airport-code {
+    display: inline-block;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 250px !important;
+  }
+  
+  .tdg-advisory-header,
+  .tdg-visa-header,
+  .tdg-restaurant-header,
+  .tdg-airport-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    overflow: hidden;
+  }
+}
+
 @media (max-width: 768px) {
   .tdg-container {
     height: 100vh;

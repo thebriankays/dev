@@ -408,7 +408,7 @@ const TravelDataGlobeManual: React.FC<TravelDataGlobeManualProps> = ({
       <OrbitControlsImpl
         ref={controlsRef}
         enablePan={false}
-        enableZoom={true}
+        enableZoom={false}
         minDistance={3}
         maxDistance={10}
         autoRotate={!selectedCountry && !passportCountry}
