@@ -1,9 +1,9 @@
 'use client'
 
-import React, { useRef, useEffect, useMemo } from 'react'
+import React, { useRef, useEffect, useMemo, useState } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls as OrbitControlsImpl, useTexture } from '@react-three/drei'
+import { OrbitControls as OrbitControlsImpl } from '@react-three/drei'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import gsap from 'gsap'
 
@@ -46,7 +46,7 @@ interface TravelDataGlobeManualProps {
   showMarkers: boolean
 }
 
-// Globe sphere component
+// Globe sphere component with error handling
 function GlobeSphere({ 
   globeImageUrl, 
   bumpImageUrl 
@@ -54,16 +54,59 @@ function GlobeSphere({
   globeImageUrl: string
   bumpImageUrl: string 
 }) {
-  const [earthTexture, bumpMap] = useTexture([globeImageUrl, bumpImageUrl])
+  const [textures, setTextures] = useState<{ earth?: THREE.Texture; bump?: THREE.Texture }>({})
+  const [error, setError] = useState(false)
+  
+  useEffect(() => {
+    const loader = new THREE.TextureLoader()
+    
+    Promise.all([
+      new Promise<THREE.Texture>((resolve, reject) => {
+        loader.load(
+          globeImageUrl,
+          (texture) => resolve(texture),
+          undefined,
+          (err) => reject(err)
+        )
+      }),
+      new Promise<THREE.Texture>((resolve, reject) => {
+        loader.load(
+          bumpImageUrl,
+          (texture) => resolve(texture),
+          undefined,
+          (err) => reject(err)
+        )
+      })
+    ]).then(([earth, bump]) => {
+      setTextures({ earth, bump })
+    }).catch((err) => {
+      console.warn('Failed to load globe textures, using fallback:', err)
+      setError(true)
+    })
+  }, [globeImageUrl, bumpImageUrl])
+  
+  if (error || !textures.earth) {
+    // Fallback globe without textures
+    return (
+      <mesh>
+        <sphereGeometry args={[2, 64, 64]} />
+        <meshPhongMaterial 
+          color="#2a4858"
+          specular={new THREE.Color('#111111')}
+          shininess={5}
+        />
+      </mesh>
+    )
+  }
   
   return (
     <mesh>
       <sphereGeometry args={[2, 64, 64]} />
       <meshPhongMaterial 
-        map={earthTexture}
-        bumpMap={bumpMap}
+        map={textures.earth}
+        bumpMap={textures.bump}
         bumpScale={0.015}
-        specularMap={earthTexture}
+        specularMap={textures.earth}
         specular={new THREE.Color('grey')}
         shininess={5}
       />
@@ -71,10 +114,20 @@ function GlobeSphere({
   )
 }
 
-// Cloud layer component
+// Cloud layer component with error handling
 function CloudLayer() {
   const cloudsRef = useRef<THREE.Mesh>(null)
-  const cloudTexture = useTexture('/clouds.png')
+  const [cloudTexture, setCloudTexture] = useState<THREE.Texture | null>(null)
+  
+  useEffect(() => {
+    const loader = new THREE.TextureLoader()
+    loader.load(
+      '/clouds.png',
+      (texture) => setCloudTexture(texture),
+      undefined,
+      (err) => console.warn('Failed to load cloud texture:', err)
+    )
+  }, [])
   
   useFrame((_, delta) => {
     if (cloudsRef.current) {
@@ -88,8 +141,9 @@ function CloudLayer() {
       <meshPhongMaterial
         map={cloudTexture}
         transparent
-        opacity={0.3}
+        opacity={cloudTexture ? 0.3 : 0.1}
         depthWrite={false}
+        color={cloudTexture ? '#ffffff' : '#e0e0e0'}
       />
     </mesh>
   )

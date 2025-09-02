@@ -77,7 +77,7 @@ export function TravelDataGlobeInteractive({ data }: TravelDataGlobeInteractiveP
     restaurants, 
     polygons, 
     borders, 
-    enabledViews,
+    enabledViews: _enabledViews,
     blockConfig 
   } = data
 
@@ -90,9 +90,27 @@ export function TravelDataGlobeInteractive({ data }: TravelDataGlobeInteractiveP
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [showDetails, setShowDetails] = useState(false)
-  const [tabsReady, setTabsReady] = useState(false)
+  const [, setTabsReady] = useState(false)
   const [panelReady, setPanelReady] = useState(false)
   const [webglReady, setWebglReady] = useState(false)
+
+  // Tab change handler
+  const handleTabChange = useCallback((view: string) => {
+    setCurrentView(view)
+    setSearchQuery('')
+    setShowDetails(false)
+    setSelectedCountry(null)
+    setPassportCountry(null)
+    
+    // Update active tab styling
+    document.querySelectorAll('.tdg-tab').forEach(tab => {
+      if (tab.getAttribute('data-view') === view) {
+        tab.classList.add('tdg-tab--active')
+      } else {
+        tab.classList.remove('tdg-tab--active')
+      }
+    })
+  }, [])
 
   // Initialize tabs and panels after mount
   useEffect(() => {
@@ -119,7 +137,7 @@ export function TravelDataGlobeInteractive({ data }: TravelDataGlobeInteractiveP
     // Delay WebGL loading slightly to prioritize UI
     const timer = setTimeout(() => setWebglReady(true), 100)
     return () => clearTimeout(timer)
-  }, [])
+  }, [handleTabChange, currentView])
 
   // Get current polygons based on view
   const currentPolygons = useMemo(() => {
@@ -164,25 +182,7 @@ export function TravelDataGlobeInteractive({ data }: TravelDataGlobeInteractiveP
     }
   }, [currentView, searchQuery, advisories, visaCountries, restaurants, airports])
 
-  // Handlers
-  const handleTabChange = useCallback((view: string) => {
-    setCurrentView(view)
-    setSearchQuery('')
-    setShowDetails(false)
-    setSelectedCountry(null)
-    setPassportCountry(null)
-    
-    // Update tab active states
-    document.querySelectorAll('.tdg-tab').forEach(tab => {
-      const tabView = tab.getAttribute('data-view')
-      if (tabView === view) {
-        tab.classList.add('tdg-tab--active')
-      } else {
-        tab.classList.remove('tdg-tab--active')
-      }
-    })
-  }, [])
-
+  // Country click handler
   const handleCountryClick = useCallback((countryName: string) => {
     if (currentView === 'travelAdvisory') {
       setSelectedCountry(countryName)
@@ -326,31 +326,33 @@ export function TravelDataGlobeInteractive({ data }: TravelDataGlobeInteractiveP
   ) : null
 
   // WebGL content - loaded progressively
-  const webglContent = webglReady ? (
-    <Suspense fallback={<GlobeLoading />}>
-      <TravelDataGlobe
-        polygons={currentPolygons}
-        borders={borders}
-        airports={currentView === 'airports' ? airports : []}
-        restaurants={currentView === 'michelinRestaurants' ? restaurants : []}
-        globeImageUrl="/earth-blue-marble.jpg"
-        bumpImageUrl="/earth-topology.jpg"
-        autoRotateSpeed={0.5}
-        atmosphereColor="#ffffff"
-        onCountryClick={handleCountryClick}
-        onAirportClick={() => {}}
-        onRestaurantClick={() => {}}
-        onCountryHover={setHoveredCountry}
-        selectedCountry={selectedCountry}
-        hoveredCountry={hoveredCountry}
-        currentView={currentView as any}
-        visaArcs={visaArcs}
-        showMarkers={true}
-      />
-    </Suspense>
-  ) : (
-    <GlobeLoading />
-  )
+  const webglContent = useMemo(() => {
+    if (!webglReady) return <GlobeLoading />
+    
+    return (
+      <Suspense fallback={<GlobeLoading />}>
+        <TravelDataGlobe
+          polygons={currentPolygons}
+          borders={borders}
+          airports={currentView === 'airports' ? airports : []}
+          restaurants={currentView === 'michelinRestaurants' ? restaurants : []}
+          globeImageUrl="/earth-blue-marble.jpg"
+          bumpImageUrl="/earth-topology.png"
+          autoRotateSpeed={0.5}
+          atmosphereColor="#ffffff"
+          onCountryClick={handleCountryClick}
+          onAirportClick={() => {}}
+          onRestaurantClick={() => {}}
+          onCountryHover={setHoveredCountry}
+          selectedCountry={selectedCountry}
+          hoveredCountry={hoveredCountry}
+          currentView={currentView as any}
+          visaArcs={visaArcs}
+          showMarkers={true}
+        />
+      </Suspense>
+    )
+  }, [webglReady, currentPolygons, borders, currentView, airports, restaurants, handleCountryClick, selectedCountry, hoveredCountry, visaArcs])
 
   // Use the BlockWrapper's webglContent prop through parent
   useEffect(() => {

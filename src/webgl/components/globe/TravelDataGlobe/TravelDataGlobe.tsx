@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import * as THREE from 'three'
 import TravelDataGlobeManual from './TravelDataGlobeManual'
 import type {
   PolyAdv,
@@ -98,7 +99,7 @@ const TravelDataGlobe: React.FC<TravelDataGlobeProps> = (props) => {
         ])
         
         setTexturesLoaded(true)
-      } catch (error) {
+      } catch (_error) {
         console.warn('Globe textures not found, using fallback globe')
         setTexturesLoaded(false)
       }
@@ -124,6 +125,3 @@ const TravelDataGlobe: React.FC<TravelDataGlobeProps> = (props) => {
 }
 
 export default TravelDataGlobe
-
-// Import THREE for the fallback
-import * as THREE from 'three'

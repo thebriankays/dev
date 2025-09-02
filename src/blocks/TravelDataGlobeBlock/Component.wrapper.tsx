@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo, useCallback, lazy, Suspense } from 'react'
+import React, { useState, useMemo, useCallback, lazy, Suspense, useEffect } from 'react'
 import Image from 'next/image'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
@@ -47,12 +47,82 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
     visaCountries,
     airports,
     restaurants,
-    polygons,
-    borders,
+    polygons: initialPolygons,
+    borders: initialBorders,
     statistics,
     blockConfig,
     enabledViews,
   } = data
+  
+  // State for loaded polygon data
+  const [polygons, setPolygons] = useState(initialPolygons)
+  const [borders, setBorders] = useState(initialBorders)
+  
+  // Load GeoJSON data on client side
+  useEffect(() => {
+    fetch('/datamaps.world.json')
+      .then(res => res.json())
+      .then(geoData => {
+        // Transform GeoJSON features to advisory polygons
+        const advisoryPolygons = geoData.features.map((feature: any) => {
+          const advisory = advisories.find((a: AdvisoryCountry) => a.country === feature.properties.name)
+          return {
+            type: 'Feature',
+            geometry: feature.geometry,
+            properties: {
+              name: feature.properties.name,
+              iso_a2: feature.properties.iso_a2 || '',
+            },
+            level: advisory?.level || 1,
+          }
+        })
+        
+        // Transform GeoJSON features to visa polygons
+        const visaPolygons = geoData.features.map((feature: any) => {
+          const visaCountry = visaCountries.find((v: CountryVisaData) => v.countryName === feature.properties.name)
+          return {
+            type: 'Feature',
+            geometry: feature.geometry,
+            properties: {
+              name: feature.properties.name,
+              iso_a2: feature.properties.iso_a2 || '',
+            },
+            requirement: visaCountry ? 'visa_required' : 'no_data',
+          }
+        })
+        
+        setPolygons({
+          advisory: advisoryPolygons,
+          visa: visaPolygons,
+        })
+        
+        // Set borders as a single MultiPolygon feature combining all countries
+        const allCoordinates = geoData.features
+          .filter((f: any) => f.geometry?.type === 'Polygon' || f.geometry?.type === 'MultiPolygon')
+          .map((f: any) => {
+            if (f.geometry.type === 'Polygon') {
+              return f.geometry.coordinates
+            } else {
+              return f.geometry.coordinates[0]
+            }
+          })
+        
+        setBorders({
+          type: 'Feature',
+          geometry: {
+            type: 'MultiPolygon',
+            coordinates: allCoordinates
+          },
+          properties: {
+            iso_a2: 'WORLD',
+            name: 'World Borders'
+          }
+        })
+      })
+      .catch(err => {
+        console.warn('Failed to load GeoJSON data:', err)
+      })
+  }, [advisories, visaCountries])
 
   // Minimal client state
   const [currentView, setCurrentView] = useState<string>(
@@ -139,7 +209,7 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
         airports={currentView === 'airports' ? airports : []}
         restaurants={currentView === 'michelinRestaurants' ? restaurants : []}
         globeImageUrl="/earth-blue-marble.jpg"
-        bumpImageUrl="/earth-topology.jpg"
+        bumpImageUrl="/earth-topology.png"
         autoRotateSpeed={0.5}
         atmosphereColor="#ffffff"
         onCountryClick={handleCountryClick}

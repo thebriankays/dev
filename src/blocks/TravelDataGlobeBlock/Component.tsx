@@ -1,14 +1,16 @@
 import React from 'react'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { TravelDataGlobeWrapper } from './Component.wrapper'
 import type { 
   TravelDataGlobeBlockProps, 
   PreparedData,
   AdvisoryCountry,
   CountryVisaData,
   AirportData,
-  MichelinRestaurantData
+  MichelinRestaurantData,
+  PolyAdv,
+  VisaPolygon,
+  CountryBorder
 } from './types'
 
 // Server-side helper functions
@@ -321,17 +323,28 @@ export async function TravelDataGlobeBlock(props: TravelDataGlobeBlockProps) {
     return aName.localeCompare(bName)
   })
 
-  // Generate polygons (would load actual GeoJSON in production)
+  // Load actual country polygons from GeoJSON
   const polygons = {
-    advisory: [], // Would load actual advisory polygons
-    visa: [], // Would load actual visa polygons
+    advisory: [] as PolyAdv[],
+    visa: [] as VisaPolygon[],
   }
-
-  const borders = {
+  
+  // Create empty borders object for now - will be loaded client-side
+  const borders: CountryBorder = {
     type: 'Feature',
-    geometry: { type: 'MultiPolygon', coordinates: [] },
-    properties: { iso_a2: '', name: '' }
-  } as any
+    geometry: {
+      type: 'MultiPolygon',
+      coordinates: []
+    },
+    properties: {
+      iso_a2: '',
+      name: ''
+    }
+  }
+  
+  // For now, create empty polygons - in production, load this at build time
+  // The client component will load the actual data
+  // This avoids server-side import issues
 
   // Pre-compute statistics
   const statistics = {
@@ -368,5 +381,6 @@ export async function TravelDataGlobeBlock(props: TravelDataGlobeBlockProps) {
   }
 
   // Use the wrapper component that properly handles BlockWrapper
+  const { TravelDataGlobeWrapper } = await import('./Component.wrapper')
   return <TravelDataGlobeWrapper data={preparedData} />
 }

@@ -1,6 +1,4 @@
-'use client'
-
-import React, { useRef } from 'react'
+import React from 'react'
 import './VerticalMarquee.scss'
 
 type VerticalMarqueeProps = {
@@ -20,7 +18,7 @@ const VerticalMarquee: React.FC<VerticalMarqueeProps> = ({
   className = '',
   position = 'left',
 }) => {
-  const marqueeRef = useRef<HTMLDivElement>(null)
+
 
   // Calculate the actual animation duration
   const calculatedDuration = animationDuration || 40 / animationSpeed
@@ -36,7 +34,7 @@ const VerticalMarquee: React.FC<VerticalMarqueeProps> = ({
     <div 
       className={`vertical-marquee-container ${className}`} 
       style={containerStyle}
-      ref={marqueeRef}
+
     >
       <div 
         className="vertical-marquee-content"

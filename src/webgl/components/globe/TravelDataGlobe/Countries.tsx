@@ -1,8 +1,7 @@
 'use client'
 
-import React, { useMemo, useRef } from 'react'
+import React, { useMemo } from 'react'
 import * as THREE from 'three'
-import { useFrame } from '@react-three/fiber'
 import type { PolyAdv, VisaPolygon } from '@/blocks/TravelDataGlobeBlock/types'
 
 interface CountriesProps {
@@ -25,71 +24,47 @@ const latLngToVector3 = (lat: number, lng: number, radius: number): THREE.Vector
   return new THREE.Vector3(x, y, z)
 }
 
-// Convert GeoJSON coordinates to vertices on sphere
-const geoJsonToVertices = (coordinates: number[][], radius: number): THREE.Vector3[] => {
-  return coordinates.map(([lng, lat]) => latLngToVector3(lat, lng, radius))
-}
-
-// Create a mesh for a single polygon
-const createPolygonMesh = (
+// Simple line-based country outlines for now
+const createCountryOutline = (
   coordinates: number[][][],
   radius: number,
   color: string,
   name: string
-): THREE.Mesh | null => {
+): THREE.Line | null => {
   try {
-    const vertices: THREE.Vector3[] = []
-    const indices: number[] = []
+    // Use the outer ring
+    const outerRing = coordinates[0]
+    if (!outerRing || outerRing.length < 3) return null
     
-    // Process each ring (outer boundary and holes)
-    coordinates.forEach((ring, ringIndex) => {
-      if (ringIndex === 0) {
-        // Outer ring - create vertices
-        const ringVertices = geoJsonToVertices(ring, radius)
-        vertices.push(...ringVertices)
-        
-        // Simple triangulation for convex polygons
-        // For complex polygons, you'd need a proper triangulation algorithm
-        if (ringVertices.length >= 3) {
-          for (let i = 1; i < ringVertices.length - 1; i++) {
-            indices.push(0, i, i + 1)
-          }
-        }
-      }
+    const points: THREE.Vector3[] = []
+    
+    // Convert coordinates to 3D points on sphere
+    outerRing.forEach(([lng, lat]) => {
+      points.push(latLngToVector3(lat, lng, radius))
     })
     
-    if (vertices.length < 3) return null
-    
-    // Create geometry
-    const geometry = new THREE.BufferGeometry()
-    const positions = new Float32Array(vertices.length * 3)
-    vertices.forEach((v, i) => {
-      positions[i * 3] = v.x
-      positions[i * 3 + 1] = v.y
-      positions[i * 3 + 2] = v.z
-    })
-    
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-    if (indices.length > 0) {
-      geometry.setIndex(indices)
+    // Close the loop
+    if (points.length > 0) {
+      points.push(points[0].clone())
     }
-    geometry.computeVertexNormals()
+    
+    // Create line geometry
+    const geometry = new THREE.BufferGeometry().setFromPoints(points)
     
     // Create material
-    const material = new THREE.MeshPhongMaterial({
+    const material = new THREE.LineBasicMaterial({
       color: new THREE.Color(color),
-      side: THREE.DoubleSide,
       transparent: true,
-      opacity: 0.6,
-      depthWrite: false
+      opacity: 0.8,
+      linewidth: 2
     })
     
-    const mesh = new THREE.Mesh(geometry, material)
-    mesh.name = name
+    const line = new THREE.Line(geometry, material)
+    line.name = name
     
-    return mesh
+    return line
   } catch (error) {
-    console.warn(`Failed to create mesh for ${name}:`, error)
+    console.warn(`Failed to create outline for ${name}:`, error)
     return null
   }
 }
@@ -101,12 +76,9 @@ export const Countries: React.FC<CountriesProps> = ({
   onCountryClick,
   onCountryHover
 }) => {
-  const groupRef = useRef<THREE.Group>(null)
-  const hoveredRef = useRef<string | null>(null)
-  
-  // Create country meshes
-  const countryMeshes = useMemo(() => {
-    const meshes: THREE.Mesh[] = []
+  // Create country outlines
+  const countryOutlines = useMemo(() => {
+    const outlines: THREE.Line[] = []
     
     polygons.forEach((polygon) => {
       if (!polygon.geometry?.coordinates || !polygon.properties?.name) return
@@ -114,70 +86,36 @@ export const Countries: React.FC<CountriesProps> = ({
       const color = getColor(polygon)
       
       if (polygon.geometry.type === 'Polygon') {
-        const mesh = createPolygonMesh(
+        const line = createCountryOutline(
           polygon.geometry.coordinates,
           radius * 1.001, // Slightly above globe surface
           color,
           polygon.properties.name
         )
-        if (mesh) meshes.push(mesh)
+        if (line) outlines.push(line)
       } else if (polygon.geometry.type === 'MultiPolygon') {
         polygon.geometry.coordinates.forEach((poly, idx) => {
-          const mesh = createPolygonMesh(
+          const line = createCountryOutline(
             poly,
             radius * 1.001,
             color,
             `${polygon.properties.name}_${idx}`
           )
-          if (mesh) {
-            mesh.userData.countryName = polygon.properties.name
-            meshes.push(mesh)
+          if (line) {
+            line.userData.countryName = polygon.properties.name
+            outlines.push(line)
           }
         })
       }
     })
     
-    return meshes
+    return outlines
   }, [polygons, radius, getColor])
   
-  // Handle raycasting for hover/click
-  useFrame(({ raycaster, camera, pointer }) => {
-    if (!groupRef.current) return
-    
-    raycaster.setFromCamera(pointer, camera)
-    const intersects = raycaster.intersectObjects(groupRef.current.children, true)
-    
-    if (intersects.length > 0) {
-      const mesh = intersects[0].object as THREE.Mesh
-      const countryName = mesh.userData.countryName || mesh.name
-      
-      if (hoveredRef.current !== countryName) {
-        hoveredRef.current = countryName
-        onCountryHover?.(countryName)
-      }
-      
-      document.body.style.cursor = 'pointer'
-    } else {
-      if (hoveredRef.current !== null) {
-        hoveredRef.current = null
-        onCountryHover?.(null)
-      }
-      document.body.style.cursor = 'auto'
-    }
-  })
-  
   return (
-    <group 
-      ref={groupRef}
-      onClick={(e) => {
-        e.stopPropagation()
-        const mesh = e.object as THREE.Mesh
-        const countryName = mesh.userData.countryName || mesh.name
-        onCountryClick?.(countryName)
-      }}
-    >
-      {countryMeshes.map((mesh, index) => (
-        <primitive key={index} object={mesh} />
+    <group>
+      {countryOutlines.map((outline, index) => (
+        <primitive key={index} object={outline} />
       ))}
     </group>
   )

@@ -79,7 +79,7 @@ export function BlockWrapper({
         <WebGLTunnel>
           <View track={ref as React.RefObject<HTMLElement>}>
             {!disableDefaultCamera && (
-              <PerspectiveCamera makeDefault position={[0, 0, 600]} />
+              <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={50} />
             )}
             {fluidOverlay.enabled && (
               <FluidOverlay
