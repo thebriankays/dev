@@ -43,9 +43,10 @@ export function BlockWrapper({
 
   useEffect(() => {
     if (!ref.current || !glassEffect.enabled) return
-    glass.applyGlass(ref.current, glassEffect.variant)
+    const element = ref.current // Capture ref value
+    glass.applyGlass(element, glassEffect.variant)
     return () => {
-      if (ref.current) glass.removeGlass(ref.current)
+      if (element) glass.removeGlass(element)
     }
   }, [glassEffect.enabled, glassEffect.variant, glass])
 

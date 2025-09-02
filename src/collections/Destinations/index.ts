@@ -9,6 +9,7 @@ import { generatePreviewPath } from '@/utilities/generatePreviewPath'
 import { googlePlaces } from '@/fields/GooglePlaces/GooglePlaces'
 import { populateVirtualFields } from './hooks/populateVirtualFields'
 import { optimizedDestinationHooks } from './hooks/optimizedHooks'
+import { autoPopulateMedia } from './hooks/autoPopulateMedia'
 
 import {
   BlocksFeature,
@@ -601,7 +602,7 @@ export const Destinations: CollectionConfig = {
     },
   ],
   hooks: {
-    beforeChange: [populateMissingLocationData, ...(optimizedDestinationHooks?.beforeChange ?? [])],
+    beforeChange: [populateMissingLocationData, autoPopulateMedia, ...(optimizedDestinationHooks?.beforeChange ?? [])],
     afterChange: [revalidateDestination],
     afterRead: [
       // Use optimized hook with caching instead of ensureCountryPopulated

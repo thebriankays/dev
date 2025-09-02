@@ -1,6 +1,7 @@
 import React, { Fragment } from 'react'
 
 import type { Page } from '@/payload-types'
+import type { DestinationDetailBlock, WeatherCardBlockType } from '@/types/blocks'
 
 import { ArchiveBlock } from '@/blocks/ArchiveBlock/Component'
 import { CallToActionBlock } from '@/blocks/CallToAction/Component'
@@ -12,6 +13,8 @@ import { WebGLTextBlock } from '@/blocks/WebGLText/Component'
 import { TravelDataGlobeBlock } from '@/blocks/TravelDataGlobeBlock/Component'
 import { ThreeDCarouselBlock } from '@/blocks/ThreeDCarousel/Component'
 import { DolphinBlock } from '@/blocks/DolphinBlock/Component'
+import { WeatherCardBlock } from '@/blocks/WeatherCardBlock/Component'
+import { DestinationDetailBlockComponent } from '@/blocks/DestinationDetailBlock/Component'
 
 const blockComponents = {
   archive: ArchiveBlock,
@@ -24,10 +27,12 @@ const blockComponents = {
   travelDataGlobeBlock: TravelDataGlobeBlock,
   threeDCarousel: ThreeDCarouselBlock,
   dolphinBlock: DolphinBlock,
+  weatherCardBlock: WeatherCardBlock,
+  destinationDetailBlock: DestinationDetailBlockComponent,
 } as const
 
 export const RenderBlocks: React.FC<{
-  blocks: Page['layout'][0][]
+  blocks: (Page['layout'][0] | DestinationDetailBlock | WeatherCardBlockType)[]
 }> = (props) => {
   const { blocks } = props
 

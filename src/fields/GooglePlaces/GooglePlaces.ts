@@ -24,6 +24,8 @@ export const googlePlaces = ({
       { name: 'country', type: 'text' },
       { name: 'continent', type: 'text' },
       { name: 'city', type: 'text' },
+      { name: 'state', type: 'text' },
+      { name: 'googleMapsUri', type: 'text' },
       { name: 'isGoodForChildren', type: 'checkbox' },
       { name: 'isGoodForGroups', type: 'checkbox' },
       { name: 'priceLevel', type: 'number' },

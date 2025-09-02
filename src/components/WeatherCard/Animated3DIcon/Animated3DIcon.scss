@@ -1,0 +1,378 @@
+// 3D Weather Icons - REMOVED GLOBAL HTML/BODY STYLES
+@keyframes rotation {
+  100% {
+    transform: rotate(1turn);
+  }
+}
+@keyframes snow {
+  0% {
+    transform: translateY(-12rem) rotate(45deg);
+  }
+  50%, 100% {
+    transform: translateY(12rem) rotate(45deg);
+  }
+}
+
+@keyframes thunder {
+  0%,25%,75%,100% {
+    filter: drop-shadow(0px -1px 0px #cfb8e5) drop-shadow(0px 0px 0px #9a4ee7)  drop-shadow(0px 0px 0px rgba(#9a4ee7,30%)) drop-shadow(-2px -2px 1px #3c3762) drop-shadow(4px 1px 1px #3c3762)
+  }
+  50% {
+    filter: drop-shadow(0px -1px 0px #cfb8e5) drop-shadow(0px 0px 3px #9a4ee7) drop-shadow(0px 0px 30px rgba(#9a4ee7,30%)) drop-shadow(-2px -2px 1px #3c3762) drop-shadow(4px 1px 1px #3c3762);
+  }
+}
+
+@keyframes floating {
+  0%, 100%{
+    transform: translatey(0)
+  }
+  50%{
+    transform: translatey(1rem)
+  }
+}
+
+@keyframes pulse {
+  0%, 100%{
+    transform: scale(1)
+  }
+  50%{
+    transform: scale(0.9)
+  }
+}
+
+@keyframes neon {
+  0%,40%,60%, 100%{    
+    filter: brightness(1);
+}
+  50%{    
+    filter: brightness(0.9);
+  }
+}
+
+// Weather label styling
+.weather-label {
+  margin-top: 0.4rem; // Reduced margin
+  text-align: center;
+  font-size: 0.75rem; // Slightly smaller to fit
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  text-transform: capitalize;
+  line-height: 1.1;
+  flex-shrink: 0; // Don't shrink the label
+  
+  @media (max-width: 1200px) {
+    font-size: 0.65rem;
+    margin-top: 0.4rem;
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 0.6rem;
+    margin-top: 0.3rem;
+    line-height: 1;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 0.55rem;
+    margin-top: 0.25rem;
+    line-height: 1;
+  }
+}
+
+// Container sizing for different icon sizes
+.weather-3d {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: visible !important;
+  background: transparent;
+  border: none;
+  position: relative;
+  pointer-events: none; // Don't block interactions below
+  
+  &--small {
+    width: 120px; // Adjusted to fit better
+    height: 90px;
+    
+    .icon {
+      transform: scale(0.40); // Slightly smaller scale
+    }
+  }
+  
+  &--medium {
+    width: 140px; // Match the updated wrapper size
+    height: 100px; // Match the wrapper height
+    
+    .icon {
+      transform: scale(0.50); // Adjusted scale
+    }
+  }
+  
+  &--large {
+    width: 180px; // Reasonable size
+    height: 120px;
+    
+    .icon {
+      transform: scale(0.65); // Adjusted scale
+    }
+  }
+}
+
+.weather{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  width: 100%;
+  height: 100%;
+  background: transparent; // Remove background - clouds get color from weather class
+  position: relative; // Ensure proper positioning context
+  pointer-events: none; // Don't block interactions
+  
+  &--sun{
+    // No cloud background needed for pure sun - kept for specificity
+    background: transparent;
+  }
+  &--rain{
+    .icon__cloud {
+      background: linear-gradient(45deg, #405870, #5a7189);
+    }
+  }
+  &--thunder{
+    .icon__cloud {
+      background: linear-gradient(45deg, #172a44, #1f3654);
+    }
+  }
+  &--snow{
+    .icon__cloud {
+      background: linear-gradient(45deg, #5e6270, #82889c);
+    }
+  }
+  &--rainbow{
+    .icon__cloud {
+      background: linear-gradient(45deg, #1d5476, #296b8f);
+    }
+  }
+  &--cloudy{
+    .icon__cloud {
+      background: linear-gradient(45deg, #9ca3af, #d1d5db);
+    }
+  }
+}
+.icon{
+  position: relative;
+  width: 18rem;
+  height: 13rem;
+  transform: scale(0.8); // Base scale - overridden by weather-3d container sizes
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto; // Center the icon
+  &__rainbow{
+    position: absolute;
+    right: -4rem; // Move rainbow further to right side of cloud (small part)
+    top: -2rem;
+    height: 14rem;
+    width: 14rem;
+    filter: drop-shadow(0px 0px 10px rgba(255,255,255,0.2));
+    animation: pulse 4s infinite;
+    &-arc{
+      position: absolute;
+      inset:0;
+      border-radius:50%;
+      color:red;
+      box-shadow: inset 2.5rem 2rem 0.3rem -3rem #000000bf, inset 0 0 0.3rem 0.25rem #ffffffb8, inset 0 0 0.2rem 0.4rem #000000a6, inset 0 0 0 0.6rem;
+      animation: neon 4s infinite;
+      &:nth-child(1){
+        color: #ff1f5d; 
+      }
+      &:nth-child(2){
+        color:#eb8125; 
+        inset: 0.9rem;
+        animation-delay: 0.2s;
+      }
+      &:nth-child(3){
+        color:#fbff0e; 
+        inset: 1.8rem;
+        animation-delay: 0.4s;
+      }
+      &:nth-child(4){
+        color:#a8ef3c; 
+        inset: 2.7rem;
+        animation-delay: 0.6s;
+      }
+      &:nth-child(5){
+        color:#59d9ff; 
+        inset: 3.6rem;
+        animation-delay: 0.8s;
+      }
+      &:nth-child(6){
+        color:#6685f5; 
+        inset: 4.5rem;
+        animation-delay: 1s;
+      }
+      &:nth-child(7){
+        color:#6a38e1; 
+        inset: 5.4rem;
+        animation-delay: 1.2s;
+      }
+    }
+  }
+  &__snow{
+    position: absolute;
+    top: 12.8rem;
+    left:0;
+    width: 100%;
+    height: 10rem;
+    overflow:hidden;
+    &-flakes{      
+      position: absolute;
+      top:0;
+      left: 13rem;
+      height: 0.8rem;
+      width: 0.8rem;
+      background: #fff;
+      animation: snow 3s linear infinite;
+      transform: translateY(-12rem) rotate(45deg);
+      opacity:0.5;
+      color: #fff;
+      box-shadow: 1rem 2rem, 1rem 7rem, 4rem 8rem, -5rem 8rem, -2rem 4rem, 0rem 11rem, 4rem 5rem, -2rem 8rem, 4rem 3rem 0 -0.1rem, 0rem 5rem 0 -0.1rem, -4rem 5rem 0 -0.1rem, -2rem 10rem 0 -0.1rem, -1rem 3rem 0 -0.2rem, 2rem 5rem 0 -0.2rem, -2rem 11rem 0 -0.2rem, 2rem 9rem 0 -0.2rem, -4rem 3rem 0 -0.2rem;
+    }
+  }
+  &__rain{
+    position: absolute;
+    top: 10rem; // Adjusted to be more visible
+    left: 50%;
+    transform: translateX(-50%); // Center the rain
+    width: 100%;
+    height: 12rem; // Increased height
+    overflow: visible; // Allow drops to be visible
+    z-index: 10; // Ensure rain is above cloud
+    &-drops{      
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      height: 0.8rem; // Slightly larger drops
+      width: 0.8rem;
+      background: #7a98e9;
+      animation: snow 2s linear infinite; // Faster animation
+      animation-delay: 0.5s;
+      transform: translateY(-12rem) rotate(45deg) translateX(-50%);
+      opacity: 1;
+      color: #7a98e9;
+      box-shadow: -2rem 1rem, -1rem 3rem, 0rem 5rem, 1rem 2rem, 2rem 4rem, -3rem 6rem, 3rem 1rem, -2rem 8rem, 1rem 7rem 0 -0.1rem, -1rem 4rem 0 -0.1rem, 2rem 6rem 0 -0.1rem, 0rem 8rem 0 -0.1rem, -2rem 3rem 0 -0.2rem, 1rem 5rem 0 -0.2rem, 3rem 7rem 0 -0.2rem, -1rem 9rem 0 -0.2rem, 0rem 2rem 0 -0.2rem;
+      border-radius: 0 1rem 1rem;
+    }
+  }
+  &__sun{
+    position:absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: 5rem;
+    width: 5rem;
+    background: linear-gradient(45deg, #f09559 40%, #f0ca43);
+    border-radius:50%;
+    filter: drop-shadow(0 0 10px rgba(#efda90,0.4)) drop-shadow(0 0 30px rgba(#f0ca43,0.4));
+    
+    &-lights{
+      position: absolute;
+      inset: 0;
+      animation: rotation 6s linear infinite;
+    }
+    &-light{
+      position:absolute;
+      top: -2.75rem;
+      left: 50%;
+      margin-left:-0.45rem;
+      border-radius: 1rem;
+      width: 0.9rem;
+      height: 2.5rem;
+      background: linear-gradient(45deg, #f0b343, #f0ca43);
+      transform-origin: 50% 5.25rem;
+      @for $c from 2 through 9 {
+        &:nth-child(#{$c}){
+          transform:rotate(calc(($c - 1) * 360deg / 8));
+        }
+      }
+    }
+  }
+    &__thunder{
+        position: absolute;
+        top: 10rem;
+        left: 50%;
+        margin-left: -2.4rem;
+        width: 4.8rem;
+        height: 8.6rem;
+        filter: drop-shadow(0px -1px 0px #cfb8e5) drop-shadow(0px 0px 0px #9a4ee7) drop-shadow(-2px -2px 1px #3c3762) drop-shadow(4px 1px 1px #3c3762);
+      animation: thunder 3s infinite, floating 3s infinite;
+      z-index: 15; // Ensure thunder is above everything
+      &:before,
+      &:after{    
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        background: #645d95;
+        height: 5rem;
+        width: 3rem;
+        border-radius: 0.4rem;
+        box-shadow: inset -0.2rem -0.4rem 0.2rem #3c3762, inset -0.1rem -0.1rem 0.4rem #fff;
+        clip-path: polygon(100% 100%, 0% 100%, 100% 0);
+      }
+      &:after{
+        top: auto;
+        bottom: 0;
+        left: auto;
+        right:0;
+        clip-path: polygon(0% 100%, 100% 0%, 45% 0%, 0% 26%);
+        box-shadow: inset 0.2rem 0.3rem 0.2rem #3c3762, inset 0.1rem 0.2rem 0.4rem #fff;
+      }
+    }
+  &__cloud{
+    position:absolute;
+    left: 50%; // Center horizontally
+    transform: translateX(-50%); // Center adjustment
+    top: 1rem;
+        width: 18rem;
+    height: 12rem;
+    // Remove default background - let weather classes handle it
+    opacity: 1;
+    backdrop-filter: blur(8px);
+    clip-path: url(#cloud-path);
+    box-shadow: inset 0rem -1.3rem 0.25rem -1rem #fff, inset 0rem 0rem 5rem 0rem #ffffff4d;
+    z-index: 5; // Ensure cloud is below rain
+    &-reflect{
+    height: 12rem;
+    width: 11.9rem;
+    border-radius: 50%;
+    box-shadow: inset 0rem -1.1rem 0.25rem -1rem #fff, inset 0.45rem 0rem 0.25rem -0.25rem #fff, inset -0.45rem 0.5rem 0.25rem -0.45em #fff, inset 0.25rem 0.25rem 0.5rem 0rem rgb(0 0 0 / 30%);
+      clip-path: polygon(0 0, 100% 0%, 100% 33%, 50% 30%, 50% 100%, 0% 100%);
+
+      &--2{ 
+        position: absolute;
+    width: 8.7rem;
+    height: 8.7rem;
+    bottom: 0.1rem;
+    right: 0.5rem;
+      clip-path: polygon(0 0, 100% 0%, 100% 100%, 50% 100%, 29% 0%);
+      }
+    }
+    &-shadow{
+        position: absolute;
+        left: 30rem;
+        top: -30rem;
+        width: 18rem;
+        height: 9rem;
+        border-radius: 50%;
+        box-shadow: -36rem 38rem 7rem #00000054;
+        z-index: -1;
+    }
+    &-svg{
+      clipPath{
+        transform: scale(0.65);
+      }
+    }
+  }
+}

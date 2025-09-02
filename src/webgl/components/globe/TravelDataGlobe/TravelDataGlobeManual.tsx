@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useEffect, useMemo, useState } from 'react'
+import React, { useRef, useEffect, useMemo, useState, useCallback } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls as OrbitControlsImpl } from '@react-three/drei'
@@ -53,17 +53,46 @@ function GlobeSphere({ globeImageUrl, bumpImageUrl }: { globeImageUrl: string; b
   const [error, setError] = useState(false)
 
   useEffect(() => {
+    console.log('Loading textures:', { globeImageUrl, bumpImageUrl })
     const loader = new THREE.TextureLoader()
     Promise.all([
       new Promise<THREE.Texture>((resolve, reject) => {
-        loader.load(globeImageUrl, (t) => resolve(t), undefined, () => reject(new Error('earth fail')))
+        loader.load(
+          globeImageUrl, 
+          (t) => {
+            console.log('Earth texture loaded successfully')
+            resolve(t)
+          }, 
+          undefined, 
+          (err) => {
+            console.error('Failed to load earth texture:', err)
+            reject(new Error('earth fail'))
+          }
+        )
       }),
       new Promise<THREE.Texture | undefined>((resolve) => {
-        loader.load(bumpImageUrl, (t) => resolve(t), undefined, () => resolve(undefined))
+        loader.load(
+          bumpImageUrl, 
+          (t) => {
+            console.log('Bump texture loaded successfully')
+            resolve(t)
+          }, 
+          undefined, 
+          () => {
+            console.warn('Failed to load bump texture, continuing without it')
+            resolve(undefined)
+          }
+        )
       }),
     ])
-      .then(([earth, bump]) => setTextures({ earth, bump }))
-      .catch(() => setError(true))
+      .then(([earth, bump]) => {
+        console.log('Textures loaded, setting state')
+        setTextures({ earth, bump })
+      })
+      .catch((err) => {
+        console.error('Failed to load textures:', err)
+        setError(true)
+      })
   }, [globeImageUrl, bumpImageUrl])
 
   if (error || !textures.earth) {
@@ -171,6 +200,7 @@ const TravelDataGlobeManual: React.FC<TravelDataGlobeManualProps> = ({
   useEffect(() => {
     scene.background = null
     gl.setClearColor(0x000000, 0) // alpha 0
+    gl.setClearAlpha(0)
     const canvas = gl.getContext().canvas as HTMLCanvasElement
     if (canvas) canvas.style.background = 'transparent'
   }, [gl, scene])
@@ -183,7 +213,7 @@ const TravelDataGlobeManual: React.FC<TravelDataGlobeManualProps> = ({
   })
 
   // Fly to a centroid (by ISO code first, then by name)
-  const flyToCountry = (code: string | null, name: string | null) => {
+  const flyToCountry = useCallback((code: string | null, name: string | null) => {
     const byCode = code
       ? polygons.find((p: any) => (p.properties?.iso_a2 || '').toUpperCase() === code.toUpperCase())
       : null
@@ -202,10 +232,10 @@ const TravelDataGlobeManual: React.FC<TravelDataGlobeManualProps> = ({
         controlsRef.current?.update()
       },
     })
-  }
+  }, [camera, polygons])
 
   // Fly to explicit lat/lng (restaurants/airports or external focus)
-  const flyToLatLng = (lat: number, lng: number) => {
+  const flyToLatLng = useCallback((lat: number, lng: number) => {
     const pos = latLngToVector3(lat, lng, 2)
     gsap.to(camera.position, {
       x: pos.x * 2,
@@ -218,7 +248,7 @@ const TravelDataGlobeManual: React.FC<TravelDataGlobeManualProps> = ({
         controlsRef.current?.update()
       },
     })
-  }
+  }, [camera])
 
   // Respond to country selections & focus targets
   useEffect(() => {

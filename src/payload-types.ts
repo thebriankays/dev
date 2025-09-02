@@ -1219,6 +1219,8 @@ export interface Destination {
     country?: string | null;
     continent?: string | null;
     city?: string | null;
+    state?: string | null;
+    googleMapsUri?: string | null;
     isGoodForChildren?: boolean | null;
     isGoodForGroups?: boolean | null;
     priceLevel?: number | null;
@@ -5527,6 +5529,8 @@ export interface DestinationsSelect<T extends boolean = true> {
         country?: T;
         continent?: T;
         city?: T;
+        state?: T;
+        googleMapsUri?: T;
         isGoodForChildren?: T;
         isGoodForGroups?: T;
         priceLevel?: T;
