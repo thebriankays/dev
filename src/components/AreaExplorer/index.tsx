@@ -11,20 +11,20 @@ import { CesiumViewer, CesiumViewerHandle } from '@/components/CesiumViewer'
 import { useDebounce } from '@/hooks/useDebounce'
 import './area-explorer.scss'
 
-// List of available place types
+// List of available place types with primary type for stricter filtering
 const POI_TYPES = [
-  { value: 'restaurant', label: 'Restaurants', icon: '🍴' },
-  { value: 'cafe', label: 'Cafes', icon: '☕' },
-  { value: 'park', label: 'Parks', icon: '🌳' },
-  { value: 'museum', label: 'Museums', icon: '🏛️' },
-  { value: 'lodging', label: 'Hotels', icon: '🏨' },
-  { value: 'shopping_mall', label: 'Shopping', icon: '🛍️' },
-  { value: 'tourist_attraction', label: 'Attractions', icon: '📸' },
-  { value: 'bank', label: 'Banks', icon: '🏦' },
-  { value: 'pharmacy', label: 'Pharmacy', icon: '💊' },
-  { value: 'hospital', label: 'Hospital', icon: '🏥' },
-  { value: 'gas_station', label: 'Gas Station', icon: '⛽' },
-  { value: 'parking', label: 'Parking', icon: '🅿️' }
+  { value: 'restaurant', label: 'Restaurants', icon: '🍴', primaryTypes: ['restaurant'] },
+  { value: 'cafe', label: 'Cafes', icon: '☕', primaryTypes: ['cafe'] },
+  { value: 'park', label: 'Parks', icon: '🌳', primaryTypes: ['park'] },
+  { value: 'museum', label: 'Museums', icon: '🏛️', primaryTypes: ['museum'] },
+  { value: 'lodging', label: 'Hotels', icon: '🏨', primaryTypes: ['lodging', 'hotel'] },
+  { value: 'shopping_mall', label: 'Shopping', icon: '🛍️', primaryTypes: ['shopping_mall', 'department_store', 'clothing_store'] },
+  { value: 'tourist_attraction', label: 'Attractions', icon: '📸', primaryTypes: ['tourist_attraction'] },
+  { value: 'bank', label: 'Banks', icon: '🏦', primaryTypes: ['bank', 'atm'] },
+  { value: 'pharmacy', label: 'Pharmacy', icon: '💊', primaryTypes: ['pharmacy', 'drugstore'] },
+  { value: 'hospital', label: 'Hospital', icon: '🏥', primaryTypes: ['hospital', 'doctor'] },
+  { value: 'gas_station', label: 'Gas Station', icon: '⛽', primaryTypes: ['gas_station'] },
+  { value: 'parking', label: 'Parking', icon: '🅿️', primaryTypes: ['parking'] }
 ]
 
 // Major city centers - better coordinates than Google's defaults
@@ -219,6 +219,28 @@ export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
     }
   }, [isMapReady, isOrbiting, orbitType, debouncedSpeed])
 
+  // Strict filter to check if place is primarily of the requested type
+  const isPlacePrimaryType = (place: google.maps.places.PlaceResult, requestedType: string): boolean => {
+    const placeTypes = place.types || []
+    const poiTypeConfig = POI_TYPES.find(poi => poi.value === requestedType)
+    
+    if (!poiTypeConfig) return false
+    
+    // Check if the place's FIRST type matches any of the primary types
+    // This ensures we only get places that are primarily of this type
+    const firstType = placeTypes[0]
+    if (poiTypeConfig.primaryTypes.includes(firstType)) {
+      return true
+    }
+    
+    // Also check if any of the primary types appear in the first 3 types
+    // This helps catch places that are strongly typed as what we want
+    const topTypes = placeTypes.slice(0, 3)
+    return poiTypeConfig.primaryTypes.some(primaryType => 
+      topTypes.includes(primaryType)
+    )
+  }
+
   // Handle POI search
   useEffect(() => {
     const searchPlaces = () => {
@@ -260,13 +282,12 @@ export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
             completedSearches++
             
             if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-              // Filter results to ONLY include the requested type
-              const filteredResults = results.filter(place => {
-                const placeTypes = place.types || []
-                return placeTypes.includes(poiType)
-              })
+              // Use STRICT filtering to only include places that are PRIMARILY of the requested type
+              const filteredResults = results.filter(place => 
+                isPlacePrimaryType(place, poiType)
+              )
               
-              console.log(`Found ${filteredResults.length} ${poiType} places`)
+              console.log(`Found ${results.length} places, filtered to ${filteredResults.length} ${poiType} places`)
               allResults.push(...filteredResults)
             } else if (status !== google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
               console.error(`Places service error for ${poiType}:`, status)
@@ -320,6 +341,11 @@ export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
     const place = places.find(p => p.place_id === placeId)
     if (place) {
       setSelectedPlace(place)
+      // Scroll the place into view in the list
+      const placeElement = document.querySelector(`[data-place-id="${placeId}"]`)
+      if (placeElement) {
+        placeElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
     }
   }, [places])
 
@@ -348,6 +374,17 @@ export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
         duration: 1.5
       })
     }
+  }
+
+  // Get POI type icon for a place
+  const getPlaceIcon = (place: google.maps.places.PlaceResult): string => {
+    const types = place.types || []
+    for (const poi of POI_TYPES) {
+      if (poi.primaryTypes.some(pt => types.includes(pt))) {
+        return poi.icon
+      }
+    }
+    return '📍'
   }
 
   return (
@@ -383,7 +420,7 @@ export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
               onClick={() => setShowOrbitInfo(!showOrbitInfo)}
               title="Camera info"
             >
-              ℹ
+              ℹ️
             </button>
           </h3>
           {showOrbitInfo && (
@@ -464,7 +501,7 @@ export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
                 onClick={() => setShowRadiusInfo(!showRadiusInfo)}
                 title="Radius info"
               >
-                ℹ
+                ℹ️
               </button>
             </label>
             {showRadiusInfo && (
@@ -492,7 +529,7 @@ export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
                 onClick={() => setShowDensityInfo(!showDensityInfo)}
                 title="Density info"
               >
-                ℹ
+                ℹ️
               </button>
             </label>
             {showDensityInfo && (
@@ -532,7 +569,7 @@ export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
 
         {isSearching && (
           <div className="area-explorer__loading">
-            Searching for places...
+            🔍 Searching for places...
           </div>
         )}
 
@@ -543,27 +580,43 @@ export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
               {places.map((place, index) => (
                 <div
                   key={place.place_id || index}
+                  data-place-id={place.place_id}
                   className={`area-explorer__place-item ${
                     selectedPlace?.place_id === place.place_id ? 'selected' : ''
                   }`}
                   onClick={() => handlePlaceClick(place)}
                 >
-                  <div className="area-explorer__place-name">
-                    {index + 1}. {place.name}
-                  </div>
-                  {place.rating && (
-                    <div className="area-explorer__place-rating">
-                      ⭐ {place.rating}
+                  <div className="area-explorer__place-header">
+                    <span className="area-explorer__place-number">{index + 1}</span>
+                    <span className="area-explorer__place-icon">{getPlaceIcon(place)}</span>
+                    <div className="area-explorer__place-info">
+                      <div className="area-explorer__place-name">
+                        {place.name}
+                      </div>
+                      <div className="area-explorer__place-address">
+                        {place.vicinity}
+                      </div>
                     </div>
-                  )}
-                  <div className="area-explorer__place-address">
-                    {place.vicinity}
                   </div>
-                  {place.price_level && (
-                    <div className="area-explorer__place-price">
-                      {'$'.repeat(place.price_level)}
-                    </div>
-                  )}
+                  <div className="area-explorer__place-meta">
+                    {place.rating && (
+                      <span className="area-explorer__place-rating">
+                        ⭐ {place.rating}
+                      </span>
+                    )}
+                    {place.price_level && (
+                      <span className="area-explorer__place-price">
+                        {'$'.repeat(place.price_level)}
+                      </span>
+                    )}
+                    {place.opening_hours && (
+                      <span className={`area-explorer__place-status ${
+                        place.opening_hours.open_now ? 'open' : 'closed'
+                      }`}>
+                        {place.opening_hours.open_now ? '🟢' : '🔴'}
+                      </span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -579,7 +632,7 @@ export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
               ✕
             </button>
             <h3>{selectedPlace.name}</h3>
-            <p>{selectedPlace.vicinity}</p>
+            <p className="area-explorer__details-address">{selectedPlace.vicinity}</p>
             {selectedPlace.rating && (
               <p className="area-explorer__rating">
                 Rating: {selectedPlace.rating} ⭐
@@ -608,6 +661,18 @@ export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
               >
                 Visit Website →
               </a>
+            )}
+            {selectedPlace.types && (
+              <div className="area-explorer__place-types">
+                <p className="area-explorer__types-label">Categories:</p>
+                <div className="area-explorer__types-list">
+                  {selectedPlace.types.slice(0, 5).map(type => (
+                    <span key={type} className="area-explorer__type-badge">
+                      {type.replace(/_/g, ' ')}
+                    </span>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         )}
