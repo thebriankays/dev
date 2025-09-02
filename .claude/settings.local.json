@@ -33,7 +33,8 @@
       "Bash(npm run:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(cat:*)"
     ],
     "deny": []
   }

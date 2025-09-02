@@ -1,24 +1,26 @@
 'use client'
 
-import React, { useRef, ReactNode } from 'react'
+import React, { useRef } from 'react'
 import { View } from '@react-three/drei'
-import { PerspectiveCamera } from '@react-three/drei'
-import { useView } from '@/providers/Canvas'
 import { WebGLTunnel } from '../tunnel'
 
 interface ViewportRendererProps {
-  children: ReactNode
+  children: React.ReactNode
   className?: string
   interactive?: boolean
 }
 
+/**
+ * NOTE: You should NOT use this component with TravelDataGlobe!
+ * BlockWrapper already handles View tracking and tunneling.
+ * This component is only kept for potential other uses.
+ */
 export function ViewportRenderer({ 
   children, 
   className = '', 
   interactive = false 
 }: ViewportRendererProps) {
-  const ref = useRef<HTMLDivElement>(null)
-  const bounds = useView(ref)
+  const ref = useRef<HTMLDivElement>(null!)
   
   return (
     <>
@@ -30,16 +32,15 @@ export function ViewportRenderer({
           height: '100%',
           pointerEvents: interactive ? 'auto' : 'none',
           background: 'transparent',
+          position: 'relative',
+          isolation: 'isolate'
         }}
       />
       <WebGLTunnel>
-        <View track={ref as React.RefObject<HTMLElement>}>
-          <PerspectiveCamera makeDefault position={[0, 0, 10]} fov={50} />
+        <View index={1} track={ref as any}>
           {children}
         </View>
       </WebGLTunnel>
     </>
   )
 }
-
-// ViewManager removed - using View from @react-three/drei directly

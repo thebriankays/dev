@@ -1,7 +1,11 @@
 'use client'
 
 import React from 'react'
-import type { CellComponentProps } from './types'
+
+interface CellComponentProps {
+  cellData: any
+  rowData: any
+}
 
 const LanguagesCell: React.FC<CellComponentProps> = ({ cellData }) => {
   if (!cellData || !Array.isArray(cellData)) {

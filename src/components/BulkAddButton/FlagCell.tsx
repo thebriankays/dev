@@ -1,7 +1,11 @@
 'use client'
 
 import React from 'react'
-import type { CellComponentProps } from './types'
+
+interface CellComponentProps {
+  cellData: any
+  rowData: any
+}
 
 const FlagCell: React.FC<CellComponentProps> = ({ cellData }) => {
   const countryCode = cellData as string

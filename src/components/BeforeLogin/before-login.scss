@@ -264,7 +264,7 @@ body:has(.before-login) {
         
         @for $i from 1 through 20 {
           &:nth-child(#{$i}) {
-            --d: #{$i / 20 + s};
+            --d: #{calc($i / 20) + s};
           }
         }
       }
@@ -316,12 +316,24 @@ body:has(.before-login) {
     margin-top: 1rem !important;
     letter-spacing: 0.05em !important;
     mix-blend-mode: difference !important;
+    order: 2 !important; // Move after submit button
     
     &:hover {
       color: #00ffff !important;
       transform: scale(1.1) !important;
       text-shadow: 0 0 10px rgba(0, 255, 255, 0.5) !important;
     }
+  }
+  
+  // Make form use flexbox to allow reordering
+  .login__form {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  // Set order for form submit to appear before forgot password
+  .form-submit {
+    order: 1 !important;
   }
   
   // Style error messages

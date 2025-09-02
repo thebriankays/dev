@@ -1,92 +1,162 @@
-# TravelDataGlobe Component
+# TravelDataGlobe WebGL Component
 
-A React Three Fiber globe visualization component using r3f-globe for the shared canvas architecture.
+A React Three Fiber (R3F) component that renders an interactive 3D globe with country data visualization. This component is designed to work within the shared canvas architecture.
+
+## Architecture
+
+This component is built specifically for the shared canvas pattern:
+- Renders within a View tracked by BlockWrapper
+- Uses R3F for declarative 3D scene management
+- Integrates with the global render loop via Tunnel pattern
+
+## File Structure
+
+```
+TravelDataGlobe/
+├── TravelDataGlobe.tsx       # Main wrapper component
+├── TravelDataGlobeManual.tsx # R3F scene implementation
+├── Countries.tsx             # Country polygons rendering
+├── VisaArcs.tsx             # Visa arc connections
+├── utils.ts                 # Helper functions
+└── README.md                # This file
+```
+
+## Components
+
+### TravelDataGlobe.tsx
+- Main entry point
+- Forwards props to TravelDataGlobeManual
+- Handles TypeScript interfaces
+
+### TravelDataGlobeManual.tsx
+The core R3F scene containing:
+- **GlobeSphere**: Textured earth sphere with bump mapping
+- **CloudLayer**: Animated transparent cloud layer
+- **Atmosphere**: Glow effect around globe
+- **Countries**: Interactive country polygons
+- **CountryMarker**: White pin that drops on selected country
+- **PointMarkers**: Airport/restaurant location markers
+- **VisaArcs**: Arc connections between countries
+
+### Countries.tsx
+- Renders country polygons on globe surface
+- Handles hover/click interactions
+- Colors based on data (advisory levels, visa requirements)
+- Uses proper 3D projection onto sphere
+
+### VisaArcs.tsx
+- Creates arc connections between passport and destination countries
+- Color-coded by visa requirement type
+- Uses Line component from drei
+
+## Props Interface
+
+```typescript
+interface TravelDataGlobeProps {
+  polygons: Array<PolyAdv | VisaPolygon>
+  borders: CountryBorder
+  airports: AirportData[]
+  restaurants: MichelinRestaurantData[]
+  
+  globeImageUrl: string
+  bumpImageUrl: string
+  
+  autoRotateSpeed: number
+  atmosphereColor: string
+  
+  onCountryClick: (name: string) => void
+  onAirportClick: (airport: AirportData) => void
+  onRestaurantClick: (restaurant: MichelinRestaurantData) => void
+  onCountryHover: (name: string | null) => void
+  
+  selectedCountry: string | null
+  hoveredCountry: string | null
+  currentView: 'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports'
+  visaArcs: VisaData[]
+  showMarkers: boolean
+}
+```
 
 ## Features
 
-- Interactive 3D globe with country polygons
-- Travel advisory visualization with color-coded risk levels
-- Visa requirements display with arc connections
-- Michelin star restaurant markers
-- Airport location markers
-- Smooth animations and camera controls
-- Glass morphism UI design
+### Globe Rendering
+- Textured sphere with earth imagery
+- Bump mapping for terrain elevation
+- Specular highlights on water
+- Animated cloud layer
 
-## Required Textures
+### Country Visualization
+- GeoJSON polygon rendering
+- Proper 3D sphere projection
+- Color coding by data type
+- Hover highlighting
+- Click selection
 
-The component requires the following texture files in the `public` folder:
+### Camera Animation
+- GSAP-powered smooth transitions
+- Fly-to selected country
+- Auto-rotation when idle
+- OrbitControls for user interaction
 
-1. **Globe Surface Texture** (`/earth-blue-marble.jpg`)
-   - High-resolution Earth surface texture
-   - Equirectangular projection
-   - Already exists in public folder
-
-2. **Bump Map Texture** (`/earth-topology.png`)
-   - Grayscale height map for Earth's terrain
-   - Creates 3D relief effect
-   - Already exists in public folder
-
-3. **Department of State Logo** (`/department-of-state.png`)
-   - Used in the travel advisory panels
-   - Already exists in public folder
-
-4. **Michelin Guide Logo** (`/michelin-guide.png`)
-   - Used in the restaurant panel
-   - May need to be added if not present
-
-5. **Country Flags** (`/flags/[country-code].svg`)
-   - SVG flags for each country
-   - Named by ISO 2-letter country codes (e.g., us.svg, gb.svg)
-   - Some flags may already exist
-
-## Usage
-
-```typescript
-import { TravelDataGlobe } from '@/webgl/components/globe/TravelDataGlobe'
-
-<TravelDataGlobe
-  polygons={polygonData}
-  borders={borderData}
-  airports={airportData}
-  restaurants={restaurantData}
-  globeImageUrl="/earth-blue-marble.jpg"
-  bumpImageUrl="/earth-topology.png"
-  autoRotateSpeed={0.5}
-  atmosphereColor="#3a7ca5"
-  atmosphereAltitude={0.15}
-  onCountryClick={handleCountryClick}
-  onAirportClick={handleAirportClick}
-  onRestaurantClick={handleRestaurantClick}
-  onCountryHover={handleCountryHover}
-  selectedCountry={selectedCountry}
-  hoveredCountry={hoveredCountry}
-  currentView="travelAdvisory"
-  visaArcs={visaArcs}
-  showMarkers={showMarkers}
-/>
-```
-
-## Props
-
-- `polygons`: Array of country polygons (PolyAdv | VisaPolygon)
-- `borders`: Country border data
-- `airports`: Array of airport data
-- `restaurants`: Array of Michelin restaurant data
-- `globeImageUrl`: URL to globe surface texture
-- `bumpImageUrl`: URL to bump map texture
-- `autoRotateSpeed`: Globe auto-rotation speed
-- `atmosphereColor`: Color of atmosphere glow
-- `atmosphereAltitude`: Height of atmosphere effect
-- `onCountryClick`: Handler for country clicks
-- `onAirportClick`: Handler for airport clicks
-- `onRestaurantClick`: Handler for restaurant clicks
-- `onCountryHover`: Handler for country hover
-- `selectedCountry`: Currently selected country name
-- `hoveredCountry`: Currently hovered country name
-- `currentView`: Current data view mode
-- `visaArcs`: Array of visa requirement arcs
-- `showMarkers`: Whether to show location markers
+### Performance Optimizations
+- Memoized polygon calculations
+- Efficient raycasting for interactions
+- Post-processing with bloom effect
+- Proper depth sorting
 
 ## Integration with Shared Canvas
 
-This component is designed to work within the shared canvas architecture. It should be rendered inside a `<View>` component from `@react-three/drei` and wrapped with the `BlockWrapper` component for proper integration.
+This component is designed to work within the shared canvas architecture:
+
+1. **Rendered through BlockWrapper**: The parent block passes this as `webglContent`
+2. **View tracking**: BlockWrapper creates a View that tracks the DOM element
+3. **Tunnel pattern**: Content is tunneled to the shared canvas
+4. **No direct canvas creation**: Uses the global WebGL renderer
+
+### Important: DO NOT
+- Create your own Canvas element
+- Use ViewportRenderer (BlockWrapper handles this)
+- Render outside the tunnel system
+
+## Textures Required
+
+Place these in `/public`:
+- `/earth-blue-marble.jpg` - Earth surface texture
+- `/earth-topology.jpg` - Bump map for elevation
+- `/clouds.png` - Transparent cloud texture
+
+## Known Issues & Solutions
+
+### Issue: "Div is not part of THREE namespace"
+**Solution**: Use BlockWrapper's webglContent prop, not ViewportRenderer
+
+### Issue: Countries not rendering
+**Solution**: Check polygon data and ensure Countries component is included
+
+### Issue: White overlay on canvas
+**Solution**: Ensure SharedCanvas has proper clear settings
+
+### Issue: Visa arcs not showing
+**Solution**: Verify visaArcs data includes passportCountry field
+
+## Performance Tips
+
+1. **Reduce polygon detail**: Simplify GeoJSON if performance issues
+2. **Adjust post-processing**: Bloom can be intensive
+3. **Limit arc count**: Too many arcs can impact performance
+4. **Texture optimization**: Use compressed textures for faster loading
+
+## Development Notes
+
+- Uses THREE.js r128+ features
+- GSAP for animations (not React Spring)
+- OrbitControls for camera manipulation
+- Bloom post-processing for atmosphere
+
+## Future Enhancements
+
+- [ ] Level of Detail (LOD) for countries
+- [ ] Texture atlas for flags
+- [ ] WebWorker for data processing
+- [ ] Progressive texture loading
+- [ ] Touch gesture support

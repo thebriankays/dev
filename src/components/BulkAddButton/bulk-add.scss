@@ -2,7 +2,38 @@
   margin-bottom: 1rem;
 }
 
+// Override Payload's modal positioning globally when our modal is open
+body:has(.bulk-add-modal) {
+  .modal-container {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 100vh !important;
+    padding: 2rem !important;
+    
+    .modal {
+      position: relative !important;
+      top: auto !important;
+      left: auto !important;
+      transform: none !important;
+      margin: 0 !important;
+      max-height: 90vh;
+      max-width: 90vw;
+    }
+  }
+}
+
+// Alternative approach - target modal directly
+.modal:has(.bulk-add-modal) {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+}
+
 .bulk-add-modal {
+  
   .modal-content {
     padding: 2rem;
     max-width: 700px;
@@ -22,10 +53,31 @@
     .autocomplete-container {
       margin-bottom: 2rem;
       
+      .search-input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--theme-border);
+        border-radius: 0.25rem;
+        background: var(--theme-bg);
+        color: var(--theme-text);
+        font-size: 1rem;
+        font-family: inherit;
+        
+        &:focus {
+          outline: none;
+          border-color: var(--theme-primary);
+        }
+        
+        &:disabled {
+          background-color: var(--theme-bg-dark);
+          cursor: not-allowed;
+          opacity: 0.6;
+        }
+      }
+      
       // Style the Google PlaceAutocompleteElement
-      .bulk-add-autocomplete-input,
-      gmpx-place-autocomplete,
-      [id="bulk-add-autocomplete"] {
+      gmp-place-autocomplete,
+      .gmp-place-autocomplete {
         display: block;
         width: 100%;
         
@@ -44,10 +96,8 @@
             border-color: var(--theme-primary);
           }
           
-          &:disabled {
-            background-color: var(--theme-bg-dark);
-            cursor: not-allowed;
-            opacity: 0.6;
+          &::placeholder {
+            color: var(--theme-text-light);
           }
         }
       }
@@ -206,6 +256,43 @@
       border-radius: 0.25rem;
       color: var(--theme-error-text);
       margin-bottom: 1rem;
+    }
+
+    .added-message {
+      padding: 0.75rem;
+      background-color: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 0.25rem;
+      color: rgba(34, 197, 94, 1);
+      margin-bottom: 1rem;
+      text-align: center;
+      font-size: 0.875rem;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .empty-state {
+      padding: 2rem;
+      text-align: center;
+      border: 2px dashed var(--theme-border);
+      border-radius: 0.25rem;
+      margin-bottom: 1rem;
+      
+      p {
+        color: var(--theme-text-light);
+        margin: 0;
+        font-size: 0.9rem;
+      }
     }
   }
   

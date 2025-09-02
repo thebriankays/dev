@@ -1,331 +1,372 @@
 import React from 'react'
-import { TravelDataGlobeBlockClient } from './Component.client'
+import { getPayload } from 'payload'
+import config from '@payload-config'
+import { TravelDataGlobeWrapper } from './Component.wrapper'
 import type { 
   TravelDataGlobeBlockProps, 
-  PolyAdv, 
-  VisaPolygon, 
-  AirportData, 
-  MichelinRestaurantData, 
-  CountryBorder,
+  PreparedData,
   AdvisoryCountry,
   CountryVisaData,
-  VisaRequirementCode
+  AirportData,
+  MichelinRestaurantData
 } from './types'
-import { getPayload } from 'payload'
-import config from '@/payload.config'
-import fs from 'fs/promises'
-import path from 'path'
 
-// Fetch data from Payload collections
-async function fetchCollectionData() {
+// Server-side helper functions
+const isNewAdvisory = (dateAdded: string | undefined): boolean => {
+  if (!dateAdded) return false
+  const date = new Date(dateAdded)
+  const now = new Date()
+  const diffTime = Math.abs(now.getTime() - date.getTime())
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  return diffDays <= 30
+}
+
+const getFlagUrl = (country: any): string => {
+  // Pre-compute flag URLs server-side
+  if (country?.flag) return `/flags/${country.flag}`
+  if (country?.countryFlag) return `/flags/${country.countryFlag}`
+  if (country?.iso2) return `/flags/${country.iso2.toLowerCase()}.svg`
+  if (country?.iso_a2) return `/flags/${country.iso_a2.toLowerCase()}.svg`
+  if (country?.code) return `/flags/${country.code.toLowerCase()}.svg`
+  
+  // Fallback to country name mapping
+  const name = (country?.name || '').toLowerCase().trim()
+  const countryMap: Record<string, string> = {
+    'united states': 'us',
+    'united states of america': 'us',
+    'usa': 'us',
+    'united kingdom': 'gb',
+    'uk': 'gb',
+    'great britain': 'gb',
+    'south korea': 'kr',
+    'republic of korea': 'kr',
+    'north korea': 'kp',
+    'china': 'cn',
+    'peoples republic of china': 'cn',
+    'japan': 'jp',
+    'germany': 'de',
+    'france': 'fr',
+    'italy': 'it',
+    'spain': 'es',
+    'russia': 'ru',
+    'russian federation': 'ru',
+    'brazil': 'br',
+    'india': 'in',
+    'mexico': 'mx',
+    'canada': 'ca',
+    'australia': 'au',
+    'netherlands': 'nl',
+    'belgium': 'be',
+    'switzerland': 'ch',
+    'sweden': 'se',
+    'norway': 'no',
+    'denmark': 'dk',
+    'finland': 'fi',
+    'poland': 'pl',
+    'austria': 'at',
+    'portugal': 'pt',
+    'greece': 'gr',
+    'turkey': 'tr',
+    'egypt': 'eg',
+    'south africa': 'za',
+    'nigeria': 'ng',
+    'kenya': 'ke',
+    'morocco': 'ma',
+    'argentina': 'ar',
+    'chile': 'cl',
+    'colombia': 'co',
+    'peru': 'pe',
+    'venezuela': 've',
+    'thailand': 'th',
+    'vietnam': 'vn',
+    'singapore': 'sg',
+    'malaysia': 'my',
+    'indonesia': 'id',
+    'philippines': 'ph',
+    'new zealand': 'nz',
+    'ireland': 'ie',
+    'israel': 'il',
+    'saudi arabia': 'sa',
+    'united arab emirates': 'ae',
+    'uae': 'ae',
+    'qatar': 'qa',
+    'kuwait': 'kw',
+    'pakistan': 'pk',
+    'bangladesh': 'bd',
+    'sri lanka': 'lk',
+    'ukraine': 'ua',
+    'czech republic': 'cz',
+    'czechia': 'cz',
+    'romania': 'ro',
+    'hungary': 'hu',
+    'croatia': 'hr',
+    'serbia': 'rs',
+    'bulgaria': 'bg',
+    'slovakia': 'sk',
+    'slovenia': 'si',
+    'lithuania': 'lt',
+    'latvia': 'lv',
+    'estonia': 'ee',
+    'iceland': 'is',
+    'luxembourg': 'lu',
+    'malta': 'mt',
+    'cyprus': 'cy',
+  }
+  
+  return countryMap[name] ? `/flags/${countryMap[name]}.svg` : '/flags/un.svg'
+}
+
+// Server Component - Fetches and transforms ALL data
+export async function TravelDataGlobeBlock(props: TravelDataGlobeBlockProps) {
   const payload = await getPayload({ config })
   
-  try {
-    // Fetch all relevant data in parallel
-    const [advisories, visaRequirements, restaurants, airports] = await Promise.all([
-      payload.find({
-        collection: 'travel-advisories',
-        limit: 1000,
-        depth: 1,
-      }),
-      payload.find({
-        collection: 'visa-requirements',
-        limit: 1000,
-        depth: 1,
-      }),
-      payload.find({
-        collection: 'michelin-restaurants',
-        limit: 1000,
-        depth: 1,
-      }),
-      payload.find({
-        collection: 'airports',
-        limit: 1000,
-        depth: 1,
-      }),
-    ])
-    
-    return {
-      advisories: advisories.docs,
-      visaRequirements: visaRequirements.docs,
-      restaurants: restaurants.docs,
-      airports: airports.docs,
-    }
-  } catch (error) {
-    console.error('Error fetching collection data:', error)
-    return {
-      advisories: [],
-      visaRequirements: [],
-      restaurants: [],
-      airports: [],
-    }
-  }
-}
-
-// Load country GeoJSON data for polygons and borders
-async function loadGeoData(): Promise<{ polygons: Array<PolyAdv | VisaPolygon>, borders: CountryBorder }> {
-  try {
-    // In server component, we need to read the file directly
-    const filePath = path.join(process.cwd(), 'public', 'datamaps.world.json')
-    const fileContent = await fs.readFile(filePath, 'utf8')
-    const data = JSON.parse(fileContent)
-    
-    if (data.features && Array.isArray(data.features)) {
-      // Convert GeoJSON features to our polygon format
-      const polygons = data.features.map((feature: any) => ({
-        type: 'Feature',
-        properties: {
-          name: feature.properties.name || feature.properties.NAME || '',
-          iso_a2: feature.properties.iso_a2 || feature.properties.ISO_A2 || '',
-          iso_a3: feature.properties.iso_a3 || feature.properties.ISO_A3 || '',
-        },
-        geometry: feature.geometry,
-      }))
-      
-      // For borders, we'll use the same data
-      const borders: CountryBorder = {
-        type: 'Feature',
-        geometry: { type: 'Polygon', coordinates: [] },
-        properties: { iso_a2: 'WORLD' }
-      }
-      
-      return { polygons, borders }
-    }
-    
-    return { 
-      polygons: [], 
-      borders: { 
-        type: 'Feature', 
-        geometry: { type: 'Polygon', coordinates: [] }, 
-        properties: { iso_a2: 'US' } 
-      } 
-    }
-  } catch (error) {
-    console.error('Failed to load geo data:', error)
-    return { 
-      polygons: [], 
-      borders: { 
-        type: 'Feature', 
-        geometry: { type: 'Polygon', coordinates: [] }, 
-        properties: { iso_a2: 'US' } 
-      } 
-    }
-  }
-}
-
-// Transform raw data to match component expectations
-function transformData(rawData: any, geoData: any) {
-  // Transform travel advisories to PolyAdv format
-  const advisoryPolygons: PolyAdv[] = rawData.advisories.map((doc: any) => {
-    const countryName = doc.country?.name || doc.title || ''
-    const countryCode = doc.country?.iso2 || doc.countryTag || ''
-    
-    // Find matching polygon from geo data
-    const matchingPolygon = geoData.polygons.find((p: any) => 
-      p.properties.name === countryName || 
-      p.properties.NAME === countryName ||
-      p.properties.iso_a2 === countryCode
-    )
-    
-    if (matchingPolygon) {
-      return {
-        ...matchingPolygon,
-        level: doc.threatLevel || doc.level || 1,
-        country: countryName,
-        dateAdded: doc.pubDate || doc.updatedAt || new Date().toISOString(),
-      }
-    }
-    
-    return null
-  }).filter(Boolean)
-
-  // Transform visa requirements to CountryVisaData format
-  const visaCountriesMap = new Map<string, CountryVisaData>()
-  
-  // Debug logging
-  console.log('Server: Processing visa requirements:', rawData.visaRequirements.length)
-  if (rawData.visaRequirements.length > 0) {
-    console.log('Server: Sample visa requirement:', rawData.visaRequirements[0])
-    console.log('Server: Sample visa requirement keys:', Object.keys(rawData.visaRequirements[0]))
-  }
-  
-  // Group visa requirements by passport country
-  rawData.visaRequirements.forEach((doc: any, index: number) => {
-    // Log first few docs to understand structure
-    if (index < 3) {
-      console.log(`Server: Visa doc ${index} structure:`, {
-        keys: Object.keys(doc),
-        passportCountry: doc.passportCountry,
-        destinationCountry: doc.destinationCountry,
-        id: doc.id
-      })
-    }
-    
-    // Extract passport country name - handle both string and object formats
-    let passportCountryName = ''
-    if (typeof doc.passportCountry === 'string') {
-      passportCountryName = doc.passportCountry
-    } else if (doc.passportCountry?.name) {
-      passportCountryName = doc.passportCountry.name
-    } else if (doc.passport_country) {
-      passportCountryName = typeof doc.passport_country === 'string' ? doc.passport_country : doc.passport_country.name || ''
-    } else if (doc.country?.name) {
-      passportCountryName = doc.country.name
-    } else if (doc.countryName) {
-      passportCountryName = doc.countryName
-    } else if (doc.from_country) {
-      passportCountryName = typeof doc.from_country === 'string' ? doc.from_country : doc.from_country.name || ''
-    }
-    
-    // Extract destination country name - handle both string and object formats
-    let destinationCountryName = ''
-    if (typeof doc.destinationCountry === 'string') {
-      destinationCountryName = doc.destinationCountry
-    } else if (doc.destinationCountry?.name) {
-      destinationCountryName = doc.destinationCountry.name
-    } else if (doc.destination_country) {
-      destinationCountryName = typeof doc.destination_country === 'string' ? doc.destination_country : doc.destination_country.name || ''
-    } else if (doc.destination) {
-      destinationCountryName = typeof doc.destination === 'string' ? doc.destination : doc.destination.name || ''
-    } else if (doc.to_country) {
-      destinationCountryName = typeof doc.to_country === 'string' ? doc.to_country : doc.to_country.name || ''
-    }
-    
-    if (!passportCountryName || !destinationCountryName) {
-      if (!passportCountryName) {
-        console.log('Server: Missing passport country in doc:', Object.keys(doc), doc.passportCountry, doc.passport_country, doc.country)
-      }
-      if (!destinationCountryName) {
-        console.log('Server: Missing destination country in doc:', Object.keys(doc), doc.destinationCountry, doc.destination_country, doc.destination)
-      }
-      return
-    }
-    
-    // Extract country code and flag from passport country object if available
-    const countryCode = doc.passportCountry?.iso2 || doc.passportCountry?.iso_a2 || 
-                       doc.passport_country?.iso2 || doc.country?.iso2 || 
-                       doc.countryCode || doc.country_code || ''
-    const countryFlag = doc.passportCountry?.flag || doc.passport_country?.flag || 
-                       doc.country?.flag || doc.flag || ''
-    
-    if (!visaCountriesMap.has(passportCountryName)) {
-      visaCountriesMap.set(passportCountryName, {
-        countryId: doc.id || `visa-${passportCountryName}`,
-        countryName: passportCountryName,
-        countryCode: countryCode,
-        countryFlag: countryFlag,
-        totalDestinations: 0,
-        visaRequirements: [],
-      })
-    }
-    
-    const countryData = visaCountriesMap.get(passportCountryName)!
-    countryData.visaRequirements.push({
-      passportCountry: passportCountryName,
-      destinationCountry: destinationCountryName,
-      requirement: (doc.requirement || doc.visa_type || doc.visaType || 'visa_required') as VisaRequirementCode,
-      allowedStay: doc.allowedStay || doc.allowed_stay || doc.duration ? `${doc.duration || doc.allowedStay || doc.allowed_stay} days` : '',
-      notes: doc.notes || doc.details || '',
-    })
-    countryData.totalDestinations++
-  })
-  
-  const visaCountries = Array.from(visaCountriesMap.values())
-  console.log('Server: Transformed visa countries:', visaCountries.length)
-  console.log('Server: Unique passport countries found:', Array.from(visaCountriesMap.keys()).slice(0, 10))
-  if (visaCountries.length > 0) {
-    console.log('Server: First visa country:', visaCountries[0])
-  }
-
-  // Transform travel advisories to AdvisoryCountry format
-  const advisoryCountries: AdvisoryCountry[] = rawData.advisories.map((doc: any) => ({
-    country: doc.country?.name || doc.title || '',
-    countryFlag: doc.country?.flag || '',
-    level: doc.threatLevel || doc.level || 1,
-    advisoryText: doc.description || doc.summary || '',
-    dateAdded: doc.pubDate || doc.updatedAt || new Date().toISOString(),
-  }))
-
-  // Transform restaurants
-  const restaurantData: MichelinRestaurantData[] = rawData.restaurants.map((doc: any) => ({
-    id: doc.id,
-    name: doc.name || '',
-    rating: doc.stars || 1,
-    cuisine: doc.cuisine || '',
-    location: {
-      lat: doc.location?.coordinates?.[1] || doc.latitude || 0,
-      lng: doc.location?.coordinates?.[0] || doc.longitude || 0,
-      city: doc.city || '',
-      country: doc.country?.name || doc.country || '',
-      countryFlag: doc.country?.flag || '',
-    },
-    greenStar: doc.greenStar || false,
-    description: doc.description || `${doc.stars || 1} Michelin star${doc.stars > 1 ? 's' : ''} restaurant`,
-  }))
-
-  // Transform airports
-  const airportData: AirportData[] = rawData.airports.map((doc: any) => ({
-    code: doc.iataCode || doc.code || '',
-    name: doc.name || '',
-    location: {
-      lat: doc.location?.coordinates?.[1] || doc.latitude || 0,
-      lng: doc.location?.coordinates?.[0] || doc.longitude || 0,
-      city: doc.city || '',
-      country: doc.country?.name || doc.country || '',
-      countryFlag: doc.country?.flag || '',
-    },
-  }))
-
-  // Create visa polygons (for visa view)
-  const visaPolygons: VisaPolygon[] = geoData.polygons.map((polygon: any) => ({
-    ...polygon,
-    requirement: 'visa_required' as VisaRequirementCode, // Default, will be updated based on selection
-  }))
-
-  return {
-    polygons: [...advisoryPolygons, ...visaPolygons],
-    borders: geoData.borders,
-    airports: airportData,
-    restaurants: restaurantData,
-    travelAdvisories: advisoryCountries,
-    visaRequirements: visaCountries,
-  }
-}
-
-export async function TravelDataGlobeBlock(props: any) {
-  // Fetch all data server-side
-  const [collectionData, geoData] = await Promise.all([
-    fetchCollectionData(),
-    loadGeoData()
+  // Parallel fetch all collections
+  const [
+    advisoriesResult,
+    visaResult,
+    airportsResult,
+    restaurantsResult,
+    countriesResult
+  ] = await Promise.all([
+    payload.find({
+      collection: 'travel-advisories',
+      limit: 1000,
+      sort: '-level',
+      depth: 2,
+    }),
+    payload.find({
+      collection: 'visa-requirements',
+      limit: 2000,
+      depth: 2,
+    }),
+    payload.find({
+      collection: 'airports',
+      limit: 1000,
+      depth: 1,
+    }),
+    payload.find({
+      collection: 'michelin-restaurants',
+      limit: 1000,
+      depth: 1,
+    }),
+    payload.find({
+      collection: 'countries',
+      limit: 500,
+      depth: 1,
+    }).catch(() => ({ docs: [], totalDocs: 0 })), // Fallback if countries collection doesn't exist
   ])
+
+  console.log('Server: Data fetched -', {
+    advisories: advisoriesResult.totalDocs,
+    visa: visaResult.totalDocs,
+    airports: airportsResult.totalDocs,
+    restaurants: restaurantsResult.totalDocs,
+    countries: countriesResult.totalDocs,
+  })
+
+  // Build country lookup map
+  const countryLookup = new Map()
+  countriesResult.docs.forEach((country: any) => {
+    countryLookup.set(country.name?.toLowerCase(), country)
+    if (country.code) countryLookup.set(country.code.toLowerCase(), country)
+  })
+
+  // Transform travel advisories with pre-computed values
+  const transformedAdvisories: AdvisoryCountry[] = advisoriesResult.docs.map((doc: any) => {
+    const countryName = doc.country?.name || doc.name || 'Unknown'
+    const countryData = countryLookup.get(countryName.toLowerCase()) || doc.country || doc
+    
+    return {
+      country: countryName,
+      countryCode: countryData?.code || '',
+      countryFlag: getFlagUrl(countryData),
+      level: doc.level || 1,
+      advisoryText: doc.description || doc.advisoryText || '',
+      dateAdded: doc.dateAdded || doc.createdAt,
+      isNew: isNewAdvisory(doc.dateAdded || doc.createdAt),
+      // Pre-compute display values
+      levelText: `Level ${doc.level || 1}`,
+      levelDescription: 
+        doc.level === 1 ? 'Exercise Normal Precautions' :
+        doc.level === 2 ? 'Exercise Increased Caution' :
+        doc.level === 3 ? 'Reconsider Travel' :
+        'Do Not Travel',
+    }
+  }).sort((a, b) => {
+    // Sort by level (highest first), then by name
+    if (a.level !== b.level) return b.level - a.level
+    // Handle undefined country names
+    const aCountry = a.country || 'Unknown'
+    const bCountry = b.country || 'Unknown'
+    return aCountry.localeCompare(bCountry)
+  })
+
+  // Transform visa requirements into country-centric data
+  const visaByCountry = new Map<string, CountryVisaData>()
+  const passportCountries = new Set<string>()
   
-  // Debug: Log the fetched data
-  console.log('TravelDataGlobe - Visa Requirements fetched:', collectionData.visaRequirements?.length || 0)
-  console.log('TravelDataGlobe - Travel Advisories fetched:', collectionData.advisories?.length || 0)
-  
-  // Transform the data
-  const transformedData = transformData(collectionData, geoData)
-  
-  // Debug: Log transformed data
-  console.log('TravelDataGlobe - Transformed visa countries:', transformedData.visaRequirements?.length || 0)
-  
-  // Combine with block config
-  const blockProps: TravelDataGlobeBlockProps = {
-    blockConfig: {
-      ...props,
-      enabledViews: props.enabledViews || ['travelAdvisory', 'visaRequirements', 'michelinRestaurants', 'airports'],
-      initialView: props.initialView || 'travelAdvisory',
-      globeImageUrl: props.globeImageUrl || '/earth-blue-marble.jpg',
-      bumpImageUrl: props.bumpImageUrl || '/earth-topology.png',
-      autoRotateSpeed: props.autoRotateSpeed || 0.5,
-      atmosphereColor: props.atmosphereColor || '#3a7ca5',
-      atmosphereAltitude: props.atmosphereAltitude || 0.15,
-      enableGlassEffect: props.enableGlassEffect !== false,
-      marqueeText: props.marqueeText || "Sweet Serenity Getaways  • 🦋 • Travel Tools • 🦋 •",
-      tabIndicatorColor: props.tabIndicatorColor || '#81d6e3',
-    },
-    ...transformedData,
+  visaResult.docs.forEach((doc: any) => {
+    const passportName = doc.passportCountry?.name || ''
+    const destinationName = doc.destinationCountry?.name || ''
+    
+    if (passportName) passportCountries.add(passportName)
+    
+    // Group by destination country (for showing all countries)
+    if (!visaByCountry.has(destinationName)) {
+      const countryData = countryLookup.get(destinationName.toLowerCase()) || doc.destinationCountry
+      visaByCountry.set(destinationName, {
+        countryId: `visa-${destinationName}`,
+        countryName: destinationName,
+        countryCode: countryData?.code || '',
+        countryFlag: getFlagUrl(countryData),
+        totalDestinations: 0,
+        visaFreeCount: 0,
+        visaOnArrivalCount: 0,
+        eVisaCount: 0,
+        visaRequiredCount: 0,
+        visaRequirements: []
+      })
+    }
+    
+    const country = visaByCountry.get(destinationName)!
+    country.totalDestinations++
+    
+    // Count visa types
+    switch(doc.requirement) {
+      case 'visa_free':
+        country.visaFreeCount = (country.visaFreeCount || 0) + 1
+        break
+      case 'visa_on_arrival':
+        country.visaOnArrivalCount = (country.visaOnArrivalCount || 0) + 1
+        break
+      case 'e_visa':
+      case 'eta':
+        country.eVisaCount = (country.eVisaCount || 0) + 1
+        break
+      default:
+        country.visaRequiredCount = (country.visaRequiredCount || 0) + 1
+    }
+    
+    country.visaRequirements.push({
+      passportCountry: passportName,
+      destinationCountry: destinationName,
+      destinationCountryCode: country.countryCode,
+      destinationCountryFlag: country.countryFlag,
+      requirement: doc.requirement,
+      allowedStay: doc.days ? `${doc.days} days` : undefined,
+      notes: doc.notes,
+    })
+  })
+
+  const visaCountries = Array.from(visaByCountry.values())
+    .sort((a, b) => {
+      const aName = a.countryName || 'Unknown'
+      const bName = b.countryName || 'Unknown'
+      return aName.localeCompare(bName)
+    })
+
+  // Transform airports with pre-computed values
+  const transformedAirports: AirportData[] = airportsResult.docs.map((doc: any) => {
+    const countryName = doc.location?.country || ''
+    const countryData = countryLookup.get(countryName.toLowerCase())
+    
+    return {
+      code: doc.code,
+      name: doc.name,
+      location: {
+        lat: doc.location?.lat || 0,
+        lng: doc.location?.lng || 0,
+        city: doc.location?.city || '',
+        country: countryName,
+        countryFlag: getFlagUrl(countryData || doc.location),
+      },
+      // Pre-compute display text
+      displayName: `${doc.code} - ${doc.name}`,
+      displayLocation: `${doc.location?.city || ''}, ${countryName}`,
+    }
+  }).sort((a, b) => {
+    const aCode = a.code || ''
+    const bCode = b.code || ''
+    return aCode.localeCompare(bCode)
+  })
+
+  // Transform restaurants with pre-computed values
+  const transformedRestaurants: MichelinRestaurantData[] = restaurantsResult.docs.map((doc: any) => {
+    const countryName = doc.location?.country || ''
+    const countryData = countryLookup.get(countryName.toLowerCase())
+    
+    return {
+      id: doc.id,
+      name: doc.name,
+      rating: doc.rating || 1,
+      cuisine: doc.cuisine || '',
+      location: {
+        lat: doc.location?.lat || 0,
+        lng: doc.location?.lng || 0,
+        city: doc.location?.city || '',
+        country: countryName,
+        countryFlag: getFlagUrl(countryData || doc.location),
+      },
+      greenStar: doc.greenStar || false,
+      description: doc.description,
+      // Pre-compute display values
+      displayRating: '⭐'.repeat(doc.rating || 1),
+      displayLocation: `${doc.location?.city || ''}, ${countryName}`,
+    }
+  }).sort((a, b) => {
+    // Sort by rating (highest first), then by name
+    if (a.rating !== b.rating) return b.rating - a.rating
+    const aName = a.name || ''
+    const bName = b.name || ''
+    return aName.localeCompare(bName)
+  })
+
+  // Generate polygons (would load actual GeoJSON in production)
+  const polygons = {
+    advisory: [], // Would load actual advisory polygons
+    visa: [], // Would load actual visa polygons
   }
-  
-  return <TravelDataGlobeBlockClient {...blockProps} />
+
+  const borders = {
+    type: 'Feature',
+    geometry: { type: 'MultiPolygon', coordinates: [] },
+    properties: { iso_a2: '', name: '' }
+  } as any
+
+  // Pre-compute statistics
+  const statistics = {
+    totalAdvisories: transformedAdvisories.length,
+    level4Count: transformedAdvisories.filter(a => a.level === 4).length,
+    level3Count: transformedAdvisories.filter(a => a.level === 3).length,
+    level2Count: transformedAdvisories.filter(a => a.level === 2).length,
+    level1Count: transformedAdvisories.filter(a => a.level === 1).length,
+    newAdvisoriesCount: transformedAdvisories.filter(a => a.isNew).length,
+    totalVisaCountries: visaCountries.length,
+    passportCountriesCount: passportCountries.size,
+    totalAirports: transformedAirports.length,
+    totalRestaurants: transformedRestaurants.length,
+    michelinStarredCount: transformedRestaurants.filter(r => r.rating >= 1).length,
+    greenStarCount: transformedRestaurants.filter(r => r.greenStar).length,
+  }
+
+  // Package all data for the client
+  const preparedData: PreparedData = {
+    advisories: transformedAdvisories,
+    visaCountries,
+    airports: transformedAirports,
+    restaurants: transformedRestaurants,
+    polygons,
+    borders,
+    statistics,
+    blockConfig: props.blockConfig || {},
+    enabledViews: props.blockConfig?.enabledViews || [
+      'travelAdvisory',
+      'visaRequirements', 
+      'michelinRestaurants',
+      'airports'
+    ],
+  }
+
+  // Use the wrapper component that properly handles BlockWrapper
+  return <TravelDataGlobeWrapper data={preparedData} />
 }

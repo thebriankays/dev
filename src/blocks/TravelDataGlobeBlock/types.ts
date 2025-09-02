@@ -26,10 +26,14 @@ export interface VisaPolygon extends Feature<Polygon | MultiPolygon, { name: str
 
 export interface AdvisoryCountry {
   country: string
+  countryCode?: string
   countryFlag?: string
   level: 1 | 2 | 3 | 4
   advisoryText?: string
   dateAdded: string
+  isNew?: boolean
+  levelText?: string
+  levelDescription?: string
 }
 
 export interface CountryVisaData {
@@ -38,6 +42,10 @@ export interface CountryVisaData {
   countryCode?: string
   countryFlag?: string
   totalDestinations: number
+  visaFreeCount?: number
+  visaOnArrivalCount?: number
+  eVisaCount?: number
+  visaRequiredCount?: number
   visaRequirements: VisaData[]
 }
 
@@ -77,6 +85,8 @@ export interface AirportData {
     country: string
     countryFlag?: string
   }
+  displayName?: string
+  displayLocation?: string
 }
 
 // Country border type
@@ -97,6 +107,8 @@ export interface MichelinRestaurantData {
   }
   greenStar?: boolean
   description?: string
+  displayRating?: string
+  displayLocation?: string
 }
 
 export interface TravelDataGlobeBlockConfig {
@@ -120,4 +132,33 @@ export interface TravelDataGlobeBlockProps {
   restaurants: MichelinRestaurantData[]
   travelAdvisories: AdvisoryCountry[]
   visaRequirements: CountryVisaData[]
+}
+
+// Prepared data type for client components
+export interface PreparedData {
+  advisories: AdvisoryCountry[]
+  visaCountries: CountryVisaData[]
+  airports: AirportData[]
+  restaurants: MichelinRestaurantData[]
+  polygons: {
+    advisory: PolyAdv[]
+    visa: VisaPolygon[]
+  }
+  borders: CountryBorder
+  statistics: {
+    totalAdvisories: number
+    level4Count: number
+    level3Count: number
+    level2Count: number
+    level1Count: number
+    newAdvisoriesCount: number
+    totalVisaCountries: number
+    passportCountriesCount: number
+    totalAirports: number
+    totalRestaurants: number
+    michelinStarredCount: number
+    greenStarCount: number
+  }
+  blockConfig: TravelDataGlobeBlockConfig
+  enabledViews: string[]
 }

@@ -1,9 +1,13 @@
 'use client'
 
 import React from 'react'
-import type { CellComponentProps } from './types'
 
-const CountryCell: React.FC<CellComponentProps> = ({ cellData, field }) => {
+interface CellComponentProps {
+  cellData: any
+  rowData: any
+}
+
+const CountryCell: React.FC<CellComponentProps> = ({ cellData }) => {
   if (!cellData) {
     return <span style={{ color: 'var(--theme-text-light)' }}>-</span>
   }

@@ -97,34 +97,7 @@
     text-align: center;
   }
 
-  &__button {
-    width: 100%;
-    background: linear-gradient(135deg, #ff00ff, #0044ff);
-    border: none;
-    border-radius: 50px;
-    padding: 1rem 2rem;
-    font-family: 'AlienRobot', sans-serif;
-    font-size: 1.25rem;
-    color: #fff;
-    letter-spacing: 0.1em;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(255, 0, 255, 0.4);
-
-    &:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(255, 0, 255, 0.6);
-    }
-
-    &:active:not(:disabled) {
-      transform: translateY(0);
-    }
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-  }
+  // Button styles moved to CubertoButton component
 
   &__forgot {
     display: block;

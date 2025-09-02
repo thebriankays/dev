@@ -30,7 +30,7 @@
     transform: translate(-50%, -50%);
     z-index: 1; // Behind 3D model
     font-family: 'AlienRobot', sans-serif;
-    font-size: clamp(6vh, 12vw, 16vh); // Responsive sizing that fits screen width
+    font-size: clamp(4vh, 6vw, 12vh); // Further reduced to prevent overflow
     font-weight: normal;
     text-align: center;
     line-height: 1.0;
@@ -52,7 +52,7 @@
     transform: translate(-50%, -50%);
     z-index: 3; // Above 3D model
     font-family: 'AlienRobot', sans-serif;
-    font-size: clamp(6vh, 12vw, 16vh); // Match back text size
+    font-size: clamp(4vh, 6vw, 12vh); // Match back text size
     font-weight: normal;
     text-align: center;
     line-height: 1.0;
@@ -76,7 +76,7 @@
   @media (max-width: 480px) {
     &__text-back,
     &__text-front {
-      font-size: clamp(4vh, 15vw, 8vh);
+      font-size: clamp(2.5vh, 7vw, 6vh);
       top: 40%; // Move text higher on mobile
     }
   }
@@ -85,7 +85,7 @@
   @media (min-width: 1920px) {
     &__text-back,
     &__text-front {
-      font-size: clamp(12vh, 8vw, 18vh);
+      font-size: clamp(10vh, 6vw, 16vh);
     }
   }
 }

@@ -53,7 +53,8 @@ export function SharedCanvas({
           onCreated={(state) => {
             const { gl } = state
             gl.setClearColor(0x000000, 0)
-            gl.autoClear = false // Disable auto clearing to preserve Whatamesh
+            gl.setClearAlpha(0)
+            gl.autoClear = false // Don't auto clear - let Views handle their own clearing
             gl.outputColorSpace = THREE.SRGBColorSpace
             gl.toneMapping = THREE.NoToneMapping
             

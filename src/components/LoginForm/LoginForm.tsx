@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { CubertoButton } from '../CubertoButton/CubertoButton'
 import './login-form.scss'
 
 export function LoginForm() {
@@ -82,13 +83,12 @@ export function LoginForm() {
           </div>
         )}
         
-        <button
+        <CubertoButton
           type="submit"
-          className="login-form__button"
+          text="ENTER"
           disabled={isLoading}
-        >
-          {isLoading ? 'LOGGING IN...' : 'ENTER'}
-        </button>
+          isLoading={isLoading}
+        />
         
         <Link href="/admin/forgot" className="login-form__forgot">
           Forgot password?
