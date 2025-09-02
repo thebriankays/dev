@@ -65,3 +65,52 @@ export function greatCircleDistance(lat1: number, lng1: number, lat2: number, ln
   
   return R * c
 }
+
+/**
+ * Get centroid of a polygon
+ */
+export function getCentroid(polygon: {
+  geometry?: {
+    type: string
+    coordinates: any // Using any here due to complex nested array types
+  }
+}): [number, number] | null {
+  if (!polygon || !polygon.geometry || !polygon.geometry.coordinates) return null
+  
+  let coords: number[][] = []
+  
+  if (polygon.geometry.type === 'Polygon') {
+    // Polygon coordinates are [[[lng, lat], [lng, lat], ...]]
+    const polygonCoords = polygon.geometry.coordinates as number[][][]
+    coords = polygonCoords[0] || []
+  } else if (polygon.geometry.type === 'MultiPolygon') {
+    // MultiPolygon coordinates are [[[[lng, lat], [lng, lat], ...]]]
+    const multiPolygonCoords = polygon.geometry.coordinates as number[][][][]
+    // For MultiPolygon, take the largest polygon
+    let maxArea = 0
+    let largestPolygon: number[][][] = multiPolygonCoords[0] || []
+    
+    multiPolygonCoords.forEach((poly: number[][][]) => {
+      const area = poly[0]?.length || 0
+      if (area > maxArea) {
+        maxArea = area
+        largestPolygon = poly
+      }
+    })
+    
+    coords = largestPolygon[0] || []
+  }
+  
+  if (coords.length === 0) return null
+  
+  // Calculate centroid
+  let sumLng = 0
+  let sumLat = 0
+  
+  coords.forEach(([lng, lat]) => {
+    sumLng += lng
+    sumLat += lat
+  })
+  
+  return [sumLng / coords.length, sumLat / coords.length]
+}

@@ -142,36 +142,100 @@ function transformData(rawData: any, geoData: any) {
   // Transform visa requirements to CountryVisaData format
   const visaCountriesMap = new Map<string, CountryVisaData>()
   
+  // Debug logging
+  console.log('Server: Processing visa requirements:', rawData.visaRequirements.length)
+  if (rawData.visaRequirements.length > 0) {
+    console.log('Server: Sample visa requirement:', rawData.visaRequirements[0])
+    console.log('Server: Sample visa requirement keys:', Object.keys(rawData.visaRequirements[0]))
+  }
+  
   // Group visa requirements by passport country
-  rawData.visaRequirements.forEach((doc: any) => {
-    const passportCountry = doc.country?.name || ''
-    const destinationCountry = doc.destinationCountry || ''
+  rawData.visaRequirements.forEach((doc: any, index: number) => {
+    // Log first few docs to understand structure
+    if (index < 3) {
+      console.log(`Server: Visa doc ${index} structure:`, {
+        keys: Object.keys(doc),
+        passportCountry: doc.passportCountry,
+        destinationCountry: doc.destinationCountry,
+        id: doc.id
+      })
+    }
     
-    if (!passportCountry) return
+    // Extract passport country name - handle both string and object formats
+    let passportCountryName = ''
+    if (typeof doc.passportCountry === 'string') {
+      passportCountryName = doc.passportCountry
+    } else if (doc.passportCountry?.name) {
+      passportCountryName = doc.passportCountry.name
+    } else if (doc.passport_country) {
+      passportCountryName = typeof doc.passport_country === 'string' ? doc.passport_country : doc.passport_country.name || ''
+    } else if (doc.country?.name) {
+      passportCountryName = doc.country.name
+    } else if (doc.countryName) {
+      passportCountryName = doc.countryName
+    } else if (doc.from_country) {
+      passportCountryName = typeof doc.from_country === 'string' ? doc.from_country : doc.from_country.name || ''
+    }
     
-    if (!visaCountriesMap.has(passportCountry)) {
-      visaCountriesMap.set(passportCountry, {
-        countryId: doc.country?.id || doc.id,
-        countryName: passportCountry,
-        countryCode: doc.country?.iso2 || '',
-        countryFlag: doc.country?.flag || '',
+    // Extract destination country name - handle both string and object formats
+    let destinationCountryName = ''
+    if (typeof doc.destinationCountry === 'string') {
+      destinationCountryName = doc.destinationCountry
+    } else if (doc.destinationCountry?.name) {
+      destinationCountryName = doc.destinationCountry.name
+    } else if (doc.destination_country) {
+      destinationCountryName = typeof doc.destination_country === 'string' ? doc.destination_country : doc.destination_country.name || ''
+    } else if (doc.destination) {
+      destinationCountryName = typeof doc.destination === 'string' ? doc.destination : doc.destination.name || ''
+    } else if (doc.to_country) {
+      destinationCountryName = typeof doc.to_country === 'string' ? doc.to_country : doc.to_country.name || ''
+    }
+    
+    if (!passportCountryName || !destinationCountryName) {
+      if (!passportCountryName) {
+        console.log('Server: Missing passport country in doc:', Object.keys(doc), doc.passportCountry, doc.passport_country, doc.country)
+      }
+      if (!destinationCountryName) {
+        console.log('Server: Missing destination country in doc:', Object.keys(doc), doc.destinationCountry, doc.destination_country, doc.destination)
+      }
+      return
+    }
+    
+    // Extract country code and flag from passport country object if available
+    const countryCode = doc.passportCountry?.iso2 || doc.passportCountry?.iso_a2 || 
+                       doc.passport_country?.iso2 || doc.country?.iso2 || 
+                       doc.countryCode || doc.country_code || ''
+    const countryFlag = doc.passportCountry?.flag || doc.passport_country?.flag || 
+                       doc.country?.flag || doc.flag || ''
+    
+    if (!visaCountriesMap.has(passportCountryName)) {
+      visaCountriesMap.set(passportCountryName, {
+        countryId: doc.id || `visa-${passportCountryName}`,
+        countryName: passportCountryName,
+        countryCode: countryCode,
+        countryFlag: countryFlag,
         totalDestinations: 0,
         visaRequirements: [],
       })
     }
     
-    const countryData = visaCountriesMap.get(passportCountry)!
+    const countryData = visaCountriesMap.get(passportCountryName)!
     countryData.visaRequirements.push({
-      passportCountry,
-      destinationCountry,
-      requirement: (doc.requirement || 'visa_required') as VisaRequirementCode,
-      allowedStay: doc.duration ? `${doc.duration} days` : '',
-      notes: doc.details || '',
+      passportCountry: passportCountryName,
+      destinationCountry: destinationCountryName,
+      requirement: (doc.requirement || doc.visa_type || doc.visaType || 'visa_required') as VisaRequirementCode,
+      allowedStay: doc.allowedStay || doc.allowed_stay || doc.duration ? `${doc.duration || doc.allowedStay || doc.allowed_stay} days` : '',
+      notes: doc.notes || doc.details || '',
     })
     countryData.totalDestinations++
   })
   
   const visaCountries = Array.from(visaCountriesMap.values())
+  console.log('Server: Transformed visa countries:', visaCountries.length)
+  console.log('Server: Unique passport countries found:', Array.from(visaCountriesMap.keys()).slice(0, 10))
+  if (visaCountries.length > 0) {
+    console.log('Server: First visa country:', visaCountries[0])
+  }
 
   // Transform travel advisories to AdvisoryCountry format
   const advisoryCountries: AdvisoryCountry[] = rawData.advisories.map((doc: any) => ({
@@ -235,8 +299,15 @@ export async function TravelDataGlobeBlock(props: any) {
     loadGeoData()
   ])
   
+  // Debug: Log the fetched data
+  console.log('TravelDataGlobe - Visa Requirements fetched:', collectionData.visaRequirements?.length || 0)
+  console.log('TravelDataGlobe - Travel Advisories fetched:', collectionData.advisories?.length || 0)
+  
   // Transform the data
   const transformedData = transformData(collectionData, geoData)
+  
+  // Debug: Log transformed data
+  console.log('TravelDataGlobe - Transformed visa countries:', transformedData.visaRequirements?.length || 0)
   
   // Combine with block config
   const blockProps: TravelDataGlobeBlockProps = {

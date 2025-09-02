@@ -1,7 +1,7 @@
 'use client'
 
 import React, { forwardRef } from 'react'
-import TravelDataGlobeManual, { GlobeMethods } from './TravelDataGlobeManual'
+import TravelDataGlobeManual from './TravelDataGlobeManual'
 import type {
   PolyAdv,
   VisaPolygon,
@@ -22,7 +22,6 @@ interface TravelDataGlobeProps {
   
   autoRotateSpeed: number
   atmosphereColor: string
-  atmosphereAltitude: number
   
   onCountryClick: (name: string) => void
   onAirportClick: (airport: AirportData) => void
@@ -36,12 +35,24 @@ interface TravelDataGlobeProps {
   showMarkers: boolean
 }
 
+// Re-export GlobeMethods type
+export interface GlobeMethods {
+  pauseAnimation: () => void
+  resumeAnimation: () => void
+  setPointOfView: (coords: { lat: number; lng: number; altitude?: number }) => void
+  getGlobeRadius: () => number
+  getCoords: (lat: number, lng: number, altitude?: number) => { x: number; y: number; z: number }
+  toGeoCoords: (coords: { x: number; y: number; z: number }) => { lat: number; lng: number; altitude: number }
+  focusOnLocation: (polygon: { geometry?: { type: string; coordinates: any } }) => void
+}
+
 const TravelDataGlobe = forwardRef<GlobeMethods | undefined, TravelDataGlobeProps>((props, ref) => {
   // Simply forward all props to the manual implementation
-  return <TravelDataGlobeManual ref={ref} {...props} />
+  // Rename borders to _borders to match the manual component's interface
+  const { borders, ...otherProps } = props
+  return <TravelDataGlobeManual ref={ref} {...otherProps} _borders={borders} />
 })
 
 TravelDataGlobe.displayName = 'TravelDataGlobe'
 
 export default TravelDataGlobe
-export type { GlobeMethods }

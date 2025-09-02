@@ -25,7 +25,21 @@ import type {
   PolyAdv,
   VisaPolygon
 } from './types'
-import type { GlobeMethods } from '@/webgl/components/globe/TravelDataGlobe/TravelDataGlobe'
+
+interface PolygonGeometry {
+  type: string
+  coordinates: number[][][] | number[][][][]
+}
+
+interface GlobeMethods {
+  pauseAnimation: () => void
+  resumeAnimation: () => void
+  setPointOfView: (coords: { lat: number; lng: number; altitude?: number }) => void
+  getGlobeRadius: () => number
+  getCoords: (lat: number, lng: number, altitude?: number) => { x: number; y: number; z: number }
+  toGeoCoords: (coords: { x: number; y: number; z: number }) => { lat: number; lng: number; altitude: number }
+  focusOnLocation: (polygon: { geometry?: PolygonGeometry }) => void
+}
 import './styles.scss'
 
 // Dynamically import TravelDataGlobe since it uses WebGL/Three.js
@@ -81,12 +95,16 @@ export function TravelDataGlobeBlockClient(props: TravelDataGlobeBlockProps) {
   const visaArcs = useMemo(() => {
     if (!passportCountry || currentView !== 'visaRequirements' || !visaRequirements) return []
     
-    const selectedCountryData = visaRequirements.find(c => c?.countryName === passportCountry)
+    const selectedCountryData = visaRequirements.find(c => {
+      const countryName = typeof c?.countryName === 'string' 
+        ? c.countryName 
+        : (c?.countryName as { name?: string })?.name || ''
+      return countryName === passportCountry
+    })
     if (!selectedCountryData || !selectedCountryData.visaRequirements) return []
 
-    // Return the visa requirements directly - the globe component will handle positioning
+    // Return all visa requirements for the selected country
     return selectedCountryData.visaRequirements
-      .filter(req => req?.requirement === 'visa_free')
   }, [passportCountry, currentView, visaRequirements])
 
   // Filter data based on search
@@ -99,9 +117,17 @@ export function TravelDataGlobeBlockClient(props: TravelDataGlobeBlockProps) {
           adv?.country?.toLowerCase().includes(query)
         )
       case 'visaRequirements':
-        return (visaRequirements || []).filter(visa => 
-          visa?.countryName?.toLowerCase().includes(query)
-        )
+        // Return all visa countries if no search query
+        if (!visaRequirements || visaRequirements.length === 0) {
+          return []
+        }
+        return visaRequirements.filter(visa => {
+          // Ensure countryName is treated as a string
+          const countryName = typeof visa?.countryName === 'string' 
+            ? visa.countryName 
+            : (visa?.countryName as { name?: string })?.name || ''
+          return countryName.toLowerCase().includes(query)
+        })
       case 'michelinRestaurants':
         return (restaurants || []).filter(rest => 
           rest?.name?.toLowerCase().includes(query) ||
@@ -126,11 +152,21 @@ export function TravelDataGlobeBlockClient(props: TravelDataGlobeBlockProps) {
     if (currentView === 'travelAdvisory') {
       setSelectedCountry(countryName)
       setShowDetails(true)
+      // Spin globe to country location
+      const polygon = polygons.find((p) => 'properties' in p && p.properties?.name === countryName)
+      if (polygon && globeRef.current) {
+        globeRef.current.focusOnLocation(polygon)
+      }
     } else if (currentView === 'visaRequirements' && passportCountry !== countryName) {
       setPassportCountry(countryName)
       setSelectedCountry(null)
+      // Spin globe to country location
+      const polygon = polygons.find((p) => 'properties' in p && p.properties?.name === countryName)
+      if (polygon && globeRef.current) {
+        globeRef.current.focusOnLocation(polygon)
+      }
     }
-  }, [currentView, passportCountry])
+  }, [currentView, passportCountry, polygons])
 
   const handleTabChange = useCallback((view: typeof currentView) => {
     setCurrentView(view)
@@ -191,7 +227,6 @@ export function TravelDataGlobeBlockClient(props: TravelDataGlobeBlockProps) {
       bumpImageUrl={blockConfig.bumpImageUrl || '/earth-topology.png'}
       autoRotateSpeed={blockConfig.autoRotateSpeed || 0.5}
       atmosphereColor={blockConfig.atmosphereColor || '#3a7ca5'}
-      atmosphereAltitude={blockConfig.atmosphereAltitude || 0.15}
       onCountryClick={handleCountryClick}
       onAirportClick={(airport) => {
         setSelectedAirport(airport)
@@ -206,14 +241,14 @@ export function TravelDataGlobeBlockClient(props: TravelDataGlobeBlockProps) {
       hoveredCountry={hoveredCountry}
       currentView={currentView}
       visaArcs={visaArcs}
-      showMarkers={showDetails}
+      showMarkers={currentView === 'airports' || currentView === 'michelinRestaurants'}
     />
   ) : null
   
   return (
     <BlockWrapper
       glassEffect={{
-        enabled: blockConfig.enableGlassEffect || true,
+        enabled: blockConfig.enableGlassEffect || false,
         variant: 'frost'
       }}
       className="travel-data-globe-block"
@@ -321,6 +356,11 @@ export function TravelDataGlobeBlockClient(props: TravelDataGlobeBlockProps) {
                           <span className="tdg-flag-placeholder" />
                         )}
                         <span className="tdg-advisory-country">{advisory.country}</span>
+                        {/* Check if added within last 30 days */}
+                        {advisory.dateAdded && 
+                         new Date(advisory.dateAdded) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) && (
+                          <span className="tdg-new-pill">New</span>
+                        )}
                         <span className={`tdg-advisory-level tdg-level-${advisory.level}`}>
                           Level {advisory.level}
                         </span>
@@ -375,24 +415,46 @@ export function TravelDataGlobeBlockClient(props: TravelDataGlobeBlockProps) {
                   className="tdg-search-input"
                 />
                 <ul className="tdg-country-list" data-lenis-prevent>
+                  {filteredData.length === 0 && searchQuery === '' && (!visaRequirements || visaRequirements.length === 0) && (
+                    <li className="tdg-no-data">
+                      <span>Loading visa data...</span>
+                    </li>
+                  )}
+                  {filteredData.length === 0 && searchQuery !== '' && (
+                    <li className="tdg-no-data">
+                      <span>No countries found</span>
+                    </li>
+                  )}
                   {(filteredData as CountryVisaData[]).map((country, index) => {
+                    if (!country) return null
                     const flagUrl = getFlagUrl(country.countryFlag)
-                    const visaFreeCount = country.visaRequirements.filter(
-                      req => req.requirement === 'visa_free'
-                    ).length
+                    const visaFreeCount = country.visaRequirements?.filter(
+                      req => req?.requirement === 'visa_free'
+                    ).length || 0
+                    // Ensure countryName is a string
+                    const displayName = typeof country.countryName === 'string' 
+                      ? country.countryName 
+                      : (country.countryName as { name?: string })?.name || ''
                     return (
                       <li
-                        key={`${country.countryId}-${index}`}
-                        onClick={() => setPassportCountry(country.countryName)}
-                        className={`tdg-country-item ${passportCountry === country.countryName ? 'tdg-selected' : ''}`}
+                        key={`visa-${country.countryId}-${index}`}
+                        onClick={() => {
+                          setPassportCountry(displayName)
+                          // Spin globe to country location
+                          const polygon = polygons.find((p) => 'properties' in p && p.properties?.name === displayName)
+                          if (polygon && globeRef.current) {
+                            globeRef.current.focusOnLocation(polygon)
+                          }
+                        }}
+                        className={`tdg-country-item ${passportCountry === displayName ? 'tdg-selected' : ''}`}
                       >
                         {flagUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={flagUrl} alt={`${country.countryName} flag`} className="tdg-flag" />
+                          <img src={flagUrl} alt={`${displayName} flag`} className="tdg-flag" />
                         ) : (
                           <span className="tdg-flag-placeholder" />
                         )}
-                        <span className="tdg-country-name">{country.countryName}</span>
+                        <span className="tdg-country-name">{displayName}</span>
                         <span className="tdg-visa-free-count">{visaFreeCount} visa-free</span>
                       </li>
                     )
@@ -449,10 +511,18 @@ export function TravelDataGlobeBlockClient(props: TravelDataGlobeBlockProps) {
                     const flagUrl = getFlagUrl(restaurant.location.countryFlag)
                     return (
                       <div
-                        key={restaurant.id}
+                        key={`restaurant-${restaurant.id}`}
                         onClick={() => {
                           setSelectedRestaurant(restaurant)
                           setShowDetails(true)
+                          // Spin globe to restaurant location
+                          if (globeRef.current && restaurant.location) {
+                            globeRef.current.setPointOfView({
+                              lat: restaurant.location.lat,
+                              lng: restaurant.location.lng,
+                              altitude: 1.5
+                            })
+                          }
                         }}
                         className={`tdg-restaurant-item ${selectedRestaurant?.id === restaurant.id ? 'tdg-selected' : ''}`}
                       >
@@ -500,14 +570,22 @@ export function TravelDataGlobeBlockClient(props: TravelDataGlobeBlockProps) {
                   className="tdg-search-input"
                 />
                 <div className="tdg-airport-list" data-lenis-prevent>
-                  {(filteredData as AirportData[]).map((airport) => {
+                  {(filteredData as AirportData[]).map((airport, idx) => {
                     const flagUrl = getFlagUrl(airport.location.countryFlag)
                     return (
                       <div
-                        key={airport.code}
+                        key={`airport-${airport.code}-${idx}`}
                         onClick={() => {
                           setSelectedAirport(airport)
                           setShowDetails(true)
+                          // Spin globe to airport location
+                          if (globeRef.current && airport.location) {
+                            globeRef.current.setPointOfView({
+                              lat: airport.location.lat,
+                              lng: airport.location.lng,
+                              altitude: 1.5
+                            })
+                          }
                         }}
                         className={`tdg-airport-item ${selectedAirport?.code === airport.code ? 'tdg-selected' : ''}`}
                       >
@@ -542,7 +620,7 @@ export function TravelDataGlobeBlockClient(props: TravelDataGlobeBlockProps) {
               </div>
             )}
             {isGlobeLoaded && (
-              <ViewportRenderer interactive={true}>
+              <ViewportRenderer interactive={true} className="tdg-viewport">
                 {webglContent}
               </ViewportRenderer>
             )}
@@ -600,6 +678,16 @@ export function TravelDataGlobeBlockClient(props: TravelDataGlobeBlockProps) {
                 {/* Travel Advisory Content */}
                 {selectedCountry && selectedAdvisory && (
                   <div className="tdg-prose">
+                    {/* Department of State logo watermark */}
+                    <div className="tdg-detail-logo">
+                      <Image
+                        src="/department-of-state.png"
+                        alt="U.S. Department of State"
+                        width={120}
+                        height={120}
+                        style={{ opacity: 0.15 }}
+                      />
+                    </div>
                     <h4>Travel Advisory for {selectedCountry}</h4>
                     <p><strong>Current Level:</strong> {selectedAdvisory.level} - {
                       selectedAdvisory.level === 1 ? 'Exercise Normal Precautions' :
@@ -611,7 +699,11 @@ export function TravelDataGlobeBlockClient(props: TravelDataGlobeBlockProps) {
                     {selectedAdvisory.advisoryText && (
                       <>
                         <h4>Advisory Details</h4>
-                        <p>{selectedAdvisory.advisoryText}</p>
+                        <div className="tdg-advisory-text">
+                          {selectedAdvisory.advisoryText.split('\n').map((paragraph, idx) => (
+                            <p key={idx}>{paragraph}</p>
+                          ))}
+                        </div>
                       </>
                     )}
                   </div>

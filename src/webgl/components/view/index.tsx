@@ -29,6 +29,7 @@ export function ViewportRenderer({
           width: '100%', 
           height: '100%',
           pointerEvents: interactive ? 'auto' : 'none',
+          background: 'transparent',
         }}
       />
       <WebGLTunnel>
