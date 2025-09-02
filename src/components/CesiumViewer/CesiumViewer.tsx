@@ -25,6 +25,14 @@ export interface CesiumViewer {
       addEventListener: (callback: () => void) => void
       removeEventListener: (callback: () => void) => void
     }
+    moveForward: (amount: number) => void
+    moveBackward: (amount: number) => void
+    moveLeft: (amount: number) => void
+    moveRight: (amount: number) => void
+    moveUp: (amount: number) => void
+    moveDown: (amount: number) => void
+    zoomIn: (amount?: number) => void
+    zoomOut: (amount?: number) => void
   }
   scene?: {
     globe?: { enableLighting: boolean }
@@ -35,6 +43,13 @@ export interface CesiumViewer {
     debugShowFramesPerSecond?: boolean
     pick?: (position: { position: { x: number; y: number } }) => unknown
     canvas?: HTMLCanvasElement
+    screenSpaceCameraController?: {
+      enableRotate: boolean
+      enableTranslate: boolean
+      enableZoom: boolean
+      enableTilt: boolean
+      enableLook: boolean
+    }
   }
   entities: {
     add: (entity: Record<string, unknown>) => unknown
@@ -73,10 +88,14 @@ interface CesiumModule {
       lat: number,
       height?: number
     ) => unknown
+    fromDegreesArrayHeights?: (
+      coordinates: number[]
+    ) => unknown
   }
   Cartesian2: new (x: number, y: number) => unknown
   Math: {
     toRadians: (degrees: number) => number
+    toDegrees: (radians: number) => number
   }
   Color: { 
     WHITE: unknown
@@ -108,6 +127,8 @@ interface CesiumModule {
   ScreenSpaceEventType: { LEFT_CLICK: unknown }
   defined: (value: unknown) => boolean
   Entity: unknown
+  NearFarScalar?: new (near: number, nearValue: number, far: number, farValue: number) => unknown
+  Billboard?: unknown
 }
 
 // Define the API that the parent component can call
@@ -135,6 +156,22 @@ export interface CesiumViewerHandle {
   clearMarkers: () => void
   isReady: () => boolean
   getViewer: () => CesiumViewer | null
+  getCameraInfo: () => {
+    lat: number
+    lng: number
+    altitude: number
+    heading: number
+    pitch: number
+  } | null
+  setCameraView: (opts: {
+    heading?: number
+    pitch?: number
+    altitude?: number
+  }) => void
+  moveCamera: (direction: 'forward' | 'backward' | 'left' | 'right', distance: number) => void
+  zoomCamera: (factor: number) => void
+  highlightMarker: (id: string) => void
+  unhighlightMarkers: () => void
 }
 
 interface CesiumViewerProps {
@@ -175,10 +212,11 @@ export const CesiumViewer = forwardRef<
   const viewerRef = useRef<CesiumViewer | null>(null)
   const cesiumRef = useRef<CesiumModule | null>(null)
   const orbitTickListener = useRef<(() => void) | null>(null)
-  const placeEntitiesRef = useRef<unknown[]>([])
+  const placeEntitiesRef = useRef<any[]>([])
   const isInitializedRef = useRef(false)
   const eventHandlerRef = useRef<any>(null)
   const tilesetRef = useRef<any>(null)
+  const selectedEntityRef = useRef<any>(null)
 
   // Memoize callbacks
   const handleLoad = useCallback(() => {
@@ -306,27 +344,29 @@ export const CesiumViewer = forwardRef<
         const color = getPoiColor(place)
         const cesiumColor = Cesium.Color.fromCssColorString(color)
         
-        // Create a simple point marker without label to avoid overlap
+        // Create a more prominent marker
         const entity = viewer.entities.add({
           id: id,
           position: Cesium.Cartesian3.fromDegrees(
             location.lng(),
             location.lat(),
-            10
+            25  // Raise it a bit higher
           ),
           point: {
-            pixelSize: 12,
+            pixelSize: 20,  // Larger size
             color: cesiumColor,
             outlineColor: Cesium.Color.WHITE,
-            outlineWidth: 2,
+            outlineWidth: 3,  // Thicker outline
             heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
             disableDepthTestDistance: Number.POSITIVE_INFINITY
           },
-          // Store the place name in properties for tooltip/click handling
+          // Store the place info
           properties: {
             name: place.name,
             rating: place.rating,
-            vicinity: place.vicinity
+            vicinity: place.vicinity,
+            placeId: id,
+            originalColor: color  // Store original color for restoration
           }
         })
         placeEntitiesRef.current.push(entity)
@@ -375,6 +415,166 @@ export const CesiumViewer = forwardRef<
     
     getViewer() {
       return viewerRef.current
+    },
+    
+    getCameraInfo() {
+      const viewer = viewerRef.current
+      const Cesium = cesiumRef.current
+      if (!viewer || !Cesium) return null
+      
+      try {
+        const pos = viewer.camera.positionCartographic
+        return {
+          lat: Cesium.Math.toDegrees(pos.latitude),
+          lng: Cesium.Math.toDegrees(pos.longitude),
+          altitude: pos.height,
+          heading: Cesium.Math.toDegrees(viewer.camera.heading),
+          pitch: Cesium.Math.toDegrees(viewer.camera.pitch)
+        }
+      } catch (error) {
+        console.error('Error getting camera info:', error)
+        return null
+      }
+    },
+    
+    setCameraView(opts) {
+      const viewer = viewerRef.current
+      const Cesium = cesiumRef.current
+      if (!viewer || !Cesium) return
+      
+      try {
+        const currentPos = viewer.camera.positionCartographic
+        const newOptions: Record<string, unknown> = {}
+        
+        if (opts.heading !== undefined) {
+          newOptions.heading = Cesium.Math.toRadians(opts.heading)
+        }
+        if (opts.pitch !== undefined) {
+          newOptions.pitch = Cesium.Math.toRadians(opts.pitch)
+        }
+        
+        if (opts.altitude !== undefined) {
+          newOptions.destination = Cesium.Cartesian3.fromRadians(
+            currentPos.longitude,
+            currentPos.latitude,
+            opts.altitude
+          )
+        }
+        
+        viewer.camera.setView({
+          orientation: newOptions.heading !== undefined || newOptions.pitch !== undefined ? {
+            heading: newOptions.heading ?? viewer.camera.heading,
+            pitch: newOptions.pitch ?? viewer.camera.pitch,
+            roll: 0
+          } : undefined,
+          destination: newOptions.destination
+        })
+      } catch (error) {
+        console.error('Error setting camera view:', error)
+      }
+    },
+    
+    moveCamera(direction, distance) {
+      const viewer = viewerRef.current
+      const Cesium = cesiumRef.current
+      if (!viewer || !Cesium) return
+      
+      try {
+        switch (direction) {
+          case 'forward':
+            viewer.camera.moveForward(distance)
+            break
+          case 'backward':
+            viewer.camera.moveBackward(distance)
+            break
+          case 'left':
+            viewer.camera.moveLeft(distance)
+            break
+          case 'right':
+            viewer.camera.moveRight(distance)
+            break
+        }
+      } catch (error) {
+        console.error('Error moving camera:', error)
+      }
+    },
+    
+    zoomCamera(factor) {
+      const viewer = viewerRef.current
+      const Cesium = cesiumRef.current
+      if (!viewer || !Cesium) return
+      
+      try {
+        if (factor < 1) {
+          // Zoom in
+          viewer.camera.zoomIn(viewer.camera.positionCartographic.height * 0.2)
+        } else {
+          // Zoom out
+          viewer.camera.zoomOut(viewer.camera.positionCartographic.height * 0.2)
+        }
+      } catch (error) {
+        console.error('Error zooming camera:', error)
+      }
+    },
+    
+    highlightMarker(id) {
+      const viewer = viewerRef.current
+      const Cesium = cesiumRef.current
+      if (!viewer || !Cesium) return
+      
+      try {
+        // First unhighlight any previously selected marker
+        this.unhighlightMarkers()
+        
+        // Find the entity with this ID
+        const entity = placeEntitiesRef.current.find((e) => {
+          const ent = e as any
+          return ent.id === id
+        })
+        if (entity && (entity as any).point) {
+          selectedEntityRef.current = entity
+          
+          // Make the selected marker larger and add pulsing effect
+          const ent = entity as any
+          ent.point.pixelSize = 35  // Much larger when selected
+          ent.point.outlineWidth = 5
+          ent.point.color = Cesium.Color.YELLOW
+          ent.point.outlineColor = Cesium.Color.RED
+        }
+      } catch (error) {
+        console.error('Error highlighting marker:', error)
+      }
+    },
+    
+    unhighlightMarkers() {
+      const viewer = viewerRef.current
+      const Cesium = cesiumRef.current
+      if (!viewer || !Cesium) return
+      
+      try {
+        if (selectedEntityRef.current) {
+          const entity = selectedEntityRef.current as any
+          
+          // Restore original appearance
+          if (entity?.point) {
+            entity.point.pixelSize = 20
+            entity.point.outlineWidth = 3
+            // Restore original color based on place type
+            const properties = entity.properties
+            if (properties && properties.originalColor) {
+              const color = properties.originalColor.getValue
+                ? properties.originalColor.getValue()
+                : properties.originalColor
+              entity.point.color = Cesium.Color.fromCssColorString(color)
+              entity.point.outlineColor = Cesium.Color.WHITE
+            }
+          }
+          
+          selectedEntityRef.current = null
+        }
+      } catch (error) {
+        console.error('Error unhighlighting markers:', error)
+      }
     }
   }))
 
@@ -442,6 +642,15 @@ export const CesiumViewer = forwardRef<
         viewerRef.current = viewer
 
         if (viewer.scene) {
+          // Enable camera controls
+          if (viewer.scene.screenSpaceCameraController) {
+            viewer.scene.screenSpaceCameraController.enableRotate = true
+            viewer.scene.screenSpaceCameraController.enableTranslate = true
+            viewer.scene.screenSpaceCameraController.enableZoom = true
+            viewer.scene.screenSpaceCameraController.enableTilt = true
+            viewer.scene.screenSpaceCameraController.enableLook = true
+          }
+          
           viewer.imageryLayers.removeAll()
 
           const creditContainer = viewer.cesiumWidget?.creditContainer
@@ -508,19 +717,33 @@ export const CesiumViewer = forwardRef<
               eventHandlerRef.current = handler
               
               handler.setInputAction((movement: { position: { x: number; y: number } }) => {
-                if (!viewer.scene?.pick) return
+                if (!viewer.scene?.pick || !movement.position) return
                 
                 try {
-                  const pickedObject = viewer.scene.pick(movement) as any
-                  if (Cesium.defined(pickedObject) && Cesium.defined(pickedObject?.id)) {
-                    if (typeof pickedObject.id === 'string') {
-                      handleMarkerClick(pickedObject.id)
-                    } else if (pickedObject.id && pickedObject.id.id) {
-                      handleMarkerClick(pickedObject.id.id)
+                  // Ensure position is valid before picking
+                  if (movement.position.x !== undefined && movement.position.y !== undefined) {
+                    const pickedObject = viewer.scene.pick(movement) as any
+                    if (Cesium.defined(pickedObject) && Cesium.defined(pickedObject?.id)) {
+                    const entity = pickedObject.id
+                      if (typeof entity === 'string') {
+                        handleMarkerClick(entity)
+                      } else if (entity && entity.id) {
+                        handleMarkerClick(entity.id)
+                      } else if (entity && entity.properties && entity.properties.placeId) {
+                        const placeId = entity.properties.placeId.getValue
+                          ? entity.properties.placeId.getValue()
+                          : entity.properties.placeId
+                        if (placeId) {
+                          handleMarkerClick(placeId)
+                        }
+                      }
                     }
                   }
-                } catch (error) {
-                  console.error('Error handling click:', error)
+                } catch (error: unknown) {
+                  // Silently handle pick errors - these can happen during camera movement
+                  if (error instanceof Error && !error.message.includes('normalized result')) {
+                    console.error('Error handling click:', error)
+                  }
                 }
               }, Cesium.ScreenSpaceEventType.LEFT_CLICK)
             } catch (error) {
@@ -531,7 +754,7 @@ export const CesiumViewer = forwardRef<
 
         const initLat = initialLocation?.lat ?? 37.7759
         const initLng = initialLocation?.lng ?? -122.4175
-        const initAltitude = initialLocation?.altitude ?? 1500
+        const initAltitude = initialLocation?.altitude ?? 500  // Lower default altitude
         const initHeading = initialLocation?.heading ?? 0
         const initPitch = initialLocation?.pitch ?? -45
 
@@ -580,9 +803,9 @@ export const CesiumViewer = forwardRef<
         }
       }
       
-      if (eventHandlerRef.current && eventHandlerRef.current.destroy) {
+      if (eventHandlerRef.current && (eventHandlerRef.current as any).destroy) {
         try {
-          eventHandlerRef.current.destroy()
+          (eventHandlerRef.current as any).destroy()
         } catch (error) {
           console.error('Error destroying event handler:', error)
         }
@@ -601,7 +824,8 @@ export const CesiumViewer = forwardRef<
       eventHandlerRef.current = null
       isInitializedRef.current = false
     }
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  // Dependencies intentionally omitted - we only want to initialize Cesium once on mount
 
   return (
     <div

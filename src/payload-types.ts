@@ -5955,6 +5955,11 @@ export interface Footer {
         id?: string | null;
       }[]
     | null;
+  backgroundStyle: 'gradient' | 'solid';
+  enableNoise?: boolean | null;
+  backgroundColor?: string | null;
+  gradientStartColor?: string | null;
+  gradientEndColor?: string | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -6043,6 +6048,11 @@ export interface FooterSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  backgroundStyle?: T;
+  enableNoise?: T;
+  backgroundColor?: T;
+  gradientStartColor?: T;
+  gradientEndColor?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

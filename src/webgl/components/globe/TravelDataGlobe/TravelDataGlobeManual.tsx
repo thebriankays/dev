@@ -230,49 +230,63 @@ const TravelDataGlobeManual = forwardRef<GlobeMethods | undefined, TravelDataGlo
       }))
   }, [currentView, visaArcs])
   
+  // Set camera on mount
+  useEffect(() => {
+    if (camera) {
+      camera.position.set(0, 0, 2.5)
+      camera.lookAt(0, 0, 0)
+    }
+  }, [camera])
+
   return (
-    <group ref={groupRef}>
-      {/* Globe sphere */}
-      <mesh ref={globeRef}>
-        <sphereGeometry args={[globeRadius, 64, 64]} />
-        <meshStandardMaterial
-          map={colorMap}
-          bumpMap={bumpMap}
-          bumpScale={0.005}
-          metalness={0.1}
-          roughness={0.8}
-        />
-      </mesh>
+    <>
+      {/* Background color */}
+      <color attach="background" args={['#000000']} />
+      <fog attach="fog" args={['#000000', 5, 15]} />
       
-      {/* Atmosphere */}
-      <Atmosphere
-        radius={globeRadius}
-        color={atmosphereColor}
-        intensity={0.15}
-      />
-      
-      {/* Markers */}
-      {markerData.length > 0 && (
-        <Markers
-          data={markerData}
+      <group ref={groupRef}>
+        {/* Globe sphere */}
+        <mesh ref={globeRef}>
+          <sphereGeometry args={[globeRadius, 64, 64]} />
+          <meshStandardMaterial
+            map={colorMap}
+            bumpMap={bumpMap}
+            bumpScale={0.005}
+            metalness={0.1}
+            roughness={0.8}
+          />
+        </mesh>
+        
+        {/* Atmosphere */}
+        <Atmosphere
           radius={globeRadius}
-          showLabels={true}
+          color={atmosphereColor}
+          intensity={0.15}
         />
-      )}
-      
-      {/* Arcs */}
-      {arcData.length > 0 && (
-        <Arcs
-          data={arcData}
-          radius={globeRadius}
-        />
-      )}
-      
-      {/* Lights */}
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[5, 3, 5]} intensity={0.8} />
-      <directionalLight position={[-5, -3, -5]} intensity={0.3} />
-    </group>
+        
+        {/* Markers */}
+        {markerData.length > 0 && (
+          <Markers
+            data={markerData}
+            radius={globeRadius}
+            showLabels={true}
+          />
+        )}
+        
+        {/* Arcs */}
+        {arcData.length > 0 && (
+          <Arcs
+            data={arcData}
+            radius={globeRadius}
+          />
+        )}
+        
+        {/* Lights */}
+        <ambientLight intensity={0.6} />
+        <directionalLight position={[5, 3, 5]} intensity={0.8} />
+        <directionalLight position={[-5, -3, -5]} intensity={0.3} />
+      </group>
+    </>
   )
 })
 

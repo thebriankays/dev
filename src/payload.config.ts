@@ -65,7 +65,7 @@ export default buildConfig({
       beforeDashboard: ['@/components/BeforeDashboard'],
       // Add the shared canvas provider to wrap the admin UI
       providers: [
-        '@/components/AdminWebGLProvider',
+        '@/providers/AdminWebGLProvider',
       ],
     },
     importMap: {

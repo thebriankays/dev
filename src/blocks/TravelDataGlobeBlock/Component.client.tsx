@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useState, useRef, useCallback, useMemo } from 'react'
+import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import { BlockWrapper } from '@/blocks/_shared/BlockWrapper'
+import { ViewportRenderer } from '@/webgl/components/view'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faExclamationTriangle,
@@ -31,12 +32,7 @@ import './styles.scss'
 const TravelDataGlobe = dynamic(
   () => import('@/webgl/components/globe/TravelDataGlobe/TravelDataGlobe'),
   { 
-    ssr: false,
-    loading: () => (
-      <div className="flex items-center justify-center h-[600px]">
-        <div className="text-white">Loading globe...</div>
-      </div>
-    )
+    ssr: false
   }
 )
 
@@ -62,6 +58,7 @@ export function TravelDataGlobeBlockClient(props: TravelDataGlobeBlockProps) {
   const [showDetails, setShowDetails] = useState(false)
   const [showAdvisoryKey, setShowAdvisoryKey] = useState(false)
   const [showVisaKey, setShowVisaKey] = useState(false)
+  const [isGlobeLoaded, setIsGlobeLoaded] = useState(false)
 
   const globeRef = useRef<GlobeMethods | null>(null)
 
@@ -177,8 +174,13 @@ export function TravelDataGlobeBlockClient(props: TravelDataGlobeBlockProps) {
     return travelAdvisories.find(adv => adv.country === selectedCountry)
   }, [selectedCountry, currentView, travelAdvisories])
 
+  // Set globe loaded after mount
+  useEffect(() => {
+    setIsGlobeLoaded(true)
+  }, [])
+
   // WebGL content for the shared canvas
-  const webglContent = (
+  const webglContent = isGlobeLoaded ? (
     <TravelDataGlobe
       ref={globeRef}
       polygons={currentPolygons}
@@ -206,17 +208,15 @@ export function TravelDataGlobeBlockClient(props: TravelDataGlobeBlockProps) {
       visaArcs={visaArcs}
       showMarkers={showDetails}
     />
-  )
+  ) : null
   
   return (
     <BlockWrapper
-      webglContent={webglContent}
       glassEffect={{
         enabled: blockConfig.enableGlassEffect || true,
         variant: 'frost'
       }}
       className="travel-data-globe-block"
-      disableDefaultCamera={true}
     >
       <div className="tdg-container">
         {/* Vertical Marquee */}
@@ -536,7 +536,16 @@ export function TravelDataGlobeBlockClient(props: TravelDataGlobeBlockProps) {
         {/* Globe pane */}
         <div className={`tdg-globe-pane ${showDetails ? 'tdg-globe-pane--split' : ''}`}>
           <div className="tdg-globe-wrapper">
-            {/* The WebGL content renders through the shared canvas */}
+            {!isGlobeLoaded && (
+              <div className="tdg-loading">
+                <div className="tdg-loading-text">Loading globe...</div>
+              </div>
+            )}
+            {isGlobeLoaded && (
+              <ViewportRenderer interactive={true}>
+                {webglContent}
+              </ViewportRenderer>
+            )}
           </div>
         </div>
 

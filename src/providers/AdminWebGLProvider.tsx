@@ -13,6 +13,7 @@ export default function AdminWebGLProvider({ children }: { children: React.React
         {/* Mount the shared canvas with interactive=false so it doesn't block UI clicks */}
         <SharedCanvas 
           interactive={false}
+          background="none"
           style={{ 
             pointerEvents: 'none',
             zIndex: -1 

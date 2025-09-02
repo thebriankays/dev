@@ -70,6 +70,14 @@ export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
   const [cameraSpeed, setCameraSpeed] = useState(20)
   const debouncedSpeed = useDebounce(cameraSpeed, 100)
   const [isOrbiting, setIsOrbiting] = useState(false)
+  const [showManualControls, setShowManualControls] = useState(false)
+  const defaultCameraRef = useRef<{
+    lat: number
+    lng: number
+    altitude: number
+    heading: number
+    pitch: number
+  } | null>(null)
 
   // Places state
   const [selectedLocation, setSelectedLocation] = useState<{
@@ -91,6 +99,7 @@ export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
   const [showRadiusInfo, setShowRadiusInfo] = useState(false)
   const [showDensityInfo, setShowDensityInfo] = useState(false)
   const [showOrbitInfo, setShowOrbitInfo] = useState(false)
+  const [showManualControlsInfo, setShowManualControlsInfo] = useState(false)
 
   // Initialize Google Places service
   useEffect(() => {
@@ -148,14 +157,14 @@ export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
     const types = place.types || []
     
     if (types.includes('locality') || types.includes('administrative_area_level_1')) {
-      return 3000
+      return 800  // Reduced from 3000 - better for city overview
     }
     
     if (types.includes('establishment') || types.includes('point_of_interest')) {
-      return 500
+      return 300  // Reduced from 500 - better for POI viewing
     }
     
-    return 1500
+    return 500  // Reduced from 1500 - default altitude
   }
 
   // Set up Places Autocomplete
@@ -186,6 +195,18 @@ export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
           heading: 0,
           pitch: -45
         })
+        
+        // Store this as the new default camera position for reset
+        setTimeout(() => {
+          defaultCameraRef.current = {
+            lat: newLocation.lat,
+            lng: newLocation.lng,
+            altitude: altitude,
+            heading: 0,
+            pitch: -45
+          }
+          console.log('Updated default camera position for new location')
+        }, 2000) // Wait for flyTo to complete
       }
     },
     options: { 
@@ -199,13 +220,26 @@ export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
   useEffect(() => {
     if (initialLocation && isMapReady && viewerRef.current?.isReady()) {
       console.log('Flying to initial location:', initialLocation)
+      const altitude = 500
       viewerRef.current.flyTo({
         lat: initialLocation.lat,
         lng: initialLocation.lng,
-        altitude: 1500,
+        altitude: altitude,
         heading: 0,
         pitch: -45
       })
+      
+      // Store this as the default camera position for reset
+      setTimeout(() => {
+        defaultCameraRef.current = {
+          lat: initialLocation.lat,
+          lng: initialLocation.lng,
+          altitude: altitude,
+          heading: 0,
+          pitch: -45
+        }
+        console.log('Set default camera position for initial location')
+      }, 2000)
     }
   }, [initialLocation, isMapReady])
 
@@ -323,6 +357,9 @@ export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
                   viewerRef.current?.addPlaceMarker(place, place.place_id)
                 }
               })
+              
+              // Clear any previous selection highlighting
+              viewerRef.current?.unhighlightMarkers()
             }
           }
         )
@@ -335,12 +372,17 @@ export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
   const handleMapLoad = useCallback(() => {
     console.log('Map loaded and ready')
     setMapReady(true)
+    // Don't store default camera position here - we'll store it when a location is selected
   }, [])
 
   const handleMarkerClick = useCallback((placeId: string) => {
     const place = places.find(p => p.place_id === placeId)
     if (place) {
       setSelectedPlace(place)
+      // Highlight the marker on the map
+      if (viewerRef.current?.isReady()) {
+        viewerRef.current.highlightMarker(placeId)
+      }
       // Scroll the place into view in the list
       const placeElement = document.querySelector(`[data-place-id="${placeId}"]`)
       if (placeElement) {
@@ -359,18 +401,75 @@ export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
     })
   }
 
+  const handleCameraMove = (direction: 'forward' | 'backward' | 'left' | 'right') => {
+    if (viewerRef.current?.isReady()) {
+      const distance = 50 // meters
+      viewerRef.current.moveCamera(direction, distance)
+    }
+  }
+
+  const handleCameraZoom = (zoomIn: boolean) => {
+    if (viewerRef.current?.isReady()) {
+      viewerRef.current.zoomCamera(zoomIn ? 0.5 : 2)
+    }
+  }
+
+  const handleCameraTilt = (direction: 'up' | 'down') => {
+    if (viewerRef.current?.isReady()) {
+      const cameraInfo = viewerRef.current.getCameraInfo()
+      if (cameraInfo) {
+        const newPitch = direction === 'up' 
+          ? Math.min(cameraInfo.pitch + 10, 0)
+          : Math.max(cameraInfo.pitch - 10, -90)
+        viewerRef.current.setCameraView({ pitch: newPitch })
+      }
+    }
+  }
+
+  const handleCameraRotate = (direction: 'left' | 'right') => {
+    if (viewerRef.current?.isReady()) {
+      const cameraInfo = viewerRef.current.getCameraInfo()
+      if (cameraInfo) {
+        const newHeading = direction === 'left'
+          ? (cameraInfo.heading - 15 + 360) % 360
+          : (cameraInfo.heading + 15) % 360
+        viewerRef.current.setCameraView({ heading: newHeading })
+      }
+    }
+  }
+
+  const handleResetCamera = () => {
+    if (viewerRef.current?.isReady() && defaultCameraRef.current) {
+      viewerRef.current.flyTo({
+        lat: defaultCameraRef.current.lat,
+        lng: defaultCameraRef.current.lng,
+        altitude: defaultCameraRef.current.altitude,
+        heading: defaultCameraRef.current.heading,
+        pitch: defaultCameraRef.current.pitch,
+        duration: 1.5
+      })
+      setIsOrbiting(false)
+    }
+  }
+
   const handlePlaceClick = (place: google.maps.places.PlaceResult) => {
     setSelectedPlace(place)
     
-    // Fly to the place
+    // Highlight the marker and fly to the place
     const location = place.geometry?.location
     if (location && viewerRef.current?.isReady()) {
+      // Highlight the selected marker
+      if (place.place_id) {
+        viewerRef.current.highlightMarker(place.place_id)
+      }
+      
+      // Fly to the place with better viewing angle
       viewerRef.current.flyTo({
         lat: location.lat(),
         lng: location.lng(),
-        altitude: 300,
+        altitude: 150,  // Much lower altitude to see the place better
         heading: 0,
-        pitch: -45,
+        pitch: -60,  // Steeper angle to look down at the marker
         duration: 1.5
       })
     }
@@ -428,56 +527,229 @@ export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
               <strong>Auto-Orbit:</strong> Automatically rotates the camera around the location<br/>
               <strong>Dynamic:</strong> Camera moves up and down while rotating<br/>
               <strong>Fixed:</strong> Camera maintains the same angle<br/>
-              <strong>Speed:</strong> How fast the camera rotates (1-100)
+              <strong>Speed:</strong> How fast the camera rotates (1-100)<br/>
+              <strong>Manual Controls:</strong> Use arrows to move, rotate and tilt the camera
             </div>
           )}
-          <div className="area-explorer__orbit-toggle">
+          
+          <div className="area-explorer__camera-mode-toggle">
             <button
-              onClick={() => {
-                const newOrbiting = !isOrbiting
-                setIsOrbiting(newOrbiting)
-                console.log('Orbit toggled:', newOrbiting)
-              }}
-              className={`area-explorer__play-btn ${isOrbiting ? 'active' : ''}`}
+              onClick={() => setShowManualControls(false)}
+              className={`area-explorer__mode-btn ${!showManualControls ? 'active' : ''}`}
               disabled={!isMapReady}
             >
-              {isOrbiting ? '⏸ Stop Orbit' : '▶ Start Auto-Orbit'}
+              🔄 Auto Orbit
+            </button>
+            <button
+              onClick={() => {
+                setShowManualControls(true)
+                setIsOrbiting(false)
+              }}
+              className={`area-explorer__mode-btn ${showManualControls ? 'active' : ''}`}
+              disabled={!isMapReady}
+            >
+              🎮 Manual Control
             </button>
           </div>
-          <div className="area-explorer__radio-group">
-            <label>
+
+          {!showManualControls ? (
+            <>
+              <div className="area-explorer__orbit-toggle">
+                <button
+                  onClick={() => {
+                    const newOrbiting = !isOrbiting
+                    setIsOrbiting(newOrbiting)
+                    console.log('Orbit toggled:', newOrbiting)
+                  }}
+                  className={`area-explorer__play-btn ${isOrbiting ? 'active' : ''}`}
+                  disabled={!isMapReady}
+                >
+                  {isOrbiting ? '⏸ Stop Orbit' : '▶ Start Auto-Orbit'}
+                </button>
+              </div>
+              <div className="area-explorer__radio-group">
+                <label>
+                  <input
+                    type="radio"
+                    value="dynamic"
+                    checked={orbitType === 'dynamic'}
+                    onChange={() => setOrbitType('dynamic')}
+                    disabled={!isMapReady}
+                  />
+                  Dynamic Orbit
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    value="fixed"
+                    checked={orbitType === 'fixed'}
+                    onChange={() => setOrbitType('fixed')}
+                    disabled={!isMapReady}
+                  />
+                  Fixed Orbit
+                </label>
+              </div>
+              <label className="area-explorer__slider-label">
+                Speed: {cameraSpeed}
+              </label>
               <input
-                type="radio"
-                value="dynamic"
-                checked={orbitType === 'dynamic'}
-                onChange={() => setOrbitType('dynamic')}
+                type="range"
+                min="1"
+                max="100"
+                value={cameraSpeed}
+                onChange={e => setCameraSpeed(Number(e.target.value))}
+                className="area-explorer__slider"
                 disabled={!isMapReady}
               />
-              Dynamic Orbit
-            </label>
-            <label>
-              <input
-                type="radio"
-                value="fixed"
-                checked={orbitType === 'fixed'}
-                onChange={() => setOrbitType('fixed')}
-                disabled={!isMapReady}
-              />
-              Fixed Orbit
-            </label>
-          </div>
-          <label className="area-explorer__slider-label">
-            Speed: {cameraSpeed}
-          </label>
-          <input
-            type="range"
-            min="1"
-            max="100"
-            value={cameraSpeed}
-            onChange={e => setCameraSpeed(Number(e.target.value))}
-            className="area-explorer__slider"
-            disabled={!isMapReady}
-          />
+            </>
+          ) : (
+            <div className="area-explorer__manual-controls">
+              <div className="area-explorer__control-info">
+                <button
+                  className="area-explorer__info-btn"
+                  onClick={() => setShowManualControlsInfo(!showManualControlsInfo)}
+                  title="Manual controls info"
+                >
+                  ℹ️
+                </button>
+                <span>Manual Camera Controls</span>
+              </div>
+              {showManualControlsInfo && (
+                <div className="area-explorer__info-tooltip">
+                  <strong>Mouse:</strong> Click and drag to rotate view<br/>
+                  <strong>Scroll:</strong> Zoom in/out<br/>
+                  <strong>Arrow buttons:</strong> Move camera position<br/>
+                  <strong>Tilt:</strong> Look up/down<br/>
+                  <strong>Rotate:</strong> Turn left/right<br/>
+                  <strong>Reset:</strong> Return to default view
+                </div>
+              )}
+              
+              <div className="area-explorer__movement-controls">
+                <div className="area-explorer__control-row">
+                  <button
+                    className="area-explorer__control-btn"
+                    onClick={() => handleCameraMove('forward')}
+                    disabled={!isMapReady}
+                    title="Move forward"
+                  >
+                    ↑
+                  </button>
+                </div>
+                <div className="area-explorer__control-row">
+                  <button
+                    className="area-explorer__control-btn"
+                    onClick={() => handleCameraMove('left')}
+                    disabled={!isMapReady}
+                    title="Move left"
+                  >
+                    ←
+                  </button>
+                  <button
+                    className="area-explorer__control-btn center"
+                    disabled
+                  >
+                    ◉
+                  </button>
+                  <button
+                    className="area-explorer__control-btn"
+                    onClick={() => handleCameraMove('right')}
+                    disabled={!isMapReady}
+                    title="Move right"
+                  >
+                    →
+                  </button>
+                </div>
+                <div className="area-explorer__control-row">
+                  <button
+                    className="area-explorer__control-btn"
+                    onClick={() => handleCameraMove('backward')}
+                    disabled={!isMapReady}
+                    title="Move backward"
+                  >
+                    ↓
+                  </button>
+                </div>
+              </div>
+
+              <div className="area-explorer__view-controls">
+                <div className="area-explorer__control-group">
+                  <span className="area-explorer__control-label">Zoom</span>
+                  <div className="area-explorer__control-buttons">
+                    <button
+                      className="area-explorer__control-btn small"
+                      onClick={() => handleCameraZoom(false)}
+                      disabled={!isMapReady}
+                      title="Zoom out"
+                    >
+                      −
+                    </button>
+                    <button
+                      className="area-explorer__control-btn small"
+                      onClick={() => handleCameraZoom(true)}
+                      disabled={!isMapReady}
+                      title="Zoom in"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                <div className="area-explorer__control-group">
+                  <span className="area-explorer__control-label">Tilt</span>
+                  <div className="area-explorer__control-buttons">
+                    <button
+                      className="area-explorer__control-btn small"
+                      onClick={() => handleCameraTilt('up')}
+                      disabled={!isMapReady}
+                      title="Tilt up"
+                    >
+                      ⬆
+                    </button>
+                    <button
+                      className="area-explorer__control-btn small"
+                      onClick={() => handleCameraTilt('down')}
+                      disabled={!isMapReady}
+                      title="Tilt down"
+                    >
+                      ⬇
+                    </button>
+                  </div>
+                </div>
+
+                <div className="area-explorer__control-group">
+                  <span className="area-explorer__control-label">Rotate</span>
+                  <div className="area-explorer__control-buttons">
+                    <button
+                      className="area-explorer__control-btn small"
+                      onClick={() => handleCameraRotate('left')}
+                      disabled={!isMapReady}
+                      title="Rotate left"
+                    >
+                      ↶
+                    </button>
+                    <button
+                      className="area-explorer__control-btn small"
+                      onClick={() => handleCameraRotate('right')}
+                      disabled={!isMapReady}
+                      title="Rotate right"
+                    >
+                      ↷
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                className="area-explorer__reset-btn"
+                onClick={handleResetCamera}
+                disabled={!isMapReady || !defaultCameraRef.current}
+                title="Reset camera to default view"
+              >
+                🔄 Reset Camera View
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="area-explorer__poi-section">
@@ -609,13 +881,7 @@ export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
                         {'$'.repeat(place.price_level)}
                       </span>
                     )}
-                    {place.opening_hours && (
-                      <span className={`area-explorer__place-status ${
-                        place.opening_hours.open_now ? 'open' : 'closed'
-                      }`}>
-                        {place.opening_hours.open_now ? '🟢' : '🔴'}
-                      </span>
-                    )}
+
                   </div>
                 </div>
               ))}
@@ -627,7 +893,13 @@ export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
           <div className="area-explorer__details-panel">
             <button
               className="area-explorer__close-btn"
-              onClick={() => setSelectedPlace(null)}
+              onClick={() => {
+                setSelectedPlace(null)
+                // Clear marker highlighting
+                if (viewerRef.current?.isReady()) {
+                  viewerRef.current.unhighlightMarkers()
+                }
+              }}
             >
               ✕
             </button>
@@ -645,13 +917,7 @@ export function AreaExplorer({ initialLocation }: AreaExplorerProps) {
                 Price: {'$'.repeat(selectedPlace.price_level)}
               </p>
             )}
-            {selectedPlace.opening_hours && (
-              <p className={`area-explorer__status ${
-                selectedPlace.opening_hours.open_now ? 'open' : 'closed'
-              }`}>
-                {selectedPlace.opening_hours.open_now ? '🟢 Open Now' : '🔴 Closed'}
-              </p>
-            )}
+
             {selectedPlace.website && (
               <a
                 href={selectedPlace.website}
