@@ -298,15 +298,16 @@ export async function TravelDataGlobeBlock(props: TravelDataGlobeBlockProps) {
 
     if (passportName) passportCountries.add(passportName)
 
-    if (!visaByCountry.has(destinationName)) {
+    // FIX: Group by PASSPORT country, not destination!
+    if (!visaByCountry.has(passportName)) {
       const countryData =
-        countryLookup.get(destinationName.toLowerCase()) ||
-        (doc.destinationCountry as LooseCountry | undefined)
-      visaByCountry.set(destinationName, {
-        countryId: `visa-${destinationName}`,
-        countryName: destinationName,
+        countryLookup.get(passportName.toLowerCase()) ||
+        (doc.passportCountry as LooseCountry | undefined)
+      visaByCountry.set(passportName, {
+        countryId: `visa-${passportName}`,
+        countryName: passportName,
         countryCode: countryData?.code || '',
-        countryFlag: getFlagUrl(countryData || { name: destinationName }),
+        countryFlag: getFlagUrl(countryData || { name: passportName }),
         totalDestinations: 0,
         visaFreeCount: 0,
         visaOnArrivalCount: 0,
@@ -316,7 +317,7 @@ export async function TravelDataGlobeBlock(props: TravelDataGlobeBlockProps) {
       })
     }
 
-    const country = visaByCountry.get(destinationName)!
+    const country = visaByCountry.get(passportName)!
     country.totalDestinations++
 
     switch (doc.requirement) {
@@ -334,11 +335,16 @@ export async function TravelDataGlobeBlock(props: TravelDataGlobeBlockProps) {
         country.visaRequiredCount! += 1
     }
 
+    // Get destination country data for flag
+    const destinationData =
+      countryLookup.get(destinationName.toLowerCase()) ||
+      (doc.destinationCountry as LooseCountry | undefined)
+
     country.visaRequirements.push({
       passportCountry: passportName,
-      destinationCountry: destinationName,
-      destinationCountryCode: country.countryCode,
-      destinationCountryFlag: country.countryFlag,
+      destinationCountry: destinationName,  // This should be the destination!
+      destinationCountryCode: destinationData?.code || '',
+      destinationCountryFlag: getFlagUrl(destinationData || { name: destinationName }),
       requirement: doc.requirement,
       allowedStay: doc.days ? `${doc.days} days` : undefined,
       notes: doc.notes,

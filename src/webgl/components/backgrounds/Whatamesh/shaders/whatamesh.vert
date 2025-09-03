@@ -1,10 +1,6 @@
 // Whatamesh/Stripe gradient vertex shader adapted for Three.js
 // Based on stripe.com gradient implementation
 
-precision highp float;
-
-// Three.js automatically provides: position, uv, modelViewMatrix, projectionMatrix
-
 varying vec3 v_color;
 
 // Import noise functions inline
@@ -82,12 +78,14 @@ uniform float u_time;
 uniform vec2 resolution;
 uniform vec4 u_active_colors;
 uniform vec3 u_baseColor;
+uniform float u_shadow_power;
+uniform float u_darken_top;
 
-// Global uniforms (flattened from struct)
+// Global uniforms
 uniform vec2 u_global_noiseFreq;
 uniform float u_global_noiseSpeed;
 
-// Vertex deform uniforms (flattened from struct)
+// Vertex deform uniforms  
 uniform float u_vertDeform_incline;
 uniform float u_vertDeform_offsetTop;
 uniform float u_vertDeform_offsetBottom;
@@ -97,21 +95,20 @@ uniform float u_vertDeform_noiseSpeed;
 uniform float u_vertDeform_noiseFlow;
 uniform float u_vertDeform_noiseSeed;
 
-// Wave layer uniforms (flattened from array of structs)
-uniform vec3 u_waveLayers_color[3];
-uniform vec2 u_waveLayers_noiseFreq[3];
-uniform float u_waveLayers_noiseSpeed[3];
-uniform float u_waveLayers_noiseFlow[3];
-uniform float u_waveLayers_noiseSeed[3];
-uniform float u_waveLayers_noiseFloor[3];
-uniform float u_waveLayers_noiseCeil[3];
-const int u_waveLayers_length = 3;
+// Wave layer uniforms as arrays
+uniform vec3 u_waveColors[3];
+uniform vec2 u_waveNoiseFreq[3];
+uniform float u_waveNoiseSpeed[3];
+uniform float u_waveNoiseFlow[3];
+uniform float u_waveNoiseSeed[3];
+uniform float u_waveNoiseFloor[3];
+uniform float u_waveNoiseCeil[3];
+
+// Custom attribute for normalized UV coords
+attribute vec2 uvNorm;
 
 void main() {
   float time = u_time * u_global_noiseSpeed;
-  
-  // Calculate normalized UV (matching original gradient)
-  vec2 uvNorm = uv * 2.0 - 1.0;
   
   vec2 noiseCoord = resolution * uvNorm * u_global_noiseFreq;
   
@@ -156,22 +153,23 @@ void main() {
   // Vertex color, to be passed to fragment shader
   //
   
-  // Initialize v_color with base color
-  v_color = u_baseColor;
+  if (u_active_colors[0] == 1.) {
+    v_color = u_baseColor;
+  }
   
-  for (int i = 0; i < u_waveLayers_length; i++) {
+  for (int i = 0; i < 3; i++) {
     if (u_active_colors[i + 1] == 1.) {
       float layerNoise = smoothstep(
-        u_waveLayers_noiseFloor[i],
-        u_waveLayers_noiseCeil[i],
+        u_waveNoiseFloor[i],
+        u_waveNoiseCeil[i],
         snoise(vec3(
-          noiseCoord.x * u_waveLayers_noiseFreq[i].x + time * u_waveLayers_noiseFlow[i],
-          noiseCoord.y * u_waveLayers_noiseFreq[i].y,
-          time * u_waveLayers_noiseSpeed[i] + u_waveLayers_noiseSeed[i]
+          noiseCoord.x * u_waveNoiseFreq[i].x + time * u_waveNoiseFlow[i],
+          noiseCoord.y * u_waveNoiseFreq[i].y,
+          time * u_waveNoiseSpeed[i] + u_waveNoiseSeed[i]
         )) / 2.0 + 0.5
       );
       
-      v_color = blendNormal(v_color, u_waveLayers_color[i], pow(layerNoise, 4.));
+      v_color = blendNormal(v_color, u_waveColors[i], pow(layerNoise, 4.));
     }
   }
   

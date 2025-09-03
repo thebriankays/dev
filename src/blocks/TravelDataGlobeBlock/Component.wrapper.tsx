@@ -38,7 +38,7 @@ import type {
 } from './types'
 import './styles.scss'
 
-// ✅ Lazy import the 3D globe component
+// ✅ Lazy import (remove the direct import to avoid duplication)
 const TravelDataGlobe = lazy(
   () => import('@/webgl/components/globe/TravelDataGlobe/TravelDataGlobeManual')
 )
@@ -347,7 +347,6 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
     setFocusTarget({ lat: airport.location.lat, lng: airport.location.lng })
   }, [])
 
-  // WebGL content with transparent background
   const webglContent = (
     <Suspense
       fallback={
@@ -355,12 +354,11 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
           <ambientLight intensity={0.3} />
           <mesh>
             <sphereGeometry args={[2, 32, 32]} />
-            <meshBasicMaterial wireframe color="#666666" />
+            <meshBasicMaterial wireframe />
           </mesh>
         </>
       }
     >
-      {/* Background is already transparent from canvas setup */}
       <ambientLight intensity={0.5} />
       <directionalLight position={[10, 10, 5]} intensity={1} />
       <TravelDataGlobe
@@ -372,8 +370,8 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
         globeImageUrl={blockConfig.globeImageUrl || '/earth-blue-marble.jpg'}
         bumpImageUrl={blockConfig.bumpImageUrl || '/earth-topology.png'}
         autoRotateSpeed={blockConfig.autoRotateSpeed || 0.3}
-        atmosphereColor={blockConfig.atmosphereColor || '#3a228a'}
-        atmosphereAltitude={blockConfig.atmosphereAltitude || 0.25}
+        atmosphereColor={blockConfig.atmosphereColor || '#81d6e3'}  // Changed to light cyan for glow effect
+        atmosphereAltitude={blockConfig.atmosphereAltitude || 0.35}  // Increased for better visibility
         onCountryClick={(name: string) => {
           if (currentView === 'travelAdvisory') {
             const advisory = advisories.find((a) => a.country === name)
@@ -406,13 +404,12 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
       {...blockConfig}
     >
       <div className="tdg-container">
-        {/* Vertical Marquee - HTML overlay with high z-index */}
-        <div className="tdg-vertical-marquee" style={{ position: 'absolute', zIndex: 1000 }}>
+        <div className="tdg-vertical-marquee">
           <VerticalMarquee text="Sweet Serenity Getaways" animationSpeed={0.5} position="left" />
         </div>
 
-        {/* Tabs - HTML overlay with high z-index */}
-        <div className="tdg-tabs-wrapper" style={{ position: 'absolute', zIndex: 1001 }}>
+        {/* Tabs */}
+        <div className="tdg-tabs-wrapper">
           <div className="tdg-tabs-container">
             {enabledViews.map((view: string) => {
               const typedView = view as
@@ -454,8 +451,8 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
           </div>
         </div>
 
-        {/* Info Panel - HTML overlay with high z-index */}
-        <aside className="tdg-info-panels" style={{ position: 'absolute', zIndex: 1002 }}>
+        {/* Panel */}
+        <aside className="tdg-info-panels">
           <div className="tdg-info-panel-glass">
             <div className="tdg-panel-heading">
               {currentView === 'travelAdvisory' && (
@@ -607,7 +604,6 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
           </div>
         </aside>
 
-        {/* Detail overlays - HTML with high z-index */}
         {selectedAdvisory && (
           <AdvisoryDetails advisory={selectedAdvisory} onClose={() => setSelectedAdvisory(null)} />
         )}

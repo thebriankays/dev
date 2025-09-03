@@ -1,8 +1,6 @@
 // Fragment shader for Whatamesh background gradient
 // Based on Stripe's WebGL gradient animation
 
-precision highp float;
-
 uniform vec2 resolution;
 uniform float u_darken_top;
 uniform float u_shadow_power;

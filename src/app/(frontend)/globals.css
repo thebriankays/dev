@@ -127,11 +127,11 @@
 
 html {
   opacity: 0;
-  background: #000814; /* Dark blue background */
+  background: transparent; /* Allow canvas to show through */
 }
 
 html[data-theme='dark'],
 html[data-theme='light'] {
   opacity: initial;
-  background: #000814; /* Dark blue background for both themes */
+  background: transparent; /* Allow canvas to show through for both themes */
 }
