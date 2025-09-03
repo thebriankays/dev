@@ -1,8 +1,9 @@
 'use client'
 
-import React, { createContext, useContext, ReactNode, useEffect, useRef, useLayoutEffect } from 'react'
+import React, { createContext, useContext, ReactNode, useEffect, useRef } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { useGSAP as useGSAPOfficial } from '@gsap/react'
 import Lenis from 'lenis'
 import { Hamo } from '@/webgl/libs/hamo'
 import { Tempus } from '@/webgl/libs/tempus'
@@ -11,7 +12,7 @@ import { Tempus } from '@/webgl/libs/tempus'
 gsap.registerPlugin(ScrollTrigger)
 
 // Try to import SplitText if available (premium plugin)
-let SplitText: typeof gsap.plugins.SplitText | null = null
+let SplitText: any | null = null
 try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const SplitTextModule = require('gsap/SplitText')
@@ -26,7 +27,7 @@ try {
 interface AnimationContextValue {
   gsap: typeof gsap
   ScrollTrigger: typeof ScrollTrigger
-  SplitText: typeof gsap.plugins.SplitText | null
+  SplitText: any | null
   lenis: Lenis | null
   hamo: Hamo | null
   tempus: Tempus | null
@@ -45,27 +46,28 @@ export const useAnimation = () => {
   return context
 }
 
-// Custom hook for GSAP animations with automatic cleanup
+// Custom hook that extends the official useGSAP with canvas integration
 export const useGSAP = (
-  callback: (context: gsap.Context, requestRender: () => void) => void,
-  deps: React.DependencyList = []
+  callback: ((context: gsap.Context, requestRender: () => void) => void) | (() => void),
+  config?: Parameters<typeof useGSAPOfficial>[1]
 ) => {
-  const contextRef = useRef<gsap.Context | null>(null)
   const canvasContext = useContext(AnimationContext)
-  const callbackRef = useRef(callback)
-  callbackRef.current = callback
   
-  useLayoutEffect(() => {
-    contextRef.current = gsap.context(() => {
-      callbackRef.current(contextRef.current!, canvasContext?.requestRender || (() => {}))
-    })
-
-    return () => {
-      contextRef.current?.revert()
-    }
-  }, [canvasContext?.requestRender, ...deps])
-
-  return contextRef.current
+  // Check if callback expects requestRender parameter
+  const callbackLength = callback.length
+  
+  return useGSAPOfficial(
+    callbackLength > 1 
+      ? (context) => {
+          // Callback expects context and requestRender
+          (callback as (context: gsap.Context, requestRender: () => void) => void)(
+            context, 
+            canvasContext?.requestRender || (() => {})
+          )
+        }
+      : callback as () => void,
+    config
+  )
 }
 
 export function AnimationProvider({ children }: { children: ReactNode }) {

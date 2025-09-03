@@ -1,7 +1,7 @@
 'use client'
 
-import { useRef, useEffect } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useRef, useEffect, useState } from 'react'
+import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 
 const LAYER_Z_POSITIONS = {
@@ -89,12 +89,17 @@ export function AnimatedFlagMesh({
   layer = 'content'
 }: AnimatedFlagMeshProps) {
   const groupRef = useRef<THREE.Group>(null!)
+  const meshRef = useRef<THREE.Mesh>(null!)
   const materialRef = useRef<THREE.RawShaderMaterial | null>(null)
   const uniformsRef = useRef({
     uTime: null as any,
     uFrequency: null as any,
     uStrength: null as any
   })
+  const [isInView, setIsInView] = useState(true)
+  const { camera } = useThree()
+  const frustum = useRef(new THREE.Frustum())
+  const matrix = useRef(new THREE.Matrix4())
 
   // Use proper z-positioning from layer system
   const zPosition = LAYER_Z_POSITIONS[layer]
@@ -152,10 +157,25 @@ export function AnimatedFlagMesh({
     }
   }, [flagImage, frequency.x, frequency.y, strength, wireframe])
 
-  // Update animation only when visible
+  // Check if object is in camera frustum
   useFrame((state) => {
-    if (!visible || !uniformsRef.current.uTime) return
-    uniformsRef.current.uTime.value = state.clock.elapsedTime * animationSpeed
+    if (!meshRef.current || !groupRef.current || !visible) return
+    
+    // Update frustum from camera
+    matrix.current.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
+    frustum.current.setFromProjectionMatrix(matrix.current)
+    
+    // Get world bounding box of the flag
+    const box = new THREE.Box3().setFromObject(groupRef.current)
+    const inView = frustum.current.intersectsBox(box)
+    
+    // Only update animation if in view and visible
+    if (inView && visible && uniformsRef.current.uTime) {
+      uniformsRef.current.uTime.value = state.clock.elapsedTime * animationSpeed
+    }
+    
+    // Update visibility state for debugging
+    setIsInView(inView)
   })
 
   if (!materialRef.current) return null
@@ -169,7 +189,7 @@ export function AnimatedFlagMesh({
       </mesh>
 
       {/* Flag */}
-      <mesh>
+      <mesh ref={meshRef} frustumCulled={true}>
         <boxGeometry args={[3, 2, 0.025, segments, segments]} />
         <primitive object={materialRef.current} attach="material" />
       </mesh>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useMemo, useEffect } from 'react'
+import { useRef, useMemo, useEffect, useState } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
@@ -21,11 +21,16 @@ const ease = CustomEase.create(
   'M0,0,C0.042,0.224,0.268,0.35,0.524,0.528,0.708,0.656,0.876,0.808,1,1'
 )
 
-export function Dolphin({ curve, delay = 0, index, animationSpeed = 8 }: DolphinProps) {
+export function Dolphin({ curve, delay = 0, index: _index, animationSpeed = 8 }: DolphinProps) {
   const { scene } = useGLTF('/dolphin.glb')
   const meshRef = useRef<THREE.Mesh>(null)
   const playHead = useRef({ value: 0 })
   const dataTextureRef = useRef<THREE.DataTexture | null>(null)
+  const [isInView, setIsInView] = useState(true)
+  const { camera } = useThree()
+  const frustum = useRef(new THREE.Frustum())
+  const matrix = useRef(new THREE.Matrix4())
+  const tlRef = useRef<gsap.core.Timeline | null>(null)
   
   const dolphinMesh = useMemo(() => {
     const mesh = scene.children[0] as THREE.Mesh
@@ -85,6 +90,7 @@ export function Dolphin({ curve, delay = 0, index, animationSpeed = 8 }: Dolphin
     
     const tl = gsap.timeline({ repeat: -1, repeatDelay: 1 })
     tl.to(playHead.current, { value: 1, duration: animationSpeed, ease }, delay)
+    tlRef.current = tl
     
     return () => {
       tl.kill()
@@ -161,7 +167,30 @@ export function Dolphin({ curve, delay = 0, index, animationSpeed = 8 }: Dolphin
   }, [dolphinMesh.material, numPoints, lengthRatio, objSize])
 
   useFrame(() => {
-    if (meshRef.current && dolphinMesh.material.userData.shader) {
+    if (!meshRef.current) return
+    
+    // Update frustum from camera
+    matrix.current.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
+    frustum.current.setFromProjectionMatrix(matrix.current)
+    
+    // Get world bounding box of the dolphin
+    const box = new THREE.Box3().setFromObject(meshRef.current)
+    const inView = frustum.current.intersectsBox(box)
+    
+    // Pause/resume animation based on visibility
+    if (inView !== isInView) {
+      setIsInView(inView)
+      if (tlRef.current) {
+        if (inView) {
+          tlRef.current.resume()
+        } else {
+          tlRef.current.pause()
+        }
+      }
+    }
+    
+    // Only update shader uniforms if in view
+    if (inView && dolphinMesh.material.userData.shader) {
       dolphinMesh.material.userData.shader.uniforms.uTime.value = playHead.current.value
     }
   })
@@ -171,6 +200,7 @@ export function Dolphin({ curve, delay = 0, index, animationSpeed = 8 }: Dolphin
       ref={meshRef}
       geometry={dolphinMesh.geometry}
       material={dolphinMesh.material}
+      frustumCulled={true}
     />
   )
 }

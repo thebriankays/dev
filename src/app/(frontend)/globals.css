@@ -104,6 +104,20 @@
     @apply text-foreground min-h-[100vh] flex flex-col;
     background: transparent;
   }
+  
+  /* Critical: Ensure main layout and canvas containers are transparent for shared canvas architecture */
+  main {
+    background-color: transparent !important;
+    background: transparent !important;
+  }
+  
+  .block-wrapper {
+    background: transparent !important;
+  }
+  
+  canvas {
+    background: transparent !important;
+  }
 }
 
 html {

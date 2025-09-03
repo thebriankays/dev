@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useAnimation } from '@/providers/Animation'
 import { useWebGLRect } from '@/hooks/use-webgl-rect'
 import WeatherCardClient from './WeatherCardClient'
@@ -19,8 +19,10 @@ export default function WeatherCardWebGL({
 }: WeatherCardWebGLProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const { tempus, lenis, ScrollTrigger, gsap } = useAnimation()
+  const [isVisible, setIsVisible] = useState(true)
+  const animationFrameRef = useRef<number | undefined>(undefined)
   
-  // Setup WebGL effects if enabled
+  // Setup WebGL effects if enabled - only when visible
   const rect = useWebGLRect(containerRef)
 
   // Setup scroll-triggered animations
@@ -128,15 +130,53 @@ export default function WeatherCardWebGL({
     }
 
     // Tempus doesn't have a subscribe method, we'll use RAF instead
-    let rafId: number
     const animate = () => {
-      handleTempusUpdate()
-      rafId = requestAnimationFrame(animate)
+      if (isVisible) {
+        handleTempusUpdate()
+        animationFrameRef.current = requestAnimationFrame(animate)
+      }
     }
-    rafId = requestAnimationFrame(animate)
     
-    return () => cancelAnimationFrame(rafId)
-  }, [tempus])
+    if (isVisible) {
+      animationFrameRef.current = requestAnimationFrame(animate)
+    }
+    
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+      }
+    }
+  }, [tempus, isVisible])
+
+  // Setup Intersection Observer for visibility detection
+  useEffect(() => {
+    const options = {
+      root: null,
+      rootMargin: '50px',
+      threshold: 0.01
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const visible = entry.isIntersecting
+        setIsVisible(visible)
+        
+        // Cancel animations when not visible
+        if (!visible && animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current)
+          animationFrameRef.current = undefined
+        }
+      })
+    }, options)
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current)
+    }
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [])
 
   return (
     <div 
@@ -151,9 +191,10 @@ export default function WeatherCardWebGL({
       <WeatherCardClient 
         weatherData={weatherData}
         location={location}
+        key={isVisible ? 'visible' : 'hidden'}
       />
       
-      {enableWebGL && rect && (
+      {enableWebGL && rect && isVisible && (
         <div 
           className="webgl-overlay"
           style={{
@@ -165,6 +206,7 @@ export default function WeatherCardWebGL({
             pointerEvents: 'none',
             mixBlendMode: 'screen',
             opacity: 0.3,
+            display: isVisible ? 'block' : 'none',
           }}
         />
       )}

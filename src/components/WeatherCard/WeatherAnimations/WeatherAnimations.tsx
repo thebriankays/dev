@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef, useCallback } from 'react'
+import React, { useEffect, useRef, useCallback, useState } from 'react'
 
 interface WeatherAnimationsProps {
   weatherType: string
@@ -38,6 +38,8 @@ const WeatherAnimations: React.FC<WeatherAnimationsProps> = ({ weatherType, ligh
   const cloudParticlesRef = useRef<Particle[]>([])
   const cloudImageRef = useRef<HTMLImageElement | null>(null)
   const cloudImageLoadedRef = useRef(false)
+  const [isVisible, setIsVisible] = useState(true)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   // Initialize rain particles
   useEffect(() => {
@@ -155,17 +157,21 @@ const WeatherAnimations: React.FC<WeatherAnimationsProps> = ({ weatherType, ligh
         })
       }
 
-      animationRef.current = requestAnimationFrame(draw)
+      if (isVisible) {
+        animationRef.current = requestAnimationFrame(draw)
+      }
     }
 
-    draw()
+    if (isVisible) {
+      draw()
+    }
 
     return () => {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current)
       }
     }
-  }, [weatherType])
+  }, [weatherType, isVisible])
 
   // Snow animation
   const animateSnow = useCallback(() => {
@@ -229,17 +235,21 @@ const WeatherAnimations: React.FC<WeatherAnimationsProps> = ({ weatherType, ligh
         }
       })
 
-      snowAnimationRef.current = requestAnimationFrame(draw)
+      if (isVisible) {
+        snowAnimationRef.current = requestAnimationFrame(draw)
+      }
     }
 
-    draw()
+    if (isVisible) {
+      draw()
+    }
 
     return () => {
       if (snowAnimationRef.current) {
         cancelAnimationFrame(snowAnimationRef.current)
       }
     }
-  }, [weatherType])
+  }, [weatherType, isVisible])
 
   // Cloud animation
   const animateClouds = useCallback(() => {
@@ -318,38 +328,84 @@ const WeatherAnimations: React.FC<WeatherAnimationsProps> = ({ weatherType, ligh
         })
       }
 
-      cloudAnimationRef.current = requestAnimationFrame(draw)
+      if (isVisible) {
+        cloudAnimationRef.current = requestAnimationFrame(draw)
+      }
     }
 
-    draw()
+    if (isVisible) {
+      draw()
+    }
 
     return () => {
       if (cloudAnimationRef.current) {
         cancelAnimationFrame(cloudAnimationRef.current)
       }
     }
-  }, [weatherType])
+  }, [weatherType, isVisible])
 
   // Setup animations
   useEffect(() => {
     const rainCleanup = animateRain()
     return rainCleanup
-  }, [animateRain])
+  }, [animateRain, isVisible])
 
   useEffect(() => {
     if (weatherType === 'snowy') {
       const snowCleanup = animateSnow()
       return snowCleanup
     }
-  }, [weatherType, animateSnow])
+  }, [weatherType, animateSnow, isVisible])
 
   useEffect(() => {
     const cloudCleanup = animateClouds()
     return cloudCleanup
-  }, [animateClouds])
+  }, [animateClouds, isVisible])
+
+  // Setup Intersection Observer for visibility detection
+  useEffect(() => {
+    const options = {
+      root: null,
+      rootMargin: '50px',
+      threshold: 0.01
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const visible = entry.isIntersecting
+        setIsVisible(visible)
+        
+        // Cancel all animations when not visible
+        if (!visible) {
+          if (animationRef.current) {
+            cancelAnimationFrame(animationRef.current)
+            animationRef.current = undefined
+          }
+          if (snowAnimationRef.current) {
+            cancelAnimationFrame(snowAnimationRef.current)
+            snowAnimationRef.current = undefined
+          }
+          if (cloudAnimationRef.current) {
+            cancelAnimationFrame(cloudAnimationRef.current)
+            cloudAnimationRef.current = undefined
+          }
+        }
+      })
+    }, options)
+
+    // Observe the container div as a reference for the entire component
+    const container = containerRef.current
+    if (container) {
+      observer.observe(container)
+    }
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [])
 
   return (
-    <>
+    <div ref={containerRef} style={{ position: 'relative', width: '100%', height: '100%' }}>
       <div
         id="thunderstorm"
         style={{ 
@@ -406,7 +462,7 @@ const WeatherAnimations: React.FC<WeatherAnimationsProps> = ({ weatherType, ligh
           transition: 'opacity 2s',
         }}
       />
-    </>
+    </div>
   )
 }
 
