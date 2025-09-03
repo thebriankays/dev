@@ -173,25 +173,37 @@ export async function TravelDataGlobeBlock(props: TravelDataGlobeBlockProps) {
     if (country.code) countryLookup.set(country.code.toLowerCase(), country)
   })
 
+  // Debug: Log first advisory to see structure
+  if (advisoriesResult.docs.length > 0) {
+    console.log('Sample advisory doc:', JSON.stringify(advisoriesResult.docs[0], null, 2))
+  }
+
   // Transform travel advisories with pre-computed values
   const transformedAdvisories: AdvisoryCountry[] = advisoriesResult.docs.map((doc: any) => {
     const countryName = doc.country?.name || doc.name || 'Unknown'
     const countryData = countryLookup.get(countryName.toLowerCase()) || doc.country || doc
     
+    // Try different possible field names for level
+    const level = doc.level || doc.advisoryLevel || doc.advisory_level || 
+                  doc.travelAdvisoryLevel || doc.travel_advisory_level || 1
+    
+    // Ensure level is a number between 1-4
+    const validLevel = typeof level === 'number' ? Math.min(4, Math.max(1, level)) : 1
+    
     return {
       country: countryName,
       countryCode: countryData?.code || '',
       countryFlag: getFlagUrl(countryData),
-      level: doc.level || 1,
-      advisoryText: doc.description || doc.advisoryText || '',
-      dateAdded: doc.dateAdded || doc.createdAt,
-      isNew: isNewAdvisory(doc.dateAdded || doc.createdAt),
+      level: validLevel,
+      advisoryText: doc.description || doc.advisoryText || doc.advisory_text || '',
+      dateAdded: doc.dateAdded || doc.date_added || doc.createdAt,
+      isNew: isNewAdvisory(doc.dateAdded || doc.date_added || doc.createdAt),
       // Pre-compute display values
-      levelText: `Level ${doc.level || 1}`,
+      levelText: `Level ${validLevel}`,
       levelDescription: 
-        doc.level === 1 ? 'Exercise Normal Precautions' :
-        doc.level === 2 ? 'Exercise Increased Caution' :
-        doc.level === 3 ? 'Reconsider Travel' :
+        validLevel === 1 ? 'Exercise Normal Precautions' :
+        validLevel === 2 ? 'Exercise Increased Caution' :
+        validLevel === 3 ? 'Reconsider Travel' :
         'Do Not Travel',
     }
   }).sort((a, b) => {

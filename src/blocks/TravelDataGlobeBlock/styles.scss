@@ -652,6 +652,296 @@
   margin-bottom: 1rem;
 }
 
+/* Glass morphism for detail panels */
+.tdg-detail-glass {
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 
+    0 12px 32px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.tdg-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.tdg-detail-header-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.tdg-detail-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.tdg-detail-level {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 0.5rem;
+  border-radius: 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+  
+  &.tdg-level-1 { 
+    background: rgba(76, 175, 80, 0.2); 
+    color: #4caf50; 
+  }
+  &.tdg-level-2 { 
+    background: rgba(255, 179, 0, 0.2); 
+    color: #ffb300; 
+  }
+  &.tdg-level-3 { 
+    background: rgba(244, 81, 30, 0.2); 
+    color: #f4511e; 
+  }
+  &.tdg-level-4 { 
+    background: rgba(183, 28, 28, 0.2); 
+    color: #ef4444; 
+  }
+}
+
+.tdg-detail-close {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover { 
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+  }
+}
+
+.tdg-detail-content {
+  position: relative;
+  flex: 1 1 auto;
+  padding: 1.25rem;
+  overflow-y: auto;
+  color: #e2e8f0;
+  
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+  }
+}
+
+.tdg-detail-logo-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0.05;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.tdg-prose {
+  position: relative;
+  z-index: 1;
+  
+  h3, h4 {
+    color: #e2e8f0;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  p {
+    color: rgba(226, 232, 240, 0.9);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+  }
+}
+
+.tdg-advisory-meta {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0.375rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  
+  p {
+    margin: 0.5rem 0;
+    color: rgba(226, 232, 240, 0.9);
+    
+    strong {
+      color: #e2e8f0;
+      font-weight: 600;
+    }
+  }
+}
+
+.tdg-advisory-text-content {
+  p {
+    margin-bottom: 1rem;
+    line-height: 1.7;
+  }
+}
+
+.tdg-detail-footer {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tdg-detail-source {
+  font-size: 0.75rem;
+  color: rgba(226, 232, 240, 0.6);
+  margin: 0;
+}
+
+/* Info rows for restaurant/airport details */
+.tdg-info-row {
+  display: grid;
+  grid-template-columns: 20px auto 1fr;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  color: rgba(226, 232, 240, 0.85);
+}
+
+.tdg-info-icon { 
+  opacity: 0.75;
+  color: #81d6e3;
+}
+
+.tdg-info-label { 
+  color: rgba(226, 232, 240, 0.65);
+  font-weight: 500;
+}
+
+.tdg-info-value { 
+  color: #e2e8f0;
+}
+
+.tdg-location-coordinates {
+  margin-top: 1.5rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: rgba(226, 232, 240, 0.7);
+  font-family: monospace;
+}
+
+/* Visa details specific styles */
+.tdg-visa-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.tdg-stat-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+  text-align: center;
+  
+  .tdg-stat-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin-bottom: 0.25rem;
+  }
+  
+  .tdg-stat-label {
+    display: block;
+    font-size: 0.75rem;
+    color: rgba(226, 232, 240, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}
+
+.tdg-visa-requirements-grid {
+  display: grid;
+  gap: 0.5rem;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+  }
+}
+
+.tdg-visa-requirement-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 0.25rem;
+  transition: background 0.2s;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+}
+
+.tdg-visa-requirement-country {
+  color: #e2e8f0;
+  font-size: 0.875rem;
+}
+
+.tdg-visa-requirement-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: rgba(226, 232, 240, 0.8);
+  
+  svg {
+    font-size: 0.875rem;
+  }
+}
+
 @keyframes slideUp {
   from {
     transform: translateY(100%);

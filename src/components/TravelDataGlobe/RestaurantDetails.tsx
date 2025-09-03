@@ -12,24 +12,30 @@ interface RestaurantDetailsProps {
 
 export function RestaurantDetails({ restaurant, onClose }: RestaurantDetailsProps) {
   return (
-    <div className="tdg-details-overlay">
-      <div className="tdg-details-panel">
-        <button className="tdg-details-close" onClick={onClose}>
-          <FontAwesomeIcon icon={faTimes} />
-        </button>
-        
-        <div className="tdg-details-header">
-          <FontAwesomeIcon icon={faUtensils} className="tdg-details-icon" />
-          <h2>{restaurant.name}</h2>
-          {restaurant.greenStar && (
-            <span className="tdg-green-star-badge" title="Michelin Green Star">
-              🌿 Green Star
-            </span>
-          )}
+    <div className="tdg-detail-overlay">
+      <div className="tdg-detail-glass">
+        <div className="tdg-detail-header">
+          <div className="tdg-detail-header-left">
+            <FontAwesomeIcon icon={faUtensils} />
+            <h2 className="tdg-detail-title">{restaurant.name}</h2>
+            {restaurant.greenStar && (
+              <span className="tdg-detail-level tdg-level-1" title="Michelin Green Star">
+                🌿 Green Star
+              </span>
+            )}
+          </div>
+          
+          <button
+            className="tdg-detail-close"
+            onClick={onClose}
+            aria-label="Close details"
+          >
+            <FontAwesomeIcon icon={faTimes} />
+          </button>
         </div>
 
-        <div className="tdg-details-content">
-          <div className="tdg-restaurant-info">
+        <div className="tdg-detail-content" data-lenis-prevent>
+          <div className="tdg-prose">
             <div className="tdg-info-row">
               <FontAwesomeIcon icon={faStar} className="tdg-info-icon" />
               <span className="tdg-info-label">Rating:</span>
@@ -49,10 +55,10 @@ export function RestaurantDetails({ restaurant, onClose }: RestaurantDetailsProp
               <span className="tdg-info-label">Location:</span>
               <span className="tdg-info-value">{restaurant.displayLocation}</span>
             </div>
-          </div>
 
-          <div className="tdg-location-coordinates">
-            <span>Coordinates: {restaurant.location.lat.toFixed(4)}, {restaurant.location.lng.toFixed(4)}</span>
+            <div className="tdg-location-coordinates">
+              <span>Coordinates: {restaurant.location.lat.toFixed(4)}, {restaurant.location.lng.toFixed(4)}</span>
+            </div>
           </div>
         </div>
       </div>
