@@ -1,6 +1,13 @@
 'use client'
 
-import React, { useState, useCallback, useEffect, Suspense } from 'react'
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  Suspense,
+  lazy,
+} from 'react'
 import Image from 'next/image'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
@@ -13,9 +20,6 @@ import {
 import { BlockWrapper } from '@/blocks/_shared/BlockWrapper'
 import VerticalMarquee from '@/components/VerticalMarquee/VerticalMarquee'
 import type { Feature, Polygon, MultiPolygon } from 'geojson'
-// Import directly instead of lazy loading
-import TravelDataGlobe from '@/webgl/components/globe/TravelDataGlobe/TravelDataGlobeManual'
-
 import { AdvisoryPanel } from '@/components/TravelDataGlobe/AdvisoryPanel'
 import { AdvisoryDetails } from '@/components/TravelDataGlobe/AdvisoryDetails'
 import { VisaPanel } from '@/components/TravelDataGlobe/VisaPanel'
@@ -34,9 +38,12 @@ import type {
 } from './types'
 import './styles.scss'
 
-const TravelDataGlobe = lazy(() => import('@/webgl/components/globe/TravelDataGlobe/TravelDataGlobeManual'))
+// ✅ Lazy import the 3D globe component
+const TravelDataGlobe = lazy(
+  () => import('@/webgl/components/globe/TravelDataGlobe/TravelDataGlobeManual')
+)
 
-// Helper function
+// Helpers
 function normalizeName(s: string) {
   return (s || '')
     .toLowerCase()
@@ -45,33 +52,35 @@ function normalizeName(s: string) {
     .trim()
 }
 
-// Type for geographic feature
-type WorldFeature = Feature<Polygon | MultiPolygon, {
-  name?: string; NAME?: string;
-  iso_a2?: string; ISO_A2?: string;
-  iso2?: string; ISO2?: string;
-  iso_alpha2?: string; ISO_ALPHA2?: string;
-  cca2?: string; CCA2?: string;
-  LABEL_X?: number; LABEL_Y?: number;
-  label_x?: number; label_y?: number;
-  LABEL_LONG?: number; LABEL_LAT?: number;
-  label_long?: number; label_lat?: number;
-  LON?: number; LAT?: number;
-  sovereignt?: string; SOVEREIGNT?: string;
-  geounit?: string; GEOUNIT?: string;
-  name_en?: string; NAME_EN?: string;
-  name_long?: string; NAME_LONG?: string;
-  admin?: string; ADMIN?: string;
-}>
+type WorldFeature = Feature<
+  Polygon | MultiPolygon,
+  {
+    name?: string; NAME?: string
+    iso_a2?: string; ISO_A2?: string
+    iso2?: string; ISO2?: string
+    iso_alpha2?: string; ISO_ALPHA2?: string
+    cca2?: string; CCA2?: string
+    LABEL_X?: number; LABEL_Y?: number
+    label_x?: number; label_y?: number
+    LABEL_LONG?: number; LABEL_LAT?: number
+    label_long?: number; label_lat?: number
+    LON?: number; LAT?: number
+    sovereignt?: string; SOVEREIGNT?: string
+    geounit?: string; GEOUNIT?: string
+    name_en?: string; NAME_EN?: string
+    name_long?: string; NAME_LONG?: string
+    admin?: string; ADMIN?: string
+  }
+>
 
-// Get centroid from feature - fixed coordinate order
 function getCentroidFromFeature(feature: WorldFeature): { lat: number; lng: number } | null {
   try {
     const props = feature?.properties || {}
-    // Check for pre-computed label points (Natural Earth datasets have these)
-    const labelLng = props.LABEL_X ?? props.label_x ?? props.LABEL_LONG ?? props.label_long ?? props.LON
-    const labelLat = props.LABEL_Y ?? props.label_y ?? props.LABEL_LAT ?? props.label_lat ?? props.LAT
-    
+    const labelLng =
+      props.LABEL_X ?? props.label_x ?? props.LABEL_LONG ?? props.label_long ?? props.LON
+    const labelLat =
+      props.LABEL_Y ?? props.label_y ?? props.LABEL_LAT ?? props.label_lat ?? props.LAT
+
     if (Number.isFinite(Number(labelLng)) && Number.isFinite(Number(labelLat))) {
       return { lat: Number(labelLat), lng: Number(labelLng) }
     }
@@ -85,7 +94,7 @@ function getCentroidFromFeature(feature: WorldFeature): { lat: number; lng: numb
       for (const coord of ring) {
         if (!coord || coord.length < 2) continue
         const lng = Number(coord[0])
-        const lat = Number(coord[1]) 
+        const lat = Number(coord[1])
         if (Number.isFinite(lat) && Number.isFinite(lng)) {
           sx += lng
           sy += lat
@@ -97,17 +106,14 @@ function getCentroidFromFeature(feature: WorldFeature): { lat: number; lng: numb
     }
 
     if (geom.type === 'Polygon' && geom.coordinates && geom.coordinates[0]) {
-      return collect(geom.coordinates[0])
+      return collect(geom.coordinates[0] as number[][])
     }
     if (geom.type === 'MultiPolygon' && geom.coordinates && geom.coordinates.length > 0) {
-      // Use the largest polygon for centroid
       const rings = (geom.coordinates as number[][][][])
         .map((poly) => poly[0])
         .filter((ring) => ring && ring.length > 0)
         .sort((a, b) => b.length - a.length)
-      if (rings.length > 0) {
-        return collect(rings[0])
-      }
+      if (rings.length > 0) return collect(rings[0] as number[][])
     }
     return null
   } catch (e) {
@@ -137,63 +143,53 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
   const [borders, setBorders] = useState(initialBorders)
   const [centroids, setCentroids] = useState<Map<string, { lat: number; lng: number }>>(new Map())
 
-  // Advisory maps
-  const advisoryByCode = React.useMemo(() => {
+  const advisoryByCode = useMemo(() => {
     const m = new Map<string, AdvisoryCountry>()
-    advisories.forEach(a => a.countryCode && m.set(a.countryCode.toUpperCase(), a))
+    advisories.forEach((a) => a.countryCode && m.set(a.countryCode.toUpperCase(), a))
     return m
   }, [advisories])
 
-  const advisoryByName = React.useMemo(() => {
+  const advisoryByName = useMemo(() => {
     const m = new Map<string, AdvisoryCountry>()
-    advisories.forEach(a => m.set(normalizeName(a.country), a))
+    advisories.forEach((a) => m.set(normalizeName(a.country), a))
     return m
   }, [advisories])
 
-  // Load geo data
   useEffect(() => {
     fetch('/datamaps.world.json')
-      .then(res => res.json())
+      .then((res) => res.json())
       .then((geoData: { features: WorldFeature[] }) => {
         const localCentroids = new Map<string, { lat: number; lng: number }>()
-        
-        console.log('Loading geo data, matching advisories...')
-        console.log('Advisory lookup has', advisoryByCode.size, 'by code and', advisoryByName.size, 'by name')
-        
+
         const advisoryPolygons = geoData.features.map((feature) => {
           const props = feature.properties || {}
-          // Try multiple ISO code fields
           const iso2 = String(
-            props.iso_a2 || props.ISO_A2 || 
-            props.iso2 || props.ISO2 || 
-            props.iso_alpha2 || props.ISO_ALPHA2 || 
-            props.cca2 || props.CCA2 || ''
-          ).toUpperCase().trim()
-          
-          // Try multiple name fields
+            props.iso_a2 ||
+              props.ISO_A2 ||
+              props.iso2 ||
+              props.ISO2 ||
+              props.iso_alpha2 ||
+              props.ISO_ALPHA2 ||
+              props.cca2 ||
+              props.CCA2 ||
+              ''
+          )
+            .toUpperCase()
+            .trim()
+
           const rawName = String(
-            props.name || props.NAME || 
-            props.name_en || props.NAME_EN || 
-            props.admin || props.ADMIN || ''
+            props.name || props.NAME || props.name_en || props.NAME_EN || props.admin || props.ADMIN || ''
           ).trim()
-          
-          // Try to match advisory
-          let joined = null
-          
-          // First try ISO2 code match
-          if (iso2 && advisoryByCode.has(iso2)) {
-            joined = advisoryByCode.get(iso2)
-          }
-          
-          // Then try various name fields
+
+          let joined: AdvisoryCountry | undefined
+          if (iso2 && advisoryByCode.has(iso2)) joined = advisoryByCode.get(iso2)
           if (!joined) {
             const nameVariants = [
               normalizeName(rawName),
               normalizeName(props.sovereignt || props.SOVEREIGNT || ''),
               normalizeName(props.geounit || props.GEOUNIT || ''),
-              normalizeName(props.name_long || props.NAME_LONG || '')
-            ].filter(n => n.length > 0)
-            
+              normalizeName(props.name_long || props.NAME_LONG || ''),
+            ].filter((n) => n.length > 0)
             for (const variant of nameVariants) {
               if (advisoryByName.has(variant)) {
                 joined = advisoryByName.get(variant)
@@ -201,21 +197,13 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
               }
             }
           }
-          
-          // Log some matches for debugging
-          if (joined && (rawName.startsWith('A') || rawName.startsWith('B'))) {
-            console.log(`Matched ${rawName} (${iso2}) -> Level ${joined.level}`)
-          }
 
           if (feature.geometry) {
             const centroid = getCentroidFromFeature(feature)
             if (centroid) {
               localCentroids.set(normalizeName(rawName), centroid)
               if (iso2) localCentroids.set(iso2, centroid)
-              // Also add sovereign name to centroids
-              if (props.sovereignt) {
-                localCentroids.set(normalizeName(props.sovereignt), centroid)
-              }
+              if (props.sovereignt) localCentroids.set(normalizeName(props.sovereignt), centroid)
             }
           }
 
@@ -229,11 +217,16 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
 
         const visaPolygons = geoData.features.map((feature) => {
           const rawName = feature.properties?.name || ''
-          const hasData = visaCountries.some(v => normalizeName(v.countryName) === normalizeName(rawName))
+          const hasData = visaCountries.some(
+            (v) => normalizeName(v.countryName) === normalizeName(rawName)
+          )
           return {
             type: 'Feature' as const,
             geometry: feature.geometry,
-            properties: { name: rawName, iso_a2: (feature.properties?.iso_a2 || '').toUpperCase() },
+            properties: {
+              name: rawName,
+              iso_a2: (feature.properties?.iso_a2 || '').toUpperCase(),
+            },
             requirement: (hasData ? 'visa_required' : 'no_admission') as 'visa_required' | 'no_admission',
           }
         })
@@ -246,13 +239,16 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
           properties: { iso_a2: 'WORLD', name: 'World Borders' },
         })
       })
-      .catch(err => console.warn('Failed to load GeoJSON data:', err))
+      .catch((err) => console.warn('Failed to load GeoJSON data:', err))
   }, [advisories, visaCountries, advisoryByCode, advisoryByName])
 
-  // State management
-  const [currentView, setCurrentView] = useState<'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports'>(
-    (blockConfig.initialView || 'travelAdvisory') as 'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports'
-  )
+  const [currentView, setCurrentView] = useState<
+    'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports'
+  >((blockConfig.initialView || 'travelAdvisory') as
+    | 'travelAdvisory'
+    | 'visaRequirements'
+    | 'michelinRestaurants'
+    | 'airports')
   const [searchQuery, setSearchQuery] = useState('')
   const [showAdvisoryKey, setShowAdvisoryKey] = useState(false)
 
@@ -263,36 +259,31 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
 
   const [_hoveredCountry, _setHoveredCountry] = useState<string | null>(null)
   const [focusTarget, setFocusTarget] = useState<{ lat: number; lng: number } | null>(null)
-  
-  // Fix scroll wheel zoom issue
+
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
-      // Check if the wheel event is happening over the globe canvas area
       const target = e.target as HTMLElement
       if (target && (target.tagName === 'CANVAS' || target.closest('.travel-data-globe-block'))) {
         e.preventDefault()
         e.stopPropagation()
       }
     }
-    
-    // Add with passive: false to ensure preventDefault works
     window.addEventListener('wheel', handleWheel, { passive: false })
     return () => window.removeEventListener('wheel', handleWheel)
   }, [])
 
-  // Get current polygons
-  const currentPolygons = React.useMemo(
+  const currentPolygons = useMemo(
     () => (currentView === 'visaRequirements' ? polygons.visa : polygons.advisory),
-    [currentView, polygons],
+    [currentView, polygons]
   )
 
-  // Visa arcs - currently unused but kept for future implementation
-  const _visaArcs = React.useMemo(() => {
+  const _visaArcs = useMemo(() => {
     if (!selectedVisaCountry || currentView !== 'visaRequirements') return []
     const origin = centroids.get(normalizeName(selectedVisaCountry.countryName))
     if (!origin) return []
-    
-    const arcs: Array<{startLat: number; startLng: number; endLat: number; endLng: number; color: string}> = []
+    const arcs: Array<{
+      startLat: number; startLng: number; endLat: number; endLng: number; color: string
+    }> = []
     selectedVisaCountry.visaRequirements.forEach((req) => {
       if (req.requirement === 'visa_free' || req.requirement === 'visa_on_arrival' || req.requirement === 'e_visa') {
         const dest = centroids.get(normalizeName(req.destinationCountry))
@@ -302,7 +293,12 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
             startLng: origin.lng,
             endLat: dest.lat,
             endLng: dest.lng,
-            color: req.requirement === 'visa_free' ? '#4caf50' : (req.requirement === 'visa_on_arrival' ? '#ffb300' : '#03a9f4'),
+            color:
+              req.requirement === 'visa_free'
+                ? '#4caf50'
+                : req.requirement === 'visa_on_arrival'
+                ? '#ffb300'
+                : '#03a9f4',
           })
         }
       }
@@ -310,30 +306,36 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
     return arcs
   }, [selectedVisaCountry, currentView, centroids])
 
-  // Handlers
-  const handleTabChange = useCallback((view: 'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports') => {
-    setCurrentView(view)
-    setSearchQuery('')
-    setSelectedAdvisory(null)
-    setSelectedVisaCountry(null)
-    setSelectedRestaurant(null)
-    setSelectedAirport(null)
-    setFocusTarget(null)
-  }, [])
+  const handleTabChange = useCallback(
+    (view: 'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports') => {
+      setCurrentView(view)
+      setSearchQuery('')
+      setSelectedAdvisory(null)
+      setSelectedVisaCountry(null)
+      setSelectedRestaurant(null)
+      setSelectedAirport(null)
+      setFocusTarget(null)
+    },
+    []
+  )
 
-  // Removed unused handleCountryClick function - direct handlers are used instead
+  const handleAdvisoryClick = useCallback(
+    (advisory: AdvisoryCountry) => {
+      setSelectedAdvisory(advisory)
+      const centroid = centroids.get(normalizeName(advisory.country))
+      if (centroid) setFocusTarget(centroid)
+    },
+    [centroids]
+  )
 
-  const handleAdvisoryClick = useCallback((advisory: AdvisoryCountry) => {
-    setSelectedAdvisory(advisory)
-    const centroid = centroids.get(normalizeName(advisory.country))
-    if (centroid) setFocusTarget(centroid)
-  }, [centroids])
-
-  const handleVisaCountryClick = useCallback((country: CountryVisaData) => {
-    setSelectedVisaCountry(country)
-    const centroid = centroids.get(normalizeName(country.countryName))
-    if (centroid) setFocusTarget(centroid)
-  }, [centroids])
+  const handleVisaCountryClick = useCallback(
+    (country: CountryVisaData) => {
+      setSelectedVisaCountry(country)
+      const centroid = centroids.get(normalizeName(country.countryName))
+      if (centroid) setFocusTarget(centroid)
+    },
+    [centroids]
+  )
 
   const handleRestaurantClick = useCallback((restaurant: MichelinRestaurantData) => {
     setSelectedRestaurant(restaurant)
@@ -345,17 +347,20 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
     setFocusTarget({ lat: airport.location.lat, lng: airport.location.lng })
   }, [])
 
-  // WebGL content for the BlockWrapper
+  // WebGL content with transparent background
   const webglContent = (
-    <Suspense fallback={
-      <>
-        <ambientLight intensity={0.3} />
-        <mesh>
-          <sphereGeometry args={[2, 32, 32]} />
-          <meshBasicMaterial color="#1a1a1a" wireframe />
-        </mesh>
-      </>
-    }>
+    <Suspense
+      fallback={
+        <>
+          <ambientLight intensity={0.3} />
+          <mesh>
+            <sphereGeometry args={[2, 32, 32]} />
+            <meshBasicMaterial wireframe color="#666666" />
+          </mesh>
+        </>
+      }
+    >
+      {/* Background is already transparent from canvas setup */}
       <ambientLight intensity={0.5} />
       <directionalLight position={[10, 10, 5]} intensity={1} />
       <TravelDataGlobe
@@ -370,20 +375,17 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
         atmosphereColor={blockConfig.atmosphereColor || '#3a228a'}
         atmosphereAltitude={blockConfig.atmosphereAltitude || 0.25}
         onCountryClick={(name: string) => {
-          // Find and select the country based on the current view
           if (currentView === 'travelAdvisory') {
-            const advisory = advisories.find(a => a.country === name)
+            const advisory = advisories.find((a) => a.country === name)
             if (advisory) handleAdvisoryClick(advisory)
           } else if (currentView === 'visaRequirements') {
-            const country = visaCountries.find(c => c.countryName === name)
+            const country = visaCountries.find((c) => c.countryName === name)
             if (country) handleVisaCountryClick(country)
           }
         }}
         onAirportClick={handleAirportClick}
         onRestaurantClick={handleRestaurantClick}
-        onCountryHover={(name: string | null) => {
-          // Could set hoveredCountry state if needed
-        }}
+        onCountryHover={(_name: string | null) => {}}
         selectedCountry={selectedAdvisory?.country || selectedVisaCountry?.countryName || null}
         selectedCountryCode={selectedAdvisory?.countryCode || selectedVisaCountry?.countryCode || null}
         hoveredCountry={_hoveredCountry}
@@ -404,15 +406,20 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
       {...blockConfig}
     >
       <div className="tdg-container">
-        <div className="tdg-vertical-marquee">
+        {/* Vertical Marquee - HTML overlay with high z-index */}
+        <div className="tdg-vertical-marquee" style={{ position: 'absolute', zIndex: 1000 }}>
           <VerticalMarquee text="Sweet Serenity Getaways" animationSpeed={0.5} position="left" />
         </div>
 
-        {/* Tabs */}
-        <div className="tdg-tabs-wrapper">
+        {/* Tabs - HTML overlay with high z-index */}
+        <div className="tdg-tabs-wrapper" style={{ position: 'absolute', zIndex: 1001 }}>
           <div className="tdg-tabs-container">
             {enabledViews.map((view: string) => {
-              const typedView = view as 'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports'
+              const typedView = view as
+                | 'travelAdvisory'
+                | 'visaRequirements'
+                | 'michelinRestaurants'
+                | 'airports'
               return (
                 <button
                   key={view}
@@ -447,13 +454,19 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
           </div>
         </div>
 
-        {/* Panel */}
-        <aside className="tdg-info-panels">
+        {/* Info Panel - HTML overlay with high z-index */}
+        <aside className="tdg-info-panels" style={{ position: 'absolute', zIndex: 1002 }}>
           <div className="tdg-info-panel-glass">
             <div className="tdg-panel-heading">
               {currentView === 'travelAdvisory' && (
                 <>
-                  <Image src="/department-of-state.png" alt="U.S. Department of State" width={40} height={40} style={{ opacity: 0.9, height: 'auto', width: '40px' }} />
+                  <Image
+                    src="/department-of-state.png"
+                    alt="U.S. Department of State"
+                    width={40}
+                    height={40}
+                    style={{ opacity: 0.9, height: 'auto', width: '40px' }}
+                  />
                   <span>U.S. Travel Advisories</span>
                 </>
               )}
@@ -594,6 +607,7 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
           </div>
         </aside>
 
+        {/* Detail overlays - HTML with high z-index */}
         {selectedAdvisory && (
           <AdvisoryDetails advisory={selectedAdvisory} onClose={() => setSelectedAdvisory(null)} />
         )}

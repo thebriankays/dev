@@ -1,8 +1,8 @@
 import React from 'react'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import type { 
-  TravelDataGlobeBlockProps, 
+import type {
+  TravelDataGlobeBlockProps,
   PreparedData,
   AdvisoryCountry,
   CountryVisaData,
@@ -12,10 +12,10 @@ import type {
   VisaPolygon,
   CountryBorder,
   AdvisoryLevel,
-  VisaData
+  VisaData,
 } from './types'
 
-// Type definitions for Payload documents
+// Types for Payload docs
 type LooseCountry = Partial<{
   flag: string
   countryFlag: string
@@ -33,7 +33,7 @@ type AdvisoryDoc = {
   advisory_level?: number
   travelAdvisoryLevel?: number
   travel_advisory_level?: number
-  threatLevel?: string
+  threatLevel?: string | number
   description?: string
   advisoryText?: string
   advisory_text?: string
@@ -51,34 +51,37 @@ type VisaDoc = {
   notes?: string
 }
 
+// Updated to match actual Payload Airport collection structure
 type AirportDoc = {
-  code: string
+  id: number | string
   name: string
+  iata?: string  // IATA code (3-letter)
+  icao?: string  // ICAO code (4-letter)
+  city: string
+  country?: { name?: string; code?: string } | string
+  latitude: number
+  longitude: number
   type?: string
-  location?: {
-    lat?: number
-    lng?: number
-    city?: string
-    country?: string
-  }
+  elevation?: number
 }
 
+// Updated to match actual Payload MichelinRestaurant collection structure
 type RestaurantDoc = {
-  id: string
+  id: number | string  // Payload returns number IDs
   name: string
   rating?: number
   cuisine?: string
   location?: {
-    lat?: number
-    lng?: number
+    latitude?: number
+    longitude?: number
     city?: string
-    country?: string
+    address?: string
   }
+  country?: { name?: string } | string
   greenStar?: boolean
   description?: string
 }
 
-// Server-side helper functions
 const isNewAdvisory = (dateAdded: string | undefined): boolean => {
   if (!dateAdded) return false
   const date = new Date(dateAdded)
@@ -89,159 +92,182 @@ const isNewAdvisory = (dateAdded: string | undefined): boolean => {
 }
 
 const getFlagUrl = (country: LooseCountry): string => {
-  // Pre-compute flag URLs server-side
   if (country?.flag) return `/flags/${country.flag}`
   if (country?.countryFlag) return `/flags/${country.countryFlag}`
   if (country?.iso2) return `/flags/${country.iso2.toLowerCase()}.svg`
   if (country?.iso_a2) return `/flags/${country.iso_a2.toLowerCase()}.svg`
   if (country?.code) return `/flags/${country.code.toLowerCase()}.svg`
-  
-  // Fallback to country name mapping
   const name = (country?.name || '').toLowerCase().trim()
   const countryMap: Record<string, string> = {
-    'united states': 'us', 'united states of america': 'us', 'usa': 'us',
-    'united kingdom': 'gb', 'uk': 'gb', 'great britain': 'gb',
-    'south korea': 'kr', 'republic of korea': 'kr',
-    'north korea': 'kp', 'china': 'cn', 'peoples republic of china': 'cn',
-    'japan': 'jp', 'germany': 'de', 'france': 'fr', 'italy': 'it', 'spain': 'es',
-    'russia': 'ru', 'russian federation': 'ru',
-    'brazil': 'br', 'india': 'in', 'mexico': 'mx',
-    'canada': 'ca', 'australia': 'au', 'netherlands': 'nl', 'belgium': 'be',
-    'switzerland': 'ch', 'sweden': 'se', 'norway': 'no', 'denmark': 'dk', 'finland': 'fi',
-    'poland': 'pl', 'austria': 'at', 'portugal': 'pt', 'greece': 'gr', 'turkey': 'tr',
-    'egypt': 'eg', 'south africa': 'za', 'nigeria': 'ng', 'kenya': 'ke', 'morocco': 'ma',
-    'argentina': 'ar', 'chile': 'cl', 'colombia': 'co', 'peru': 'pe', 'venezuela': 've',
-    'thailand': 'th', 'vietnam': 'vn', 'singapore': 'sg', 'malaysia': 'my',
-    'indonesia': 'id', 'philippines': 'ph', 'new zealand': 'nz', 'ireland': 'ie',
-    'israel': 'il', 'saudi arabia': 'sa', 'united arab emirates': 'ae', 'uae': 'ae',
-    'qatar': 'qa', 'kuwait': 'kw', 'pakistan': 'pk', 'bangladesh': 'bd', 'sri lanka': 'lk',
-    'ukraine': 'ua', 'czech republic': 'cz', 'czechia': 'cz',
-    'romania': 'ro', 'hungary': 'hu', 'croatia': 'hr', 'serbia': 'rs',
-    'bulgaria': 'bg', 'slovakia': 'sk', 'slovenia': 'si',
-    'lithuania': 'lt', 'latvia': 'lv', 'estonia': 'ee', 'iceland': 'is',
-    'luxembourg': 'lu', 'malta': 'mt', 'cyprus': 'cy',
+    'united states': 'us',
+    'united states of america': 'us',
+    usa: 'us',
+    'united kingdom': 'gb',
+    uk: 'gb',
+    'great britain': 'gb',
+    'south korea': 'kr',
+    'republic of korea': 'kr',
+    'north korea': 'kp',
+    china: 'cn',
+    'peoples republic of china': 'cn',
+    japan: 'jp',
+    germany: 'de',
+    france: 'fr',
+    italy: 'it',
+    spain: 'es',
+    russia: 'ru',
+    'russian federation': 'ru',
+    brazil: 'br',
+    india: 'in',
+    mexico: 'mx',
+    canada: 'ca',
+    australia: 'au',
+    netherlands: 'nl',
+    belgium: 'be',
+    switzerland: 'ch',
+    sweden: 'se',
+    norway: 'no',
+    denmark: 'dk',
+    finland: 'fi',
+    poland: 'pl',
+    austria: 'at',
+    portugal: 'pt',
+    greece: 'gr',
+    turkey: 'tr',
+    egypt: 'eg',
+    'south africa': 'za',
+    nigeria: 'ng',
+    kenya: 'ke',
+    morocco: 'ma',
+    argentina: 'ar',
+    chile: 'cl',
+    colombia: 'co',
+    peru: 'pe',
+    venezuela: 've',
+    thailand: 'th',
+    vietnam: 'vn',
+    singapore: 'sg',
+    malaysia: 'my',
+    indonesia: 'id',
+    philippines: 'ph',
+    'new zealand': 'nz',
+    ireland: 'ie',
+    israel: 'il',
+    'saudi arabia': 'sa',
+    'united arab emirates': 'ae',
+    uae: 'ae',
+    qatar: 'qa',
+    kuwait: 'kw',
+    pakistan: 'pk',
+    bangladesh: 'bd',
+    'sri lanka': 'lk',
+    ukraine: 'ua',
+    'czech republic': 'cz',
+    czechia: 'cz',
+    romania: 'ro',
+    hungary: 'hu',
+    croatia: 'hr',
+    serbia: 'rs',
+    bulgaria: 'bg',
+    slovakia: 'sk',
+    slovenia: 'si',
+    lithuania: 'lt',
+    latvia: 'lv',
+    estonia: 'ee',
+    iceland: 'is',
+    luxembourg: 'lu',
+    malta: 'mt',
+    cyprus: 'cy',
   }
-  
   return countryMap[name] ? `/flags/${countryMap[name]}.svg` : '/flags/un.svg'
 }
 
-// Helper to convert to AdvisoryLevel
 const toAdvisoryLevel = (n: number | undefined): AdvisoryLevel => {
   const v = typeof n === 'number' ? Math.min(4, Math.max(1, n)) : 1
   return v as AdvisoryLevel
 }
 
-// Server Component - Fetches and transforms ALL data
 export async function TravelDataGlobeBlock(props: TravelDataGlobeBlockProps) {
   const payload = await getPayload({ config })
-  
-  // Parallel fetch all collections
-  const [
-    advisoriesResult,
-    visaResult,
-    airportsResult,
-    restaurantsResult,
-    countriesResult
-  ] = await Promise.all([
-    payload.find({
-      collection: 'travel-advisories',
-      limit: 1000,
-      sort: '-level',
-      depth: 2,
-    }),
-    payload.find({
-      collection: 'visa-requirements',
-      limit: 2000,
-      depth: 2,
-    }),
-    payload.find({
-      collection: 'airports',
-      limit: 1000,
-      depth: 1,
-    }),
-    payload.find({
-      collection: 'michelin-restaurants',
-      limit: 1000,
-      depth: 1,
-    }),
-    payload.find({
-      collection: 'countries',
-      limit: 500,
-      depth: 1,
-    }).catch(() => ({ docs: [], totalDocs: 0 })), // Fallback if countries collection doesn't exist
-  ])
 
-  console.log('Server: Data fetched -', {
-    advisories: advisoriesResult.totalDocs,
-    visa: visaResult.totalDocs,
-    airports: airportsResult.totalDocs,
-    restaurants: restaurantsResult.totalDocs,
-    countries: countriesResult.totalDocs,
-  })
+  const [advisoriesResult, visaResult, airportsResult, restaurantsResult, countriesResult] =
+    await Promise.all([
+      payload.find({ collection: 'travel-advisories', limit: 1000, sort: '-level', depth: 2 }),
+      payload.find({ collection: 'visa-requirements', limit: 2000, depth: 2 }),
+      payload.find({ collection: 'airports', limit: 1000, depth: 1 }),
+      payload.find({ collection: 'michelin-restaurants', limit: 1000, depth: 1 }),
+      payload
+        .find({ collection: 'countries', limit: 500, depth: 1 })
+        .catch(() => ({ docs: [], totalDocs: 0 })),
+    ])
 
-  // Build country lookup map
   const countryLookup = new Map<string, LooseCountry>()
   ;(countriesResult.docs as LooseCountry[]).forEach((country) => {
     if (country.name) countryLookup.set(country.name.toLowerCase(), country)
     if (country.code) countryLookup.set(country.code.toLowerCase(), country)
   })
 
-  // Transform travel advisories with pre-computed values
   const transformedAdvisories: AdvisoryCountry[] = (advisoriesResult.docs as AdvisoryDoc[])
     .map((doc, index): AdvisoryCountry => {
-      // Debug logging for the first few documents to see actual structure
-      if (index < 3) {
-        console.log(`\nAdvisory doc ${index} structure:`, {
+      if (index < 1) {
+        console.log('Advisory debug sample:', {
           keys: Object.keys(doc),
           level: doc.level,
-          advisoryLevel: doc.advisoryLevel, 
+          advisoryLevel: doc.advisoryLevel,
           threatLevel: doc.threatLevel,
-          // Log the entire doc for first one to see all fields
-          ...(index === 0 ? { fullDoc: doc } : {})
         })
       }
-      
+
       const countryName = doc.country?.name || doc.name || 'Unknown'
-      const countryData = countryLookup.get(countryName.toLowerCase()) || 
-                         (doc.country as LooseCountry | undefined) || 
-                         { name: countryName }
-      
-      // Try different possible field names for level
-      // Also check if level might be a string that needs parsing
-      let levelRaw = doc.level || 
-                    doc.advisoryLevel || 
-                    doc.advisory_level || 
-                    doc.travelAdvisoryLevel || 
-                    doc.travel_advisory_level
-      
-      // If still no level found, try threatLevel as either string or number
-      if (!levelRaw && doc.threatLevel) {
-        levelRaw = typeof doc.threatLevel === 'string' ? parseInt(doc.threatLevel, 10) : doc.threatLevel
+      const countryData =
+        countryLookup.get(countryName.toLowerCase()) ||
+        (doc.country as LooseCountry | undefined) || { name: countryName }
+
+      let levelRaw =
+        doc.level ??
+        doc.advisoryLevel ??
+        doc.advisory_level ??
+        doc.travelAdvisoryLevel ??
+        doc.travel_advisory_level
+
+      // also check threatLevel (string or number)
+      if (!levelRaw && doc.threatLevel != null) {
+        levelRaw =
+          typeof doc.threatLevel === 'string'
+            ? parseInt(doc.threatLevel, 10)
+            : (doc.threatLevel as number)
       }
-      
-      // If STILL no level, check if it might be nested in the doc differently
+
+      // 🔧 TS7053-safe dynamic probe for any "*level*" field
       if (!levelRaw) {
-        // Check for any field containing 'level' or 'threat'
-        const levelField = Object.keys(doc).find(key => 
-          key.toLowerCase().includes('level') || 
-          key.toLowerCase().includes('threat')
-        )
-        if (levelField && doc[levelField]) {
-          const value = doc[levelField]
-          levelRaw = typeof value === 'string' ? parseInt(value, 10) : value
-          console.log(`Found level in field '${levelField}':`, levelRaw)
+        const levelField = Object.keys(doc).find((key) => {
+          const k = key.toLowerCase()
+          return k.includes('level') || k.includes('threat')
+        })
+        if (levelField) {
+          const bag = doc as Record<string, unknown>
+          const valueUnknown = bag[levelField]
+          let parsed: number | undefined
+          if (typeof valueUnknown === 'string') {
+            const n = parseInt(valueUnknown, 10)
+            if (Number.isFinite(n)) parsed = n
+          } else if (typeof valueUnknown === 'number') {
+            parsed = valueUnknown
+          }
+          if (typeof parsed === 'number') {
+            levelRaw = parsed
+            console.log(`Found level in field '${levelField}':`, parsed)
+          }
         }
       }
-      
-      // Default to 1 if still no level found
+
       if (!levelRaw) {
         console.warn(`No level found for ${countryName}, defaulting to 1`)
         levelRaw = 1
       }
-      
-      // Ensure level is properly typed as AdvisoryLevel
+
       const level = toAdvisoryLevel(levelRaw)
-      
+
       return {
         country: countryName,
         countryCode: countryData?.code || '',
@@ -251,33 +277,31 @@ export async function TravelDataGlobeBlock(props: TravelDataGlobeBlockProps) {
         dateAdded: doc.dateAdded || doc.date_added || doc.pubDate || doc.createdAt || '',
         isNew: isNewAdvisory(doc.dateAdded || doc.date_added || doc.pubDate || doc.createdAt),
         levelText: `Level ${level}`,
-        levelDescription: 
-          level === 1 ? 'Exercise Normal Precautions' :
-          level === 2 ? 'Exercise Increased Caution' :
-          level === 3 ? 'Reconsider Travel' :
-          'Do Not Travel',
+        levelDescription:
+          level === 1
+            ? 'Exercise Normal Precautions'
+            : level === 2
+            ? 'Exercise Increased Caution'
+            : level === 3
+            ? 'Reconsider Travel'
+            : 'Do Not Travel',
       }
     })
-    .sort((a, b) => {
-      if (a.level !== b.level) return b.level - a.level
-      return a.country.localeCompare(b.country)
-    })
+    .sort((a, b) => (a.level !== b.level ? b.level - a.level : a.country.localeCompare(b.country)))
 
-  // Transform visa data
   const visaByCountry = new Map<string, CountryVisaData>()
   const passportCountries = new Set<string>()
 
   ;(visaResult.docs as VisaDoc[]).forEach((doc) => {
     const passportName = doc.passportCountry?.name || ''
     const destinationName = doc.destinationCountry?.name || ''
-    
-    if (passportName) {
-      passportCountries.add(passportName)
-    }
-    
+
+    if (passportName) passportCountries.add(passportName)
+
     if (!visaByCountry.has(destinationName)) {
-      const countryData = countryLookup.get(destinationName.toLowerCase()) || 
-                         (doc.destinationCountry as LooseCountry | undefined)
+      const countryData =
+        countryLookup.get(destinationName.toLowerCase()) ||
+        (doc.destinationCountry as LooseCountry | undefined)
       visaByCountry.set(destinationName, {
         countryId: `visa-${destinationName}`,
         countryName: destinationName,
@@ -291,10 +315,10 @@ export async function TravelDataGlobeBlock(props: TravelDataGlobeBlockProps) {
         visaRequirements: [],
       })
     }
-    
+
     const country = visaByCountry.get(destinationName)!
     country.totalDestinations++
-    
+
     switch (doc.requirement) {
       case 'visa_free':
         country.visaFreeCount! += 1
@@ -309,7 +333,7 @@ export async function TravelDataGlobeBlock(props: TravelDataGlobeBlockProps) {
       default:
         country.visaRequiredCount! += 1
     }
-    
+
     country.visaRequirements.push({
       passportCountry: passportName,
       destinationCountry: destinationName,
@@ -321,94 +345,87 @@ export async function TravelDataGlobeBlock(props: TravelDataGlobeBlockProps) {
     })
   })
 
-  const visaCountries = Array.from(visaByCountry.values())
-    .sort((a, b) => (a.countryName || 'Unknown').localeCompare(b.countryName || 'Unknown'))
+  const visaCountries = Array.from(visaByCountry.values()).sort((a, b) =>
+    (a.countryName || 'Unknown').localeCompare(b.countryName || 'Unknown')
+  )
 
-  // Transform airports
-  const transformedAirports: AirportData[] = (airportsResult.docs as unknown as AirportDoc[])
-    .map((doc) => {
-      const countryName = doc.location?.country || ''
-      const countryData = countryLookup.get(countryName.toLowerCase())
-      return {
-        code: doc.code,
-        name: doc.name,
-        type: doc.type,
-        location: {
-          lat: doc.location?.lat || 0,
-          lng: doc.location?.lng || 0,
-          city: doc.location?.city || '',
-          country: countryName,
-          countryFlag: getFlagUrl(countryData || { name: countryName }),
-        },
-        displayName: `${doc.code} - ${doc.name}`,
-        displayLocation: `${doc.location?.city || ''}, ${countryName}`,
-      }
-    })
-    .sort((a, b) => (a.code || '').localeCompare(b.code || ''))
+  const transformedAirports: AirportData[] = (airportsResult.docs as AirportDoc[]).map((doc) => {
+    // Handle country which could be a relationship object or string
+    const countryName = typeof doc.country === 'object' 
+      ? doc.country?.name || ''
+      : doc.country || ''
+    const countryData = countryLookup.get(countryName.toLowerCase())
+    const code = doc.iata || doc.icao || 'XXX'  // Use IATA preferably, fallback to ICAO
+    
+    return {
+      code,
+      name: doc.name,
+      type: doc.type,
+      location: {
+        lat: doc.latitude || 0,
+        lng: doc.longitude || 0,
+        city: doc.city || '',
+        country: countryName,
+        countryFlag: getFlagUrl(countryData || { name: countryName }),
+      },
+      displayName: `${code} - ${doc.name}`,
+      displayLocation: `${doc.city || ''}, ${countryName}`,
+    }
+  }).sort((a, b) => (a.code || '').localeCompare(b.code || ''))
 
-  // Transform restaurants
-  const transformedRestaurants: MichelinRestaurantData[] = (restaurantsResult.docs as unknown as RestaurantDoc[])
+  const transformedRestaurants: MichelinRestaurantData[] = (restaurantsResult.docs as RestaurantDoc[])
     .map((doc) => {
-      const countryName = doc.location?.country || ''
+      // Handle country which could be a relationship object or string
+      const countryName = typeof doc.country === 'object' 
+        ? doc.country?.name || ''
+        : doc.country || ''
       const countryData = countryLookup.get(countryName.toLowerCase())
       const rating = doc.rating || 1
+      const cityName = doc.location?.city || ''
+      
       return {
-        id: doc.id,
+        id: String(doc.id),  // Convert to string for consistency
         name: doc.name,
         rating,
         cuisine: doc.cuisine || '',
         location: {
-          lat: doc.location?.lat || 0,
-          lng: doc.location?.lng || 0,
-          city: doc.location?.city || '',
+          lat: doc.location?.latitude || 0,
+          lng: doc.location?.longitude || 0,
+          city: cityName,
           country: countryName,
           countryFlag: getFlagUrl(countryData || { name: countryName }),
         },
         greenStar: !!doc.greenStar,
         description: doc.description,
         displayRating: '⭐'.repeat(rating),
-        displayLocation: `${doc.location?.city || ''}, ${countryName}`,
+        displayLocation: `${cityName}, ${countryName}`,
       }
     })
-    .sort((a, b) => {
-      if (a.rating !== b.rating) return b.rating - a.rating
-      return a.name.localeCompare(b.name)
-    })
+    .sort((a, b) => (a.rating !== b.rating ? b.rating - a.rating : a.name.localeCompare(b.name)))
 
-  // Initialize empty polygons and borders (will be populated client-side)
-  const polygons = {
-    advisory: [] as PolyAdv[],
-    visa: [] as VisaPolygon[],
-  }
+  // empty shapes; client populates from /datamaps.world.json
+  const polygons = { advisory: [] as PolyAdv[], visa: [] as VisaPolygon[] }
   const borders: CountryBorder = {
     type: 'Feature',
-    geometry: {
-      type: 'MultiPolygon',
-      coordinates: [],
-    },
-    properties: {
-      iso_a2: '',
-      name: '',
-    },
+    geometry: { type: 'MultiPolygon', coordinates: [] },
+    properties: { iso_a2: '', name: '' },
   }
 
-  // Calculate statistics
   const statistics = {
     totalAdvisories: transformedAdvisories.length,
-    level4Count: transformedAdvisories.filter(a => a.level === 4).length,
-    level3Count: transformedAdvisories.filter(a => a.level === 3).length,
-    level2Count: transformedAdvisories.filter(a => a.level === 2).length,
-    level1Count: transformedAdvisories.filter(a => a.level === 1).length,
-    newAdvisoriesCount: transformedAdvisories.filter(a => a.isNew).length,
+    level4Count: transformedAdvisories.filter((a) => a.level === 4).length,
+    level3Count: transformedAdvisories.filter((a) => a.level === 3).length,
+    level2Count: transformedAdvisories.filter((a) => a.level === 2).length,
+    level1Count: transformedAdvisories.filter((a) => a.level === 1).length,
+    newAdvisoriesCount: transformedAdvisories.filter((a) => a.isNew).length,
     totalVisaCountries: visaCountries.length,
     passportCountriesCount: passportCountries.size,
     totalAirports: transformedAirports.length,
     totalRestaurants: transformedRestaurants.length,
-    michelinStarredCount: transformedRestaurants.filter(r => r.rating >= 1).length,
-    greenStarCount: transformedRestaurants.filter(r => r.greenStar).length,
+    michelinStarredCount: transformedRestaurants.filter((r) => r.rating >= 1).length,
+    greenStarCount: transformedRestaurants.filter((r) => r.greenStar).length,
   }
 
-  // Prepare data for client component
   const preparedData: PreparedData = {
     advisories: transformedAdvisories,
     visaCountries,
@@ -426,8 +443,6 @@ export async function TravelDataGlobeBlock(props: TravelDataGlobeBlockProps) {
     ],
   }
 
-  // Dynamic import to reduce bundle size
   const { TravelDataGlobeWrapper } = await import('./Component.wrapper')
-  
   return <TravelDataGlobeWrapper data={preparedData} />
 }
