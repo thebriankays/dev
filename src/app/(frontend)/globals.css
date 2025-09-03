@@ -118,15 +118,20 @@
   canvas {
     background: transparent !important;
   }
+  
+  /* Ensure View component containers are transparent */
+  [data-drei-view] {
+    background: transparent !important;
+  }
 }
 
 html {
   opacity: 0;
-  background: transparent;
+  background: #000814; /* Dark blue background */
 }
 
 html[data-theme='dark'],
 html[data-theme='light'] {
   opacity: initial;
-  background: transparent;
+  background: #000814; /* Dark blue background for both themes */
 }

@@ -3,7 +3,7 @@
     width: 100%;
     height: 40vh;
     margin-top: auto;
-    overflow: hidden; // Prevent horizontal scrollbar from SVG overflow
+    overflow: hidden;
 
     &:after {
       content: '';
@@ -27,10 +27,24 @@
       z-index: 0;
     }
     
-    // Ensure content is above the SVG
-    .container {
+    // Footer container that slides up on reveal
+    &__container {
       position: relative;
+      width: 100%;
+      height: 100%;
       z-index: 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      will-change: transform;
+      padding: 2rem;
+      box-sizing: border-box;
+      
+      // Ensure content is properly contained and positioned
+      > * {
+        position: relative;
+        z-index: 3;
+      }
     }
   }
   

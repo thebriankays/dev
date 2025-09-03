@@ -31,147 +31,115 @@ interface TravelDataGlobeProps {
   focusTarget: { lat: number; lng: number } | null
 }
 
-// Earth sphere with proper texture and lighting
+// Simple Earth sphere with fallback
 function GlobeSphere({ globeImageUrl, bumpImageUrl }: { globeImageUrl: string; bumpImageUrl: string }) {
-  const [textures, setTextures] = useState<{ earth?: THREE.Texture; bump?: THREE.Texture }>({})
+  const meshRef = useRef<THREE.Mesh>(null)
+  const [texture, setTexture] = useState<THREE.Texture | null>(null)
+  const [bumpTexture, setBumpTexture] = useState<THREE.Texture | null>(null)
 
   useEffect(() => {
     const loader = new THREE.TextureLoader()
     
-    Promise.all([
-      new Promise<THREE.Texture>((resolve, reject) => {
-        loader.load(globeImageUrl, (texture) => {
-          texture.colorSpace = THREE.SRGBColorSpace
-          texture.anisotropy = 16
-          resolve(texture)
-        }, undefined, reject)
-      }),
-      new Promise<THREE.Texture>((resolve) => {
-        loader.load(bumpImageUrl, (texture) => {
-          texture.anisotropy = 16
-          resolve(texture)
-        }, undefined, () => resolve(undefined as any))
-      })
-    ]).then(([earth, bump]) => {
-      setTextures({ earth, bump })
-    })
+    // Load main texture
+    loader.load(
+      globeImageUrl,
+      (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace
+        setTexture(tex)
+      },
+      undefined,
+      (err) => {
+        console.error('Failed to load globe texture:', err)
+      }
+    )
+    
+    // Load bump map
+    loader.load(
+      bumpImageUrl,
+      (tex) => {
+        setBumpTexture(tex)
+      },
+      undefined,
+      () => {
+        console.warn('Failed to load bump texture')
+      }
+    )
   }, [globeImageUrl, bumpImageUrl])
 
-  if (!textures.earth) {
-    return (
-      <mesh>
-        <sphereGeometry args={[2, 64, 64]} />
-        <meshStandardMaterial color="#1a2332" roughness={0.8} metalness={0.2} />
-      </mesh>
-    )
-  }
-
   return (
-    <mesh>
-      <sphereGeometry args={[2, 128, 128]} />
-      <meshStandardMaterial
-        map={textures.earth}
-        bumpMap={textures.bump}
-        bumpScale={0.01}
-        roughness={0.7}
-        metalness={0.1}
-        emissiveMap={textures.earth}
-        emissive={new THREE.Color(0xffffff)}
-        emissiveIntensity={0.1}
-      />
+    <mesh ref={meshRef}>
+      <sphereGeometry args={[2, 64, 64]} />
+      {texture ? (
+        <meshPhongMaterial
+          map={texture}
+          bumpMap={bumpTexture}
+          bumpScale={0.005}
+          color="#ffffff"
+        />
+      ) : (
+        // Fallback material if texture doesn't load
+        <meshPhongMaterial color="#2a4d6e" />
+      )}
     </mesh>
   )
 }
 
-// Subtle atmosphere effect
-function Atmosphere({ color = '#4FC3F7', altitude = 0.05 }: { color?: string; altitude?: number }) {
+// Simple atmosphere
+function Atmosphere() {
   return (
-    <mesh scale={[1 + altitude, 1 + altitude, 1 + altitude]}>
+    <mesh scale={[1.1, 1.1, 1.1]}>
       <sphereGeometry args={[2, 64, 64]} />
       <meshBasicMaterial 
-        color={color} 
+        color="#4a90e2"
         transparent 
-        opacity={0.05} 
+        opacity={0.1}
         side={THREE.BackSide}
-        depthWrite={false}
       />
     </mesh>
   )
 }
 
-// Country polygons
-function Countries({ polygons, getColor, onCountryClick, onCountryHover }: any) {
+// Simple country polygons
+function CountryPolygons({ polygons, onCountryClick, selectedCountry }: any) {
   return (
     <group>
       {polygons.map((polygon: any, index: number) => {
-        if (!polygon.geometry) return null
+        if (!polygon.geometry?.coordinates) return null
         
-        const geometry = new THREE.BufferGeometry()
-        const vertices: number[] = []
+        const isSelected = selectedCountry === polygon.properties?.name
+        let color = '#4caf50' // Default green
         
-        // Simple polygon rendering (you may need to adjust based on your data structure)
-        if (polygon.geometry.coordinates) {
-          const coords = polygon.geometry.type === 'Polygon' 
-            ? polygon.geometry.coordinates[0]
-            : polygon.geometry.coordinates[0][0]
-            
-          coords.forEach(([lng, lat]: number[]) => {
-            const pos = latLngToVector3(lat, lng, 2.01)
-            vertices.push(pos.x, pos.y, pos.z)
-          })
+        if ('level' in polygon) {
+          const colors: any = { 1: '#4caf50', 2: '#ffb300', 3: '#f4511e', 4: '#b71c1c' }
+          color = colors[polygon.level] || '#666'
         }
         
-        if (vertices.length === 0) return null
+        if (isSelected) color = '#ffeb3b'
         
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+        // Simple line around each country
+        const points: THREE.Vector3[] = []
+        const coords = polygon.geometry.type === 'Polygon' 
+          ? polygon.geometry.coordinates[0]
+          : polygon.geometry.coordinates[0]?.[0] || []
+          
+        coords.forEach(([lng, lat]: number[]) => {
+          const pos = latLngToVector3(lat, lng, 2.01)
+          points.push(pos)
+        })
+        
+        if (points.length < 3) return null
+        
+        const lineGeometry = new THREE.BufferGeometry().setFromPoints(points)
         
         return (
-          <mesh
-            key={index}
-            geometry={geometry}
-            onClick={(e) => {
-              e.stopPropagation()
-              if (polygon.properties?.name) {
-                onCountryClick(polygon.properties.name)
-              }
-            }}
-            onPointerEnter={() => onCountryHover(polygon.properties?.name)}
-            onPointerLeave={() => onCountryHover(null)}
-          >
-            <meshBasicMaterial 
-              color={getColor(polygon)} 
-              transparent 
-              opacity={0.6}
-              side={THREE.DoubleSide}
-            />
-          </mesh>
+          <line key={index}>
+            <primitive object={lineGeometry} />
+            <lineBasicMaterial color={color} linewidth={1} />
+          </line>
         )
       })}
     </group>
   )
-}
-
-// Helper functions
-function normalizeName(s: string) {
-  return (s || '').toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim()
-}
-
-function getCentroidFromPoly(poly: any): { lat: number; lng: number } | null {
-  if (!poly?.geometry?.coordinates) return null
-  try {
-    const coords = poly.geometry.type === 'Polygon' 
-      ? poly.geometry.coordinates[0] 
-      : poly.geometry.coordinates[0][0]
-    let sumLat = 0, sumLng = 0, count = 0
-    coords.forEach(([lng, lat]: number[]) => { 
-      sumLat += lat
-      sumLng += lng
-      count++
-    })
-    return count > 0 ? { lat: sumLat / count, lng: sumLng / count } : null
-  } catch { 
-    return null 
-  }
 }
 
 const TravelDataGlobe: React.FC<TravelDataGlobeProps> = ({
@@ -182,14 +150,14 @@ const TravelDataGlobe: React.FC<TravelDataGlobeProps> = ({
   globeImageUrl,
   bumpImageUrl,
   autoRotateSpeed,
-  atmosphereColor,
+  atmosphereColor: _atmosphereColor,
   onCountryClick,
   onAirportClick,
   onRestaurantClick,
-  onCountryHover,
+  onCountryHover: _onCountryHover,
   selectedCountry,
-  selectedCountryCode,
-  hoveredCountry,
+  selectedCountryCode: _selectedCountryCode,
+  hoveredCountry: _hoveredCountry,
   passportCountry: _passportCountry,
   currentView,
   visaArcs: _visaArcs,
@@ -200,16 +168,16 @@ const TravelDataGlobe: React.FC<TravelDataGlobeProps> = ({
   const controlsRef = useRef<any>(null)
   const groupRef = useRef<THREE.Group>(null)
 
-  // Ensure transparent background
+  // Ensure scene is set up correctly
   useEffect(() => {
-    scene.background = null
-    gl.setClearColor(0x000000, 0)
+    scene.background = new THREE.Color(0x000814) // Very dark blue background
+    gl.setClearColor(0x000814, 1)
   }, [gl, scene])
 
   // Auto-rotation
-  useFrame((_, delta) => {
+  useFrame((_state, delta) => {
     if (groupRef.current && !selectedCountry && !focusTarget && autoRotateSpeed > 0) {
-      groupRef.current.rotation.y += delta * autoRotateSpeed * 0.1
+      groupRef.current.rotation.y += delta * autoRotateSpeed * 0.05
     }
   })
 
@@ -233,17 +201,27 @@ const TravelDataGlobe: React.FC<TravelDataGlobeProps> = ({
   useEffect(() => {
     if (focusTarget) {
       flyToLocation(focusTarget.lat, focusTarget.lng)
-    } else if (selectedCountry || selectedCountryCode) {
-      const poly = polygons.find((p: any) => 
-        (selectedCountryCode && p.properties?.iso_a2?.toUpperCase() === selectedCountryCode.toUpperCase()) ||
-        (selectedCountry && normalizeName(p.properties?.name) === normalizeName(selectedCountry))
-      )
-      const cent = poly ? getCentroidFromPoly(poly) : null
-      if (cent) flyToLocation(cent.lat, cent.lng)
+    } else if (selectedCountry) {
+      // Find country centroid and fly to it
+      const poly = polygons.find(p => p.properties?.name === selectedCountry)
+      if (poly?.geometry?.coordinates) {
+        const coords = poly.geometry.type === 'Polygon' 
+          ? poly.geometry.coordinates[0]
+          : poly.geometry.coordinates[0]?.[0] || []
+        
+        if (coords.length > 0) {
+          let sumLat = 0, sumLng = 0
+          coords.forEach(([lng, lat]: number[]) => {
+            sumLat += lat
+            sumLng += lng
+          })
+          flyToLocation(sumLat / coords.length, sumLng / coords.length)
+        }
+      }
     } else {
       // Reset camera
       gsap.to(camera.position, {
-        x: 0, y: 0, z: 5,
+        x: 0, y: 0, z: 6,
         duration: 1.0,
         ease: 'power2.inOut',
         onUpdate: () => {
@@ -252,52 +230,15 @@ const TravelDataGlobe: React.FC<TravelDataGlobeProps> = ({
         },
       })
     }
-  }, [selectedCountry, selectedCountryCode, focusTarget, polygons, camera, flyToLocation])
-
-  // Get polygon colors
-  const getPolygonColor = useCallback((poly: any) => {
-    if (selectedCountry && poly.properties?.name === selectedCountry) return '#ffeb3b'
-    if (hoveredCountry && poly.properties?.name === hoveredCountry) return '#ffffff'
-    
-    if ('level' in poly) {
-      const colors: any = { 1: '#4caf50', 2: '#ffb300', 3: '#f4511e', 4: '#b71c1c' }
-      return colors[poly.level] || '#666'
-    }
-    
-    if ('requirement' in poly) {
-      const colors: any = {
-        visa_free: '#4caf50',
-        visa_on_arrival: '#8bc34a',
-        e_visa: '#03a9f4',
-        visa_required: '#f4511e',
-        no_data: '#3a3a3a'
-      }
-      return colors[poly.requirement] || '#666'
-    }
-    
-    return '#666'
-  }, [hoveredCountry, selectedCountry])
-
-  // Calculate marker position
-  const markerPosition = useMemo(() => {
-    if (!selectedCountry && !selectedCountryCode) return null
-    
-    const poly = polygons.find((p: any) => 
-      (selectedCountryCode && p.properties?.iso_a2?.toUpperCase() === selectedCountryCode.toUpperCase()) ||
-      (selectedCountry && normalizeName(p.properties?.name) === normalizeName(selectedCountry))
-    )
-    
-    const cent = poly ? getCentroidFromPoly(poly) : null
-    return cent ? latLngToVector3(cent.lat, cent.lng, 2.05) : null
-  }, [selectedCountry, selectedCountryCode, polygons])
+  }, [selectedCountry, focusTarget, polygons, camera, flyToLocation])
 
   return (
     <>
-      {/* Bright lighting setup */}
+      {/* BRIGHT lighting to ensure visibility */}
       <ambientLight intensity={1.5} />
-      <directionalLight position={[5, 5, 5]} intensity={2} castShadow />
+      <directionalLight position={[5, 5, 5]} intensity={2} />
       <directionalLight position={[-5, -5, -5]} intensity={1} />
-      <pointLight position={[10, 10, 10]} intensity={0.5} />
+      <pointLight position={[10, 10, 10]} intensity={1} />
 
       <OrbitControlsImpl
         ref={controlsRef}
@@ -306,38 +247,54 @@ const TravelDataGlobe: React.FC<TravelDataGlobeProps> = ({
         minDistance={3}
         maxDistance={10}
         autoRotate={false}
+        enableDamping={true}
+        dampingFactor={0.05}
       />
 
       <group ref={groupRef}>
         <GlobeSphere globeImageUrl={globeImageUrl} bumpImageUrl={bumpImageUrl} />
-        <Atmosphere color={atmosphereColor} />
-
+        <Atmosphere />
+        
         {(currentView === 'travelAdvisory' || currentView === 'visaRequirements') && (
-          <Countries
+          <CountryPolygons 
             polygons={polygons}
-            getColor={getPolygonColor}
             onCountryClick={onCountryClick}
-            onCountryHover={onCountryHover}
+            selectedCountry={selectedCountry}
           />
         )}
-
-        {/* Country marker */}
-        {showMarkers && markerPosition && (
-          <group position={markerPosition}>
-            <mesh>
-              <coneGeometry args={[0.02, 0.08, 8]} />
-              <meshBasicMaterial color="white" />
-            </mesh>
-            <mesh position={[0, 0.05, 0]}>
-              <sphereGeometry args={[0.03, 16, 16]} />
-              <meshBasicMaterial color="white" />
-            </mesh>
-          </group>
+        
+        {/* Simple marker for selected location */}
+        {showMarkers && selectedCountry && (
+          (() => {
+            const poly = polygons.find(p => p.properties?.name === selectedCountry)
+            if (!poly?.geometry?.coordinates) return null
+            
+            const coords = poly.geometry.type === 'Polygon' 
+              ? poly.geometry.coordinates[0]
+              : poly.geometry.coordinates[0]?.[0] || []
+            
+            if (coords.length === 0) return null
+            
+            let sumLat = 0, sumLng = 0
+            coords.forEach(([lng, lat]: number[]) => {
+              sumLat += lat
+              sumLng += lng
+            })
+            
+            const position = latLngToVector3(sumLat / coords.length, sumLng / coords.length, 2.05)
+            
+            return (
+              <mesh position={position}>
+                <sphereGeometry args={[0.03, 16, 16]} />
+                <meshBasicMaterial color="#ffffff" />
+              </mesh>
+            )
+          })()
         )}
-
+        
         {/* Airport markers */}
         {currentView === 'airports' && airports.map((airport, i) => {
-          const position = latLngToVector3(airport.location.lat, airport.location.lng, 2.01)
+          const position = latLngToVector3(airport.location.lat, airport.location.lng, 2.02)
           return (
             <mesh 
               key={i} 
@@ -355,7 +312,7 @@ const TravelDataGlobe: React.FC<TravelDataGlobeProps> = ({
 
         {/* Restaurant markers */}
         {currentView === 'michelinRestaurants' && restaurants.map((restaurant, i) => {
-          const position = latLngToVector3(restaurant.location.lat, restaurant.location.lng, 2.01)
+          const position = latLngToVector3(restaurant.location.lat, restaurant.location.lng, 2.02)
           const color = restaurant.greenStar ? '#4caf50' : '#ffd700'
           return (
             <mesh 

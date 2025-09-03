@@ -1,0 +1,38 @@
+// Base button styles
+.button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: none;
+  outline: none;
+  transition: all 0.3s ease;
+  
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  // Size variations
+  &--small {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  &--medium {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  &--large {
+    padding: 1rem 2rem;
+    font-size: 1.125rem;
+  }
+
+  &--full-width {
+    width: 100%;
+  }
+}

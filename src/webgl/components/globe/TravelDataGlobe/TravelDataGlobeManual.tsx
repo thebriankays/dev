@@ -1,14 +1,12 @@
 'use client'
 
-import React, { useRef, useEffect, useMemo, useState, useCallback } from 'react'
+import React, { useRef, useEffect, useCallback, Suspense } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls as OrbitControlsImpl } from '@react-three/drei'
 import gsap from 'gsap'
 
 import { Countries } from './Countries'
-import { Arcs } from './Arcs'
-import { Markers } from './Markers'
 import { latLngToVector3 } from './utils'
 import type {
   PolyAdv,
@@ -48,48 +46,65 @@ interface TravelDataGlobeManualProps {
   focusTarget: { lat: number; lng: number } | null
 }
 
-// Earth sphere with proper lighting and texture
+// Simple globe sphere with manual texture loading
 function GlobeSphere({ globeImageUrl, bumpImageUrl }: { globeImageUrl: string; bumpImageUrl: string }) {
-  const [textures, setTextures] = useState<{ earth?: THREE.Texture; bump?: THREE.Texture }>({})
-
+  const meshRef = useRef<THREE.Mesh>(null)
+  const [textureLoaded, setTextureLoaded] = React.useState(false)
+  
   useEffect(() => {
-    const loader = new THREE.TextureLoader()
+    if (!meshRef.current) return
     
-    Promise.all([
-      new Promise<THREE.Texture>((resolve, _reject) => {
-        loader.load(globeImageUrl, (texture) => {
-          texture.colorSpace = THREE.SRGBColorSpace
-          texture.anisotropy = 16
-          resolve(texture)
-        }, undefined, () => resolve(undefined as unknown as THREE.Texture))
-      }),
-      new Promise<THREE.Texture>((resolve) => {
-        loader.load(bumpImageUrl, (texture) => {
-          texture.anisotropy = 16
-          resolve(texture)
-        }, undefined, () => resolve(undefined as unknown as THREE.Texture))
-      })
-    ]).then(([earth, bump]) => {
-      setTextures({ earth, bump })
-    })
+    const textureLoader = new THREE.TextureLoader()
+    
+    // Load main texture
+    console.log('Loading globe texture from:', globeImageUrl)
+    textureLoader.load(
+      globeImageUrl,
+      (texture) => {
+        console.log('Globe texture loaded successfully')
+        texture.colorSpace = THREE.SRGBColorSpace
+        texture.anisotropy = 16
+        
+        if (meshRef.current) {
+          const material = meshRef.current.material as THREE.MeshStandardMaterial
+          material.map = texture
+          material.needsUpdate = true
+          setTextureLoaded(true)
+        }
+      },
+      (progress) => {
+        console.log('Loading texture...', progress)
+      },
+      (error) => {
+        console.error('Failed to load globe texture:', error)
+      }
+    )
+    
+    // Load bump map
+    console.log('Loading bump texture from:', bumpImageUrl)
+    textureLoader.load(
+      bumpImageUrl,
+      (texture) => {
+        console.log('Bump texture loaded successfully')
+        if (meshRef.current) {
+          const material = meshRef.current.material as THREE.MeshStandardMaterial
+          material.bumpMap = texture
+          material.bumpScale = 0.01
+          material.needsUpdate = true
+        }
+      },
+      undefined,
+      (error) => {
+        console.error('Failed to load bump texture:', error)
+      }
+    )
   }, [globeImageUrl, bumpImageUrl])
 
-  if (!textures.earth) {
-    return (
-      <mesh>
-        <sphereGeometry args={[2, 64, 64]} />
-        <meshStandardMaterial color="#1a2332" roughness={0.8} metalness={0.2} />
-      </mesh>
-    )
-  }
-
   return (
-    <mesh>
-      <sphereGeometry args={[2, 128, 128]} />
+    <mesh ref={meshRef}>
+      <sphereGeometry args={[2, 64, 64]} />
       <meshStandardMaterial
-        map={textures.earth}
-        bumpMap={textures.bump}
-        bumpScale={0.01}
+        color={textureLoaded ? "#ffffff" : "#2a4d6e"}
         roughness={0.7}
         metalness={0.1}
       />
@@ -97,19 +112,16 @@ function GlobeSphere({ globeImageUrl, bumpImageUrl }: { globeImageUrl: string; b
   )
 }
 
-// Subtle atmosphere effect
-function Atmosphere({ color = '#4FC3F7', altitude = 0.05 }: { color?: string; altitude?: number }) {
-  const meshRef = useRef<THREE.Mesh>(null)
-  
+// Simple atmosphere
+function Atmosphere() {
   return (
-    <mesh ref={meshRef} scale={[1 + altitude, 1 + altitude, 1 + altitude]}>
-      <sphereGeometry args={[2, 64, 64]} />
+    <mesh scale={[1.15, 1.15, 1.15]}>
+      <sphereGeometry args={[2, 32, 32]} />
       <meshBasicMaterial 
-        color={color} 
+        color="#4a90e2"
         transparent 
-        opacity={0.05} 
+        opacity={0.1}
         side={THREE.BackSide}
-        depthWrite={false}
       />
     </mesh>
   )
@@ -145,8 +157,8 @@ const TravelDataGlobeManual: React.FC<TravelDataGlobeManualProps> = ({
   globeImageUrl,
   bumpImageUrl,
   autoRotateSpeed,
-  atmosphereColor,
-  atmosphereAltitude,
+  atmosphereColor: _atmosphereColor,
+  atmosphereAltitude: _atmosphereAltitude,
   onCountryClick,
   onAirportClick,
   onRestaurantClick,
@@ -156,7 +168,7 @@ const TravelDataGlobeManual: React.FC<TravelDataGlobeManualProps> = ({
   hoveredCountry,
   passportCountry: _passportCountry,
   currentView,
-  visaArcs,
+  visaArcs: _visaArcs,
   showMarkers,
   focusTarget,
 }) => {
@@ -164,7 +176,7 @@ const TravelDataGlobeManual: React.FC<TravelDataGlobeManualProps> = ({
   const controlsRef = useRef<any>(null)
   const groupRef = useRef<THREE.Group>(null)
 
-  // Ensure transparent background
+  // CRITICAL: Set transparent background
   useEffect(() => {
     scene.background = null
     gl.setClearColor(0x000000, 0)
@@ -173,7 +185,7 @@ const TravelDataGlobeManual: React.FC<TravelDataGlobeManualProps> = ({
   // Auto-rotation
   useFrame((_state, delta) => {
     if (groupRef.current && !selectedCountry && !focusTarget && autoRotateSpeed > 0) {
-      groupRef.current.rotation.y += delta * autoRotateSpeed * 0.1
+      groupRef.current.rotation.y += delta * autoRotateSpeed * 0.05
     }
   })
 
@@ -199,7 +211,6 @@ const TravelDataGlobeManual: React.FC<TravelDataGlobeManualProps> = ({
       flyToLocation(focusTarget.lat, focusTarget.lng)
     } else if (selectedCountry || selectedCountryCode) {
       const poly = polygons.find((p: PolyAdv | VisaPolygon) => {
-        // Type guard to check if iso_a2 exists
         const propsWithIso = p.properties as { name: string; iso_a2?: string }
         const hasIsoA2 = propsWithIso.iso_a2 !== undefined
         return (
@@ -212,7 +223,7 @@ const TravelDataGlobeManual: React.FC<TravelDataGlobeManualProps> = ({
     } else {
       // Reset camera
       gsap.to(camera.position, {
-        x: 0, y: 0, z: 5,
+        x: 0, y: 0, z: 6,
         duration: 1.0,
         ease: 'power2.inOut',
         onUpdate: () => {
@@ -249,61 +260,12 @@ const TravelDataGlobeManual: React.FC<TravelDataGlobeManualProps> = ({
     return '#666'
   }, [hoveredCountry, selectedCountry])
 
-  // Marker data for different views
-  const markersData = useMemo(() => {
-    if (currentView === 'airports') {
-      return airports.map(a => ({
-        id: `airport-${a.code}`,
-        lat: a.location.lat,
-        lng: a.location.lng,
-        color: '#00ffff',
-        size: 0.015,
-        data: a,
-        type: 'airport' as const,
-        label: a.name
-      }))
-    }
-    
-    if (currentView === 'michelinRestaurants') {
-      return restaurants.map(r => ({
-        id: `rest-${r.id}`,
-        lat: r.location.lat,
-        lng: r.location.lng,
-        color: r.greenStar ? '#4caf50' : '#ffd700',
-        size: 0.015,
-        data: r,
-        type: 'restaurant' as const,
-        label: r.name
-      }))
-    }
-    
-    if ((currentView === 'travelAdvisory' || currentView === 'visaRequirements') && selectedCountry) {
-      const poly = polygons.find(p => p.properties?.name === selectedCountry)
-      const cent = poly ? getCentroidFromPoly(poly) : null
-      if (cent) {
-        return [{
-          id: 'selected-country',
-          lat: cent.lat,
-          lng: cent.lng,
-          color: '#ffffff',
-          size: 0.03,
-          data: null,
-          type: 'airport' as const, // Using airport type for country markers
-          label: selectedCountry
-        }]
-      }
-    }
-    
-    return []
-  }, [currentView, airports, restaurants, selectedCountry, polygons])
-
   return (
     <>
-      {/* Bright lighting setup */}
-      <ambientLight intensity={1.2} />
-      <directionalLight position={[5, 5, 5]} intensity={1.5} castShadow />
-      <directionalLight position={[-5, -5, -5]} intensity={0.5} />
-      <pointLight position={[10, 10, 10]} intensity={0.5} />
+      {/* Bright lighting */}
+      <ambientLight intensity={1.0} />
+      <directionalLight position={[5, 3, 5]} intensity={1.2} />
+      <pointLight position={[-5, -3, -5]} intensity={0.5} />
 
       <OrbitControlsImpl
         ref={controlsRef}
@@ -312,36 +274,85 @@ const TravelDataGlobeManual: React.FC<TravelDataGlobeManualProps> = ({
         minDistance={3}
         maxDistance={10}
         autoRotate={false}
+        enableDamping={true}
+        dampingFactor={0.05}
       />
 
       <group ref={groupRef}>
-        <GlobeSphere globeImageUrl={globeImageUrl} bumpImageUrl={bumpImageUrl} />
-        <Atmosphere color={atmosphereColor} altitude={atmosphereAltitude} />
+        <Suspense fallback={
+          <mesh>
+            <sphereGeometry args={[2, 32, 32]} />
+            <meshBasicMaterial color="#2a4d6e" wireframe />
+          </mesh>
+        }>
+          <GlobeSphere globeImageUrl={globeImageUrl} bumpImageUrl={bumpImageUrl} />
+        </Suspense>
+        
+        <Atmosphere />
 
         {(currentView === 'travelAdvisory' || currentView === 'visaRequirements') && (
           <Countries
             polygons={polygons}
-            radius={2}
+            radius={2.01}
             getColor={getPolygonColor}
             onCountryClick={onCountryClick}
             onCountryHover={onCountryHover}
           />
         )}
 
-        {currentView === 'visaRequirements' && visaArcs.length > 0 && (
-          <Arcs data={visaArcs} radius={2} />
+        {/* Selected country marker */}
+        {showMarkers && selectedCountry && (
+          (() => {
+            const poly = polygons.find(p => p.properties?.name === selectedCountry)
+            const cent = poly ? getCentroidFromPoly(poly) : null
+            if (!cent) return null
+            const position = latLngToVector3(cent.lat, cent.lng, 2.05)
+            
+            return (
+              <mesh position={position}>
+                <sphereGeometry args={[0.03, 16, 16]} />
+                <meshBasicMaterial color="white" />
+              </mesh>
+            )
+          })()
         )}
 
-        {showMarkers && markersData.length > 0 && (
-          <Markers 
-            data={markersData} 
-            radius={2.05}
-            onMarkerClick={(m) => {
-              if (m.type === 'airport' && m.data) onAirportClick(m.data as AirportData)
-              if (m.type === 'restaurant' && m.data) onRestaurantClick(m.data as MichelinRestaurantData)
-            }}
-          />
-        )}
+        {/* Airport markers */}
+        {currentView === 'airports' && airports.map((airport, i) => {
+          const position = latLngToVector3(airport.location.lat, airport.location.lng, 2.02)
+          return (
+            <mesh 
+              key={i} 
+              position={position} 
+              onClick={(e) => { 
+                e.stopPropagation()
+                onAirportClick(airport) 
+              }}
+            >
+              <sphereGeometry args={[0.015, 8, 8]} />
+              <meshBasicMaterial color="#00ffff" />
+            </mesh>
+          )
+        })}
+
+        {/* Restaurant markers */}
+        {currentView === 'michelinRestaurants' && restaurants.map((restaurant, i) => {
+          const position = latLngToVector3(restaurant.location.lat, restaurant.location.lng, 2.02)
+          const color = restaurant.greenStar ? '#4caf50' : '#ffd700'
+          return (
+            <mesh 
+              key={i} 
+              position={position} 
+              onClick={(e) => { 
+                e.stopPropagation()
+                onRestaurantClick(restaurant) 
+              }}
+            >
+              <sphereGeometry args={[0.015, 8, 8]} />
+              <meshBasicMaterial color={color} />
+            </mesh>
+          )
+        })}
       </group>
     </>
   )

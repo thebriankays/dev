@@ -1,125 +1,116 @@
-# TravelDataGlobe Block
+# TravelDataGlobeBlock
 
-A comprehensive interactive 3D globe component for visualizing travel data including:
-- U.S. Travel Advisories with threat levels
-- Visa requirements between countries
-- Michelin restaurants worldwide
-- International airports
+An interactive 3D globe visualization component for displaying travel-related data including travel advisories, visa requirements, Michelin restaurants, and airports.
+
+## Overview
+
+This block renders an interactive 3D globe using React Three Fiber with multiple data visualization layers:
+- **Travel Advisories**: U.S. Department of State travel advisory levels (1-4) displayed as colored country polygons
+- **Visa Requirements**: Interactive visa requirement visualization with arc connections
+- **Michelin Restaurants**: Location markers for Michelin-starred restaurants worldwide
+- **Airports**: International airport location markers
 
 ## Architecture
 
-This block follows the shared canvas architecture using:
-- `BlockWrapper` for WebGL content tunneling
-- React Three Fiber (R3F) for 3D rendering
-- View-based rendering for proper canvas sharing
-- Dynamic imports for optimal loading
+The component uses a shared canvas architecture where:
+- The WebGL canvas is rendered at the root level
+- UI components overlay the canvas with transparent backgrounds
+- The globe is rendered using Three.js with React Three Fiber
+- Data is loaded from GeoJSON files for country polygons
 
 ## File Structure
 
 ```
 TravelDataGlobeBlock/
-├── Component.tsx           # Server component (data fetching)
-├── Component.client.tsx    # Client component (UI & interactions)
+├── Component.wrapper.tsx    # Main component wrapper with state management
+├── Component.tsx           # Server component for data fetching
 ├── types.ts               # TypeScript type definitions
-├── styles.scss            # Component styles
-├── components/
-│   ├── AdvisoryPanel.tsx # Travel advisory list panel
-│   └── AdvisoryDetails.tsx # Advisory detail overlay
+├── styles.scss            # Component styles with glass morphism effects
 └── README.md              # This file
 ```
 
-## Data Flow
-
-1. **Server Component** (`Component.tsx`):
-   - Fetches data from Payload CMS collections
-   - Transforms data to match component requirements
-   - Passes data to client component
-
-2. **Client Component** (`Component.client.tsx`):
-   - Manages UI state (selected country, view, etc.)
-   - Renders info panels and tabs
-   - Passes WebGL content to BlockWrapper
-
-3. **WebGL Component** (`TravelDataGlobe`):
-   - Renders 3D globe with countries
-   - Handles interactions (hover, click)
-   - Shows visa arcs and markers
-
 ## Key Features
 
-### Travel Advisories
-- Color-coded threat levels (1-4)
-- NEW pill for recent advisories (< 30 days)
-- Flag display for each country
-- Full advisory text with State Department branding
+### Visual Features
+- **3D Earth Globe**: Textured sphere with bump mapping for terrain
+- **Atmosphere Effect**: Subtle blue glow around the globe
+- **Country Borders**: Color-coded based on advisory levels or visa requirements
+- **Interactive Markers**: Clickable markers for restaurants and airports
+- **Camera Animation**: Smooth camera transitions when selecting items
+- **Auto-rotation**: Optional globe rotation when idle
 
-### Visa Requirements
-- Shows all countries with visa data (199 countries)
-- Passport country selection
-- Arc visualization for visa-free/on-arrival destinations
-- Color-coded visa requirements
-
-### Interactive Globe
-- Country polygons with proper colors
-- Hover effects
-- Click to select and spin to location
-- Marker drops on selected country
-- Cloud layer animation
-
-## Usage
-
-The block is used via BlockWrapper which handles:
-- WebGL content tunneling
-- View tracking for canvas sharing
-- Glass effects (optional)
-- Interactive pointer events
-
-```tsx
-<BlockWrapper 
-  webglContent={webglContent}
-  interactive={true}
-  disableDefaultCamera={true}
->
-  {/* UI content */}
-</BlockWrapper>
-```
-
-## Important Notes
-
-1. **DO NOT use ViewportRenderer** - BlockWrapper handles View tracking
-2. **Globe textures** must be in `/public`:
-   - `/earth-blue-marble.jpg`
-   - `/earth-topology.jpg`
-   - `/clouds.png`
-3. **Flags** should be in `/public/flags/`
-4. **State Department logo** at `/public/department-of-state.png`
-
-## Troubleshooting
-
-### White Canvas Issue
-- Ensure using BlockWrapper's webglContent prop
-- Don't duplicate View components
-- Check SharedCanvas clear settings
-
-### Countries Not Showing
-- Verify polygon data is loaded
-- Check texture loading
-- Ensure Countries component is rendering
-
-### Only 6 Visa Countries
-- This was fixed by showing ALL countries in visa data
-- Previously only showed passport countries
-- Now displays 199 countries
-
-### Performance
-- Globe uses dynamic import for code splitting
-- Textures loaded asynchronously
-- Post-processing effects can be adjusted
+### UI Components
+- **Glass Panel**: Backdrop-filtered glass effect for the information panel
+- **Tab Navigation**: Switch between different data views
+- **Search Functionality**: Filter countries, restaurants, or airports
+- **List Views**: Scrollable lists with country flags and status indicators
+- **Detail Overlays**: Popup panels with detailed information
 
 ## Dependencies
 
-- `@react-three/fiber` - R3F core
-- `@react-three/drei` - R3F helpers
-- `@react-three/postprocessing` - Effects
-- `three` - Three.js
-- `gsap` - Animations
+- `@react-three/fiber`: React renderer for Three.js
+- `@react-three/drei`: Useful helpers for React Three Fiber
+- `three`: 3D graphics library
+- `gsap`: Animation library for smooth transitions
+- `@turf/centroid`: Geographic calculations
+- `three-geojson-geometry`: Convert GeoJSON to Three.js geometries
+
+## Data Sources
+
+- **Travel Advisories**: U.S. Department of State API
+- **Visa Requirements**: Passport visa requirement database
+- **Michelin Restaurants**: Michelin Guide data
+- **Airports**: International airport database
+- **Country Polygons**: GeoJSON world map data (`/datamaps.world.json`)
+
+## Styling
+
+The component uses SCSS with:
+- **CSS Grid**: For list item layouts to prevent text wrapping
+- **Flexbox**: For component alignment
+- **Glass morphism**: `backdrop-filter: blur()` for panel effects
+- **Custom scrollbars**: Styled scrollbar for list containers
+- **Responsive design**: Mobile-friendly layout adjustments
+
+## Known Issues & Solutions
+
+### Text Wrapping in Lists
+- **Solution**: Uses CSS Grid with explicit column templates to ensure flag, text, and badges stay on one line
+
+### Globe Texture Not Loading
+- **Solution**: Ensure `/earth-blue-marble.jpg` and `/earth-topology.png` exist in the public folder
+
+### White Background Issues
+- **Solution**: Canvas containers use `background: transparent !important` in globals.css
+
+### Performance
+- **Solution**: Uses React.lazy() for code splitting and Suspense for loading states
+
+## Configuration
+
+The block accepts configuration through Payload CMS:
+```typescript
+{
+  globeImageUrl: string         // Earth texture URL
+  bumpImageUrl: string          // Bump map texture URL
+  autoRotateSpeed: number       // Rotation speed (0 to disable)
+  atmosphereColor: string       // Atmosphere glow color
+  atmosphereAltitude: number    // Atmosphere size (0.1 - 0.3)
+  enabledViews: string[]        // Which tabs to show
+  initialView: string           // Default tab
+}
+```
+
+## Usage
+
+The component is integrated into Payload CMS as a block and can be added to any page through the admin interface.
+
+## Recent Updates
+
+- Fixed list item wrapping issues with CSS Grid layout
+- Improved globe texture loading with drei's useTexture hook
+- Added proper TypeScript types throughout
+- Fixed atmosphere rendering with subtle glow effect
+- Ensured canvas transparency in shared canvas architecture
+- Added country flags to all list views
+- Improved marker positioning and visibility

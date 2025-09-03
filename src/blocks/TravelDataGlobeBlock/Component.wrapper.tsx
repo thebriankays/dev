@@ -31,7 +31,7 @@ import type {
 } from './types'
 import './styles.scss'
 
-const TravelDataGlobe = lazy(() => import('@/webgl/components/globe/TravelDataGlobe/TravelDataGlobe'))
+const TravelDataGlobe = lazy(() => import('@/webgl/components/globe/TravelDataGlobe/TravelDataGlobeManual'))
 
 const GlobeLoading = () => (
   <>
@@ -275,6 +275,7 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
         bumpImageUrl={blockConfig.bumpImageUrl || '/earth-topology.png'}
         autoRotateSpeed={blockConfig.autoRotateSpeed ?? 0.5}
         atmosphereColor={blockConfig.atmosphereColor || '#4FC3F7'}
+        atmosphereAltitude={blockConfig.atmosphereAltitude || 0.1}
         onCountryClick={handleCountryClick}
         onAirportClick={handleAirportClick}
         onRestaurantClick={handleRestaurantClick}

@@ -40,32 +40,74 @@ export function AdvisoryPanel({
           <div
             key={`advisory-${advisory.country}-${idx}`}
             onClick={() => onCountryClick(advisory)}
-            className={`tdg-advisory-item ${selectedCountry === advisory.country ? 'tdg-selected' : ''}`}
+            className={`tdg-country-item ${selectedCountry === advisory.country ? 'tdg-selected' : ''}`}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '0.75rem 1rem',
+              cursor: 'pointer',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+            }}
           >
-            <span className={`tdg-advisory-dot tdg-level-${advisory.level}`} />
-            <div className="tdg-advisory-content">
-              <div className="tdg-advisory-header">
-                {advisory.countryFlag && (
-                  <Image 
-                    src={advisory.countryFlag} 
-                    alt={`${advisory.country} flag`} 
-                    width={24} 
-                    height={16} 
-                    className="tdg-flag" 
-                    unoptimized 
-                  />
-                )}
-                <span className="tdg-advisory-country">{advisory.country}</span>
-                {advisory.isNew && (
-                  <span className="tdg-new-pill" title={`Added ${advisory.dateAdded}`}>
-                    NEW
-                  </span>
-                )}
-              </div>
-            </div>
-            <span className={`tdg-advisory-level tdg-level-${advisory.level}`}>
-              {advisory.levelText || `Level ${advisory.level}`}
+            {/* Flag */}
+            {advisory.countryFlag && (
+              <Image 
+                src={advisory.countryFlag} 
+                alt={`${advisory.country} flag`}
+                width={24}
+                height={16}
+                className="tdg-flag"
+                unoptimized
+                style={{ flexShrink: 0 }}
+              />
+            )}
+            
+            {/* Country name - takes up available space */}
+            <span 
+              style={{
+                flex: '1 1 auto',
+                color: '#e2e8f0',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                minWidth: 0, // Important for text-overflow to work
+              }}
+            >
+              {advisory.country}
             </span>
+            
+            {/* Level pill - always on the right */}
+            <span 
+              className={`tdg-advisory-level tdg-level-${advisory.level}`}
+              style={{
+                flexShrink: 0,
+                fontSize: '0.7rem',
+                padding: '0.125rem 0.5rem',
+                borderRadius: '0.25rem',
+                fontWeight: 600,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Level {advisory.level}
+            </span>
+            
+            {/* NEW pill if applicable */}
+            {advisory.isNew && (
+              <span 
+                className="tdg-new-pill"
+                style={{
+                  flexShrink: 0,
+                  fontSize: '0.6rem',
+                  padding: '2px 6px',
+                  marginLeft: '0.25rem',
+                }}
+              >
+                NEW
+              </span>
+            )}
           </div>
         ))}
       </div>
