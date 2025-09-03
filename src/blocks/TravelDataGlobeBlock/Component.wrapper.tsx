@@ -52,15 +52,28 @@ function normalizeName(s: string) {
     .trim()
 }
 
-// Get centroid from feature
+// Get centroid from feature - fixed coordinate order
 function getCentroidFromFeature(feature: any): { lat: number; lng: number } | null {
   try {
+    const props = feature?.properties || {}
+    // Check for pre-computed label points (Natural Earth datasets have these)
+    const labelLng = props.LABEL_X ?? props.label_x ?? props.LABEL_LONG ?? props.label_long ?? props.LON
+    const labelLat = props.LABEL_Y ?? props.label_y ?? props.LABEL_LAT ?? props.label_lat ?? props.LAT
+    
+    if (Number.isFinite(Number(labelLng)) && Number.isFinite(Number(labelLat))) {
+      return { lat: Number(labelLat), lng: Number(labelLng) }
+    }
+
     const geom = feature?.geometry
     if (!geom) return null
 
     const collect = (ring: number[][]) => {
+      if (!ring || ring.length === 0) return null
       let sx = 0, sy = 0, n = 0
-      for (const [lng, lat] of ring) {
+      for (const coord of ring) {
+        if (!coord || coord.length < 2) continue
+        const lng = Number(coord[0])
+        const lat = Number(coord[1]) 
         if (Number.isFinite(lat) && Number.isFinite(lng)) {
           sx += lng
           sy += lat
@@ -71,13 +84,22 @@ function getCentroidFromFeature(feature: any): { lat: number; lng: number } | nu
       return { lat: sy / n, lng: sx / n }
     }
 
-    if (geom.type === 'Polygon') return collect(geom.coordinates[0])
-    if (geom.type === 'MultiPolygon') {
-      const rings = geom.coordinates.map((poly: number[][][]) => poly[0]).sort((a: any, b: any) => b.length - a.length)
-      return collect(rings[0])
+    if (geom.type === 'Polygon' && geom.coordinates && geom.coordinates[0]) {
+      return collect(geom.coordinates[0])
+    }
+    if (geom.type === 'MultiPolygon' && geom.coordinates && geom.coordinates.length > 0) {
+      // Use the largest polygon for centroid
+      const rings = geom.coordinates
+        .map((poly: number[][][]) => poly[0])
+        .filter((ring: any) => ring && ring.length > 0)
+        .sort((a: any, b: any) => b.length - a.length)
+      if (rings.length > 0) {
+        return collect(rings[0])
+      }
     }
     return null
-  } catch {
+  } catch (e) {
+    console.warn('Failed to get centroid:', e)
     return null
   }
 }
@@ -123,16 +145,65 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
       .then((geoData) => {
         const localCentroids = new Map<string, { lat: number; lng: number }>()
         
+        console.log('Loading geo data, matching advisories...')
+        console.log('Advisory lookup has', advisoryByCode.size, 'by code and', advisoryByName.size, 'by name')
+        
         const advisoryPolygons = geoData.features.map((feature: any) => {
-          const iso2 = (feature.properties?.iso_a2 || feature.properties?.ISO_A2 || '').toUpperCase()
-          const rawName = feature.properties?.name || feature.properties?.NAME || ''
-          const joined = (iso2 && advisoryByCode.get(iso2)) || advisoryByName.get(normalizeName(rawName))
+          const props = feature.properties || {}
+          // Try multiple ISO code fields
+          const iso2 = String(
+            props.iso_a2 || props.ISO_A2 || 
+            props.iso2 || props.ISO2 || 
+            props.iso_alpha2 || props.ISO_ALPHA2 || 
+            props.cca2 || props.CCA2 || ''
+          ).toUpperCase().trim()
+          
+          // Try multiple name fields
+          const rawName = String(
+            props.name || props.NAME || 
+            props.name_en || props.NAME_EN || 
+            props.admin || props.ADMIN || ''
+          ).trim()
+          
+          // Try to match advisory
+          let joined = null
+          
+          // First try ISO2 code match
+          if (iso2 && advisoryByCode.has(iso2)) {
+            joined = advisoryByCode.get(iso2)
+          }
+          
+          // Then try various name fields
+          if (!joined) {
+            const nameVariants = [
+              normalizeName(rawName),
+              normalizeName(props.sovereignt || props.SOVEREIGNT || ''),
+              normalizeName(props.geounit || props.GEOUNIT || ''),
+              normalizeName(props.name_long || props.NAME_LONG || '')
+            ].filter(n => n.length > 0)
+            
+            for (const variant of nameVariants) {
+              if (advisoryByName.has(variant)) {
+                joined = advisoryByName.get(variant)
+                break
+              }
+            }
+          }
+          
+          // Log some matches for debugging
+          if (joined && (rawName.startsWith('A') || rawName.startsWith('B'))) {
+            console.log(`Matched ${rawName} (${iso2}) -> Level ${joined.level}`)
+          }
 
           if (feature.geometry) {
             const centroid = getCentroidFromFeature(feature)
             if (centroid) {
               localCentroids.set(normalizeName(rawName), centroid)
               if (iso2) localCentroids.set(iso2, centroid)
+              // Also add sovereign name to centroids
+              if (props.sovereignt) {
+                localCentroids.set(normalizeName(props.sovereignt), centroid)
+              }
             }
           }
 
@@ -140,7 +211,7 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
             type: 'Feature',
             geometry: feature.geometry,
             properties: { name: rawName, iso_a2: iso2 },
-            level: joined?.level ?? 1,
+            level: (joined?.level || 1) as 1 | 2 | 3 | 4,
           }
         })
 
@@ -178,6 +249,22 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
 
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null)
   const [focusTarget, setFocusTarget] = useState<{ lat: number; lng: number } | null>(null)
+  
+  // Fix scroll wheel zoom issue
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      // Check if the wheel event is happening over the globe canvas area
+      const target = e.target as HTMLElement
+      if (target && (target.tagName === 'CANVAS' || target.closest('.travel-data-globe-block'))) {
+        e.preventDefault()
+        e.stopPropagation()
+      }
+    }
+    
+    // Add with passive: false to ensure preventDefault works
+    window.addEventListener('wheel', handleWheel, { passive: false })
+    return () => window.removeEventListener('wheel', handleWheel)
+  }, [])
 
   // Get current polygons
   const currentPolygons = React.useMemo(
@@ -264,40 +351,12 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
   }, [])
 
   // WebGL content
-  const webglContent = (
-    <Suspense fallback={<GlobeLoading />}>
-      <TravelDataGlobe
-        polygons={currentPolygons}
-        borders={borders}
-        airports={currentView === 'airports' ? airports : []}
-        restaurants={currentView === 'michelinRestaurants' ? restaurants : []}
-        globeImageUrl={blockConfig.globeImageUrl || '/earth-blue-marble.jpg'}
-        bumpImageUrl={blockConfig.bumpImageUrl || '/earth-topology.png'}
-        autoRotateSpeed={blockConfig.autoRotateSpeed ?? 0.5}
-        atmosphereColor={blockConfig.atmosphereColor || '#4FC3F7'}
-        atmosphereAltitude={blockConfig.atmosphereAltitude || 0.1}
-        onCountryClick={handleCountryClick}
-        onAirportClick={handleAirportClick}
-        onRestaurantClick={handleRestaurantClick}
-        onCountryHover={setHoveredCountry}
-        selectedCountry={selectedAdvisory?.country || selectedVisaCountry?.countryName || null}
-        selectedCountryCode={selectedAdvisory?.countryCode || null}
-        hoveredCountry={hoveredCountry}
-        passportCountry={selectedVisaCountry?.countryName || null}
-        currentView={currentView as any}
-        visaArcs={visaArcs}
-        focusTarget={focusTarget}
-        showMarkers={true}
-      />
-    </Suspense>
-  )
-
   return (
     <BlockWrapper
       className="travel-data-globe-block"
       interactive={true}
       disableDefaultCamera={false}
-      webglContent={webglContent}
+      // IMPORTANT: Do NOT pass webglContent here - it causes full-screen rendering
       {...blockConfig}
     >
       <div className="tdg-container">

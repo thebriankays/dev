@@ -369,6 +369,7 @@ const TravelDataGlobeManual: React.FC<TravelDataGlobeManualProps> = ({
   useEffect(() => {
     scene.background = null
     gl.setClearColor(0x000000, 0)
+    gl.setClearAlpha(0)
   }, [gl, scene])
 
   // Auto-rotation
@@ -506,17 +507,8 @@ const TravelDataGlobeManual: React.FC<TravelDataGlobeManualProps> = ({
         autoRotate={false}
         enableDamping={true}
         dampingFactor={0.05}
-        // Disable mouse wheel zoom to prevent scroll interference
-        mouseButtons={{
-          LEFT: THREE.MOUSE.ROTATE,
-          MIDDLE: THREE.MOUSE.DOLLY,
-          RIGHT: THREE.MOUSE.PAN
-        }}
-        // Only allow pinch zoom on touch devices
-        touches={{
-          ONE: THREE.TOUCH.ROTATE,
-          TWO: THREE.TOUCH.DOLLY_PAN
-        }}
+        // Disable only wheel zoom but keep other zoom methods
+        zoomSpeed={0}
       />
 
       <group ref={groupRef}>

@@ -173,9 +173,18 @@ export async function TravelDataGlobeBlock(props: TravelDataGlobeBlockProps) {
     if (country.code) countryLookup.set(country.code.toLowerCase(), country)
   })
 
-  // Debug: Log first advisory to see structure
+  // Debug: Log first few advisories to see structure
   if (advisoriesResult.docs.length > 0) {
-    console.log('Sample advisory doc:', JSON.stringify(advisoriesResult.docs[0], null, 2))
+    console.log('Sample advisory docs:')
+    advisoriesResult.docs.slice(0, 3).forEach((doc: any) => {
+      console.log({
+        name: doc.country?.name || doc.name,
+        level: doc.level,
+        advisoryLevel: doc.advisoryLevel,
+        advisory_level: doc.advisory_level,
+        raw_doc_keys: Object.keys(doc)
+      })
+    })
   }
 
   // Transform travel advisories with pre-computed values
