@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback, lazy, Suspense, useEffect } from 'react'
+import React, { useState, useCallback, useEffect, Suspense } from 'react'
 import Image from 'next/image'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
@@ -12,6 +12,9 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { BlockWrapper } from '@/blocks/_shared/BlockWrapper'
 import VerticalMarquee from '@/components/VerticalMarquee/VerticalMarquee'
+import type { Feature, Polygon, MultiPolygon } from 'geojson'
+// Import directly instead of lazy loading
+import TravelDataGlobe from '@/webgl/components/globe/TravelDataGlobe/TravelDataGlobeManual'
 
 import { AdvisoryPanel } from '@/components/TravelDataGlobe/AdvisoryPanel'
 import { AdvisoryDetails } from '@/components/TravelDataGlobe/AdvisoryDetails'
@@ -33,16 +36,6 @@ import './styles.scss'
 
 const TravelDataGlobe = lazy(() => import('@/webgl/components/globe/TravelDataGlobe/TravelDataGlobeManual'))
 
-const GlobeLoading = () => (
-  <>
-    <ambientLight intensity={0.3} />
-    <mesh>
-      <sphereGeometry args={[2, 32, 32]} />
-      <meshBasicMaterial color="#1a1a1a" wireframe />
-    </mesh>
-  </>
-)
-
 // Helper function
 function normalizeName(s: string) {
   return (s || '')
@@ -52,8 +45,27 @@ function normalizeName(s: string) {
     .trim()
 }
 
+// Type for geographic feature
+type WorldFeature = Feature<Polygon | MultiPolygon, {
+  name?: string; NAME?: string;
+  iso_a2?: string; ISO_A2?: string;
+  iso2?: string; ISO2?: string;
+  iso_alpha2?: string; ISO_ALPHA2?: string;
+  cca2?: string; CCA2?: string;
+  LABEL_X?: number; LABEL_Y?: number;
+  label_x?: number; label_y?: number;
+  LABEL_LONG?: number; LABEL_LAT?: number;
+  label_long?: number; label_lat?: number;
+  LON?: number; LAT?: number;
+  sovereignt?: string; SOVEREIGNT?: string;
+  geounit?: string; GEOUNIT?: string;
+  name_en?: string; NAME_EN?: string;
+  name_long?: string; NAME_LONG?: string;
+  admin?: string; ADMIN?: string;
+}>
+
 // Get centroid from feature - fixed coordinate order
-function getCentroidFromFeature(feature: any): { lat: number; lng: number } | null {
+function getCentroidFromFeature(feature: WorldFeature): { lat: number; lng: number } | null {
   try {
     const props = feature?.properties || {}
     // Check for pre-computed label points (Natural Earth datasets have these)
@@ -89,10 +101,10 @@ function getCentroidFromFeature(feature: any): { lat: number; lng: number } | nu
     }
     if (geom.type === 'MultiPolygon' && geom.coordinates && geom.coordinates.length > 0) {
       // Use the largest polygon for centroid
-      const rings = geom.coordinates
-        .map((poly: number[][][]) => poly[0])
-        .filter((ring: any) => ring && ring.length > 0)
-        .sort((a: any, b: any) => b.length - a.length)
+      const rings = (geom.coordinates as number[][][][])
+        .map((poly) => poly[0])
+        .filter((ring) => ring && ring.length > 0)
+        .sort((a, b) => b.length - a.length)
       if (rings.length > 0) {
         return collect(rings[0])
       }
@@ -142,13 +154,13 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
   useEffect(() => {
     fetch('/datamaps.world.json')
       .then(res => res.json())
-      .then((geoData) => {
+      .then((geoData: { features: WorldFeature[] }) => {
         const localCentroids = new Map<string, { lat: number; lng: number }>()
         
         console.log('Loading geo data, matching advisories...')
         console.log('Advisory lookup has', advisoryByCode.size, 'by code and', advisoryByName.size, 'by name')
         
-        const advisoryPolygons = geoData.features.map((feature: any) => {
+        const advisoryPolygons = geoData.features.map((feature) => {
           const props = feature.properties || {}
           // Try multiple ISO code fields
           const iso2 = String(
@@ -208,21 +220,21 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
           }
 
           return {
-            type: 'Feature',
+            type: 'Feature' as const,
             geometry: feature.geometry,
             properties: { name: rawName, iso_a2: iso2 },
             level: (joined?.level || 1) as 1 | 2 | 3 | 4,
           }
         })
 
-        const visaPolygons = geoData.features.map((feature: any) => {
+        const visaPolygons = geoData.features.map((feature) => {
           const rawName = feature.properties?.name || ''
           const hasData = visaCountries.some(v => normalizeName(v.countryName) === normalizeName(rawName))
           return {
-            type: 'Feature',
+            type: 'Feature' as const,
             geometry: feature.geometry,
             properties: { name: rawName, iso_a2: (feature.properties?.iso_a2 || '').toUpperCase() },
-            requirement: hasData ? 'visa_required' : 'no_data',
+            requirement: (hasData ? 'visa_required' : 'no_admission') as 'visa_required' | 'no_admission',
           }
         })
 
@@ -238,7 +250,9 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
   }, [advisories, visaCountries, advisoryByCode, advisoryByName])
 
   // State management
-  const [currentView, setCurrentView] = useState<string>(blockConfig.initialView || 'travelAdvisory')
+  const [currentView, setCurrentView] = useState<'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports'>(
+    (blockConfig.initialView || 'travelAdvisory') as 'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports'
+  )
   const [searchQuery, setSearchQuery] = useState('')
   const [showAdvisoryKey, setShowAdvisoryKey] = useState(false)
 
@@ -247,7 +261,7 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
   const [selectedRestaurant, setSelectedRestaurant] = useState<MichelinRestaurantData | null>(null)
   const [selectedAirport, setSelectedAirport] = useState<AirportData | null>(null)
 
-  const [hoveredCountry, setHoveredCountry] = useState<string | null>(null)
+  const [_hoveredCountry, _setHoveredCountry] = useState<string | null>(null)
   const [focusTarget, setFocusTarget] = useState<{ lat: number; lng: number } | null>(null)
   
   // Fix scroll wheel zoom issue
@@ -272,14 +286,14 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
     [currentView, polygons],
   )
 
-  // Visa arcs
-  const visaArcs = React.useMemo(() => {
+  // Visa arcs - currently unused but kept for future implementation
+  const _visaArcs = React.useMemo(() => {
     if (!selectedVisaCountry || currentView !== 'visaRequirements') return []
     const origin = centroids.get(normalizeName(selectedVisaCountry.countryName))
     if (!origin) return []
     
-    const arcs: any[] = []
-    selectedVisaCountry.visaRequirements.forEach((req: any) => {
+    const arcs: Array<{startLat: number; startLng: number; endLat: number; endLng: number; color: string}> = []
+    selectedVisaCountry.visaRequirements.forEach((req) => {
       if (req.requirement === 'visa_free' || req.requirement === 'visa_on_arrival' || req.requirement === 'e_visa') {
         const dest = centroids.get(normalizeName(req.destinationCountry))
         if (dest) {
@@ -297,7 +311,7 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
   }, [selectedVisaCountry, currentView, centroids])
 
   // Handlers
-  const handleTabChange = useCallback((view: string) => {
+  const handleTabChange = useCallback((view: 'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports') => {
     setCurrentView(view)
     setSearchQuery('')
     setSelectedAdvisory(null)
@@ -307,26 +321,7 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
     setFocusTarget(null)
   }, [])
 
-  const handleCountryClick = useCallback(
-    (countryName: string) => {
-      if (currentView === 'travelAdvisory') {
-        const advisory = advisories.find(a => normalizeName(a.country) === normalizeName(countryName))
-        if (advisory) {
-          setSelectedAdvisory(advisory)
-          const centroid = centroids.get(normalizeName(countryName))
-          if (centroid) setFocusTarget(centroid)
-        }
-      } else if (currentView === 'visaRequirements') {
-        const country = visaCountries.find(c => normalizeName(c.countryName) === normalizeName(countryName))
-        if (country) {
-          setSelectedVisaCountry(country)
-          const centroid = centroids.get(normalizeName(countryName))
-          if (centroid) setFocusTarget(centroid)
-        }
-      }
-    },
-    [currentView, advisories, visaCountries, centroids],
-  )
+  // Removed unused handleCountryClick function - direct handlers are used instead
 
   const handleAdvisoryClick = useCallback((advisory: AdvisoryCountry) => {
     setSelectedAdvisory(advisory)
@@ -350,13 +345,62 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
     setFocusTarget({ lat: airport.location.lat, lng: airport.location.lng })
   }, [])
 
-  // WebGL content
+  // WebGL content for the BlockWrapper
+  const webglContent = (
+    <Suspense fallback={
+      <>
+        <ambientLight intensity={0.3} />
+        <mesh>
+          <sphereGeometry args={[2, 32, 32]} />
+          <meshBasicMaterial color="#1a1a1a" wireframe />
+        </mesh>
+      </>
+    }>
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[10, 10, 5]} intensity={1} />
+      <TravelDataGlobe
+        currentView={currentView}
+        polygons={currentPolygons}
+        borders={borders}
+        airports={airports}
+        restaurants={restaurants}
+        globeImageUrl={blockConfig.globeImageUrl || '/earth-blue-marble.jpg'}
+        bumpImageUrl={blockConfig.bumpImageUrl || '/earth-topology.png'}
+        autoRotateSpeed={blockConfig.autoRotateSpeed || 0.3}
+        atmosphereColor={blockConfig.atmosphereColor || '#3a228a'}
+        atmosphereAltitude={blockConfig.atmosphereAltitude || 0.25}
+        onCountryClick={(name: string) => {
+          // Find and select the country based on the current view
+          if (currentView === 'travelAdvisory') {
+            const advisory = advisories.find(a => a.country === name)
+            if (advisory) handleAdvisoryClick(advisory)
+          } else if (currentView === 'visaRequirements') {
+            const country = visaCountries.find(c => c.countryName === name)
+            if (country) handleVisaCountryClick(country)
+          }
+        }}
+        onAirportClick={handleAirportClick}
+        onRestaurantClick={handleRestaurantClick}
+        onCountryHover={(name: string | null) => {
+          // Could set hoveredCountry state if needed
+        }}
+        selectedCountry={selectedAdvisory?.country || selectedVisaCountry?.countryName || null}
+        selectedCountryCode={selectedAdvisory?.countryCode || selectedVisaCountry?.countryCode || null}
+        hoveredCountry={_hoveredCountry}
+        passportCountry={selectedVisaCountry?.countryName || null}
+        visaArcs={_visaArcs}
+        showMarkers={currentView === 'airports' || currentView === 'michelinRestaurants'}
+        focusTarget={focusTarget}
+      />
+    </Suspense>
+  )
+
   return (
     <BlockWrapper
       className="travel-data-globe-block"
       interactive={true}
       disableDefaultCamera={false}
-      // IMPORTANT: Do NOT pass webglContent here - it causes full-screen rendering
+      webglContent={webglContent}
       {...blockConfig}
     >
       <div className="tdg-container">
@@ -367,36 +411,39 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
         {/* Tabs */}
         <div className="tdg-tabs-wrapper">
           <div className="tdg-tabs-container">
-            {enabledViews.map((view: string) => (
-              <button
-                key={view}
-                className={`tdg-tab ${currentView === view ? 'tdg-tab--active' : ''}`}
-                onClick={() => handleTabChange(view)}
-                type="button"
-              >
-                <FontAwesomeIcon
-                  icon={
-                    view === 'travelAdvisory'
-                      ? faExclamationTriangle
+            {enabledViews.map((view: string) => {
+              const typedView = view as 'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports'
+              return (
+                <button
+                  key={view}
+                  className={`tdg-tab ${currentView === view ? 'tdg-tab--active' : ''}`}
+                  onClick={() => handleTabChange(typedView)}
+                  type="button"
+                >
+                  <FontAwesomeIcon
+                    icon={
+                      view === 'travelAdvisory'
+                        ? faExclamationTriangle
+                        : view === 'visaRequirements'
+                        ? faPassport
+                        : view === 'michelinRestaurants'
+                        ? faUtensils
+                        : faPlane
+                    }
+                    className="tdg-tab-icon"
+                  />
+                  <span className="tdg-tab-label">
+                    {view === 'travelAdvisory'
+                      ? 'Travel Advisories'
                       : view === 'visaRequirements'
-                      ? faPassport
+                      ? 'Visa Requirements'
                       : view === 'michelinRestaurants'
-                      ? faUtensils
-                      : faPlane
-                  }
-                  className="tdg-tab-icon"
-                />
-                <span className="tdg-tab-label">
-                  {view === 'travelAdvisory'
-                    ? 'Travel Advisories'
-                    : view === 'visaRequirements'
-                    ? 'Visa Requirements'
-                    : view === 'michelinRestaurants'
-                    ? 'Michelin Restaurants'
-                    : 'Airports'}
-                </span>
-              </button>
-            ))}
+                      ? 'Michelin Restaurants'
+                      : 'Airports'}
+                  </span>
+                </button>
+              )
+            })}
           </div>
         </div>
 

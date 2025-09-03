@@ -1,6 +1,9 @@
 // Import types from the payload-main directory
 import type { Feature, Polygon, MultiPolygon } from 'geojson'
 
+// Export AdvisoryLevel type
+export type AdvisoryLevel = 1 | 2 | 3 | 4
+
 // Travel advisory types
 export interface PolyAdv
   extends Feature<Polygon | MultiPolygon, { name: string; iso_a2?: string }> {
@@ -78,6 +81,7 @@ export interface VisaRequirement {
 export interface AirportData {
   code: string
   name: string
+  type?: string
   location: {
     lat: number
     lng: number

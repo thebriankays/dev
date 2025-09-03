@@ -1,8 +1,11 @@
 // Whatamesh/Stripe gradient vertex shader adapted for Three.js
 // Based on stripe.com gradient implementation
 
+precision highp float;
+
+// Three.js automatically provides: position, uv, modelViewMatrix, projectionMatrix
+
 varying vec3 v_color;
-varying vec2 v_uv;
 
 // Import noise functions inline
 vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -78,12 +81,13 @@ vec3 blendNormal(vec3 base, vec3 blend, float opacity) {
 uniform float u_time;
 uniform vec2 resolution;
 uniform vec4 u_active_colors;
+uniform vec3 u_baseColor;
 
-// Global noise
+// Global uniforms (flattened from struct)
 uniform vec2 u_global_noiseFreq;
 uniform float u_global_noiseSpeed;
 
-// Vertex deformation
+// Vertex deform uniforms (flattened from struct)
 uniform float u_vertDeform_incline;
 uniform float u_vertDeform_offsetTop;
 uniform float u_vertDeform_offsetBottom;
@@ -93,31 +97,43 @@ uniform float u_vertDeform_noiseSpeed;
 uniform float u_vertDeform_noiseFlow;
 uniform float u_vertDeform_noiseSeed;
 
-// Base color
-uniform vec3 u_baseColor;
-
-// Wave layers - using arrays instead of structs
-uniform vec3 u_waveColors[3];
-uniform vec2 u_waveNoiseFreq[3];
-uniform float u_waveNoiseSpeed[3];
-uniform float u_waveNoiseFlow[3];
-uniform float u_waveNoiseSeed[3];
-uniform float u_waveNoiseFloor[3];
-uniform float u_waveNoiseCeil[3];
+// Wave layer uniforms (flattened from array of structs)
+uniform vec3 u_waveLayers_color[3];
+uniform vec2 u_waveLayers_noiseFreq[3];
+uniform float u_waveLayers_noiseSpeed[3];
+uniform float u_waveLayers_noiseFlow[3];
+uniform float u_waveLayers_noiseSeed[3];
+uniform float u_waveLayers_noiseFloor[3];
+uniform float u_waveLayers_noiseCeil[3];
+const int u_waveLayers_length = 3;
 
 void main() {
   float time = u_time * u_global_noiseSpeed;
   
-  // Calculate normalized UV
+  // Calculate normalized UV (matching original gradient)
   vec2 uvNorm = uv * 2.0 - 1.0;
+  
   vec2 noiseCoord = resolution * uvNorm * u_global_noiseFreq;
   
+  vec2 st = 1. - uvNorm.xy;
+  
+  //
   // Tilting the plane
+  //
+  
+  // Front-to-back tilt
   float tilt = resolution.y / 2.0 * uvNorm.y;
+  
+  // Left-to-right angle
   float incline = resolution.x * uvNorm.x / 2.0 * u_vertDeform_incline;
+  
+  // Up-down shift to offset incline
   float offset = resolution.x / 2.0 * u_vertDeform_incline * mix(u_vertDeform_offsetBottom, u_vertDeform_offsetTop, uv.y);
   
+  //
   // Vertex noise
+  //
+  
   float noise = snoise(vec3(
     noiseCoord.x * u_vertDeform_noiseFreq.x + time * u_vertDeform_noiseFlow,
     noiseCoord.y * u_vertDeform_noiseFreq.y,
@@ -126,34 +142,42 @@ void main() {
   
   // Fade noise to zero at edges
   noise *= 1.0 - pow(abs(uvNorm.y), 2.0);
+  
+  // Clamp to 0
   noise = max(0.0, noise);
   
-  // Calculate position
   vec3 pos = vec3(
     position.x,
     position.y + tilt + incline + noise - offset,
     position.z
   );
   
-  // Color calculation
+  //
+  // Vertex color, to be passed to fragment shader
+  //
+  
+  // Initialize v_color with base color
   v_color = u_baseColor;
   
-  // Apply wave layers
-  for (int i = 0; i < 3; i++) {
-    if (u_active_colors[i + 1] == 1.0) {
+  for (int i = 0; i < u_waveLayers_length; i++) {
+    if (u_active_colors[i + 1] == 1.) {
       float layerNoise = smoothstep(
-        u_waveNoiseFloor[i],
-        u_waveNoiseCeil[i],
+        u_waveLayers_noiseFloor[i],
+        u_waveLayers_noiseCeil[i],
         snoise(vec3(
-          noiseCoord.x * u_waveNoiseFreq[i].x + time * u_waveNoiseFlow[i],
-          noiseCoord.y * u_waveNoiseFreq[i].y,
-          time * u_waveNoiseSpeed[i] + u_waveNoiseSeed[i]
+          noiseCoord.x * u_waveLayers_noiseFreq[i].x + time * u_waveLayers_noiseFlow[i],
+          noiseCoord.y * u_waveLayers_noiseFreq[i].y,
+          time * u_waveLayers_noiseSpeed[i] + u_waveLayers_noiseSeed[i]
         )) / 2.0 + 0.5
       );
-      v_color = blendNormal(v_color, u_waveColors[i], pow(layerNoise, 4.0));
+      
+      v_color = blendNormal(v_color, u_waveLayers_color[i], pow(layerNoise, 4.));
     }
   }
   
-  v_uv = uv;
+  //
+  // Finish
+  //
+  
   gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 }

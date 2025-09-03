@@ -43,8 +43,8 @@ export function Whatamesh({
   const meshRef = useRef<THREE.Mesh>(null)
   const materialRef = useRef<THREE.ShaderMaterial>(null)
   const { size, invalidate } = useThree()
-  const startTime = useRef(Date.now())
   const timeRef = useRef(1253106) // Start time matching original
+  const globalNoiseSpeed = 5e-6 // Original speed value
   
   // Parse colors from props or CSS variables
   const sectionColors = useMemo(() => {
@@ -74,18 +74,22 @@ export function Whatamesh({
       normalizeColor(0xeae2ff), // Light purple
     ]
     
-    // Prepare initial wave layer arrays
-    const waveColors = defaultColors.slice(1).map(c => new THREE.Vector3(...c))
-    const waveNoiseFreq = [
-      new THREE.Vector2(2.25, 3.25),
-      new THREE.Vector2(2.5, 3.5),
-      new THREE.Vector2(2.75, 3.75)
-    ]
-    const waveNoiseSpeed = [11.3, 11.6, 11.9]
-    const waveNoiseFlow = [6.8, 7.1, 7.4]
-    const waveNoiseSeed = [5 + 10, 5 + 20, 5 + 30] // Use default seed
-    const waveNoiseFloor = [0.1, 0.1, 0.1]
-    const waveNoiseCeil = [0.70, 0.77, 0.84]
+    // Initialize wave layers to match original structure
+    const waveLayers = [];
+    for (let i = 1; i < defaultColors.length; i++) {
+      waveLayers.push({
+        color: new THREE.Vector3(...defaultColors[i]),
+        noiseFreq: new THREE.Vector2(
+          2 + (i - 1) / defaultColors.length,
+          3 + (i - 1) / defaultColors.length
+        ),
+        noiseSpeed: 11 + 0.3 * (i - 1),
+        noiseFlow: 6.5 + 0.3 * (i - 1),
+        noiseSeed: 5 + 10 * i, // Use default seed  
+        noiseFloor: 0.1,
+        noiseCeil: 0.63 + 0.07 * (i - 1)
+      });
+    }
     
     const uniforms = {
       // Core uniforms
@@ -96,28 +100,28 @@ export function Whatamesh({
       u_active_colors: { value: new THREE.Vector4(1, 1, 1, 1) },
       u_baseColor: { value: new THREE.Vector3(...defaultColors[0]) },
       
-      // Global settings
+      // Global uniforms
       u_global_noiseFreq: { value: new THREE.Vector2(0.00014, 0.00029) }, // Default freqX/Y
-      u_global_noiseSpeed: { value: 0.000005 },
+      u_global_noiseSpeed: { value: globalNoiseSpeed },
       
-      // Vertex deform
+      // Vertex deform uniforms
       u_vertDeform_incline: { value: 0 },
       u_vertDeform_offsetTop: { value: -0.5 },
       u_vertDeform_offsetBottom: { value: -0.5 },
       u_vertDeform_noiseFreq: { value: new THREE.Vector2(3, 4) },
-      u_vertDeform_noiseAmp: { value: 320 }, // Default amplitude * intensity
+      u_vertDeform_noiseAmp: { value: 320 }, // Default amplitude
       u_vertDeform_noiseSpeed: { value: 10 },
       u_vertDeform_noiseFlow: { value: 3 },
       u_vertDeform_noiseSeed: { value: 5 }, // Default seed
       
-      // Wave layers as arrays
-      u_waveColors: { value: waveColors },
-      u_waveNoiseFreq: { value: waveNoiseFreq },
-      u_waveNoiseSpeed: { value: waveNoiseSpeed },
-      u_waveNoiseFlow: { value: waveNoiseFlow },
-      u_waveNoiseSeed: { value: waveNoiseSeed },
-      u_waveNoiseFloor: { value: waveNoiseFloor },
-      u_waveNoiseCeil: { value: waveNoiseCeil },
+      // Wave layers arrays
+      u_waveLayers_color: { value: waveLayers.map(l => l.color) },
+      u_waveLayers_noiseFreq: { value: waveLayers.map(l => l.noiseFreq) },
+      u_waveLayers_noiseSpeed: { value: waveLayers.map(l => l.noiseSpeed) },
+      u_waveLayers_noiseFlow: { value: waveLayers.map(l => l.noiseFlow) },
+      u_waveLayers_noiseSeed: { value: waveLayers.map(l => l.noiseSeed) },
+      u_waveLayers_noiseFloor: { value: waveLayers.map(l => l.noiseFloor) },
+      u_waveLayers_noiseCeil: { value: waveLayers.map(l => l.noiseCeil) }
     }
     
     return new THREE.ShaderMaterial({
@@ -140,10 +144,34 @@ export function Whatamesh({
   // Update uniforms when props change
   useEffect(() => {
     if (material) {
-      // Update colors
+      // Update base color
       material.uniforms.u_baseColor.value = new THREE.Vector3(...sectionColors[0])
-      const waveColors = sectionColors.slice(1).map(c => new THREE.Vector3(...c))
-      material.uniforms.u_waveColors.value = waveColors
+      
+      // Update wave layers - matching original stripe gradient exactly
+      const waveLayers = [];
+      for (let i = 1; i < sectionColors.length && i < 4; i++) {
+        waveLayers.push({
+          color: new THREE.Vector3(...sectionColors[i]),
+          noiseFreq: new THREE.Vector2(
+            2 + (i - 1) / sectionColors.length,
+            3 + (i - 1) / sectionColors.length
+          ),
+          noiseSpeed: 11 + 0.3 * (i - 1),
+          noiseFlow: 6.5 + 0.3 * (i - 1),
+          noiseSeed: seed + 10 * i,
+          noiseFloor: 0.1,
+          noiseCeil: 0.63 + 0.07 * (i - 1)
+        });
+      }
+      
+      // Update wave layer arrays
+      material.uniforms.u_waveLayers_color.value = waveLayers.map(l => l.color);
+      material.uniforms.u_waveLayers_noiseFreq.value = waveLayers.map(l => l.noiseFreq);
+      material.uniforms.u_waveLayers_noiseSpeed.value = waveLayers.map(l => l.noiseSpeed);
+      material.uniforms.u_waveLayers_noiseFlow.value = waveLayers.map(l => l.noiseFlow);
+      material.uniforms.u_waveLayers_noiseSeed.value = waveLayers.map(l => l.noiseSeed);
+      material.uniforms.u_waveLayers_noiseFloor.value = waveLayers.map(l => l.noiseFloor);
+      material.uniforms.u_waveLayers_noiseCeil.value = waveLayers.map(l => l.noiseCeil);
       
       // Update other uniforms
       material.uniforms.u_shadow_power.value = shadowPower
@@ -151,9 +179,6 @@ export function Whatamesh({
       material.uniforms.u_global_noiseFreq.value.set(freqX, freqY)
       material.uniforms.u_vertDeform_noiseAmp.value = amplitude * intensity
       material.uniforms.u_vertDeform_noiseSeed.value = seed
-      
-      // Update wave noise seeds
-      material.uniforms.u_waveNoiseSeed.value = [seed + 10, seed + 20, seed + 30]
       
       // Force a re-render
       invalidate()
@@ -172,8 +197,9 @@ export function Whatamesh({
   useFrame((state, delta) => {
     if (!material || !animate) return
     
-    // Update time with proper speed
-    timeRef.current += Math.min(delta * 1000, 1000 / 15) * speed
+    // Update time exactly like the original (delta in seconds, convert to ms)
+    const frameTime = Math.min(delta * 1000, 1000 / 15) // Cap at ~66ms like original
+    timeRef.current += frameTime * speed
     material.uniforms.u_time.value = timeRef.current
   })
   

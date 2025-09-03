@@ -1,7 +1,8 @@
 .travel-data-globe-block {
   position: relative;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
+  min-height: 95vh;
   background: transparent !important;
   
   .block-wrapper {
@@ -11,18 +12,54 @@
   }
 }
 
-/* Container - ensure transparent */
+/* Container - ensure transparent and confined to parent */
 .tdg-container {
   position: relative;
-  height: 100vh;
-  width: 100vw;
+  height: 100%;
+  width: 100%;
   overflow: hidden;
   display: flex;
   padding: 0;
   contain: layout;
   isolation: isolate;
-  z-index: 1;
   background: transparent !important;
+  pointer-events: none; /* Allow WebGL to show through */
+  
+  > * {
+    pointer-events: auto; /* Re-enable for children */
+  }
+}
+
+/* Globe pane - contains the 3D globe */
+.tdg-globe-pane {
+  position: absolute;
+  left: calc(400px + 7rem);
+  right: 2rem;
+  top: 0;
+  bottom: 0;
+  height: 100%;
+  overflow: hidden;
+  transition: all 0.6s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+  pointer-events: auto;
+  z-index: 5;
+}
+
+.tdg-viewport {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background: transparent !important;
+  isolation: isolate;
+  z-index: 1;
+
+  canvas {
+    background: transparent !important;
+    pointer-events: auto;
+  }
 }
 
 /* Vertical Marquee */
@@ -940,6 +977,96 @@
   svg {
     font-size: 0.875rem;
   }
+}
+
+/* List item styles for airports and restaurants */
+.tdg-list-item-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.tdg-country-flag {
+  flex-shrink: 0;
+  border-radius: 2px;
+  object-fit: cover;
+}
+
+.tdg-list-item-details {
+  flex: 1;
+  min-width: 0; /* Allow text truncation */
+}
+
+.tdg-list-item-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.tdg-airport-code {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.tdg-airport-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tdg-list-item-location {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 2px;
+}
+
+.tdg-michelin-stars {
+  color: gold;
+  margin-right: 0.5rem;
+}
+
+.tdg-restaurant-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tdg-list-item-cuisine {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-style: italic;
+}
+
+.tdg-green-star {
+  flex-shrink: 0;
+  font-size: 1.25rem;
+}
+
+.tdg-airport-type {
+  background: rgba(100, 200, 255, 0.2);
+  color: rgba(100, 200, 255, 0.9);
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.tdg-restaurant-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.tdg-search-wrapper {
+  margin-bottom: 0.5rem;
 }
 
 @keyframes slideUp {
