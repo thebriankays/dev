@@ -1,15 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as turf from '@turf/turf'
-import { getAirlineByCode, getAircraftImage } from '@/lib/flights/flight-service'
+import { getPayload } from 'payload'
+import config from '@payload-config'
 
 // Cache configuration
 // OpenSky API rate limits:
 // - Anonymous: 10-second resolution, 400 credits/day
 // - Authenticated: 5-second resolution, 4000-8000 credits/day
 // But we use position prediction, so we can cache longer
-const CACHE_DURATION_ANONYMOUS = 30000 // 30 seconds for anonymous users
-const CACHE_DURATION_AUTHENTICATED = 20000 // 20 seconds for authenticated users
+const CACHE_DURATION_ANONYMOUS = 45000 // 45 seconds for anonymous users
+const CACHE_DURATION_AUTHENTICATED = 25000 // 25 seconds for authenticated users
 const flightCache = new Map<string, { data: any; timestamp: number }>()
+
+// Clean up old cache entries periodically
+setInterval(() => {
+  const now = Date.now()
+  for (const [key, value] of flightCache.entries()) {
+    if (now - value.timestamp > CACHE_DURATION_ANONYMOUS * 2) {
+      flightCache.delete(key)
+    }
+  }
+}, 60000) // Clean every minute
 
 // OAuth token cache
 let oauthToken: { token: string; expiresAt: number } | null = null
@@ -91,10 +102,10 @@ async function getOAuthToken(): Promise<string | null> {
 
     const data = await response.json()
 
-    // Cache the token (expires_in is in seconds, we'll refresh 1 minute before expiry)
+    // Cache the token (expires_in is in seconds, we'll refresh 5 minutes before expiry)
     oauthToken = {
       token: data.access_token,
-      expiresAt: Date.now() + (data.expires_in - 60) * 1000,
+      expiresAt: Date.now() + (data.expires_in - 300) * 1000, // 5 minutes buffer
     }
 
     console.log('Successfully obtained OAuth2 token, expires in', data.expires_in, 'seconds')
@@ -144,6 +155,51 @@ function predictFlightPosition(flight: FlightState, deltaTimeMs: number): [numbe
   })
 
   return destination.geometry.coordinates as [number, number]
+}
+
+// Get airline info from Payload CMS
+async function getAirlineByCode(callsign: string): Promise<any | null> {
+  try {
+    // Extract airline code from callsign (first 3 characters)
+    const airlineCode = callsign.slice(0, 3)
+    
+    const payload = await getPayload({ config })
+    
+    // Try ICAO code first
+    const icaoResult = await payload.find({
+      collection: 'airlines',
+      where: {
+        icao: {
+          equals: airlineCode,
+        },
+      },
+      limit: 1,
+    })
+
+    if (icaoResult.docs.length > 0) {
+      return icaoResult.docs[0]
+    }
+
+    // Try IATA code
+    const iataResult = await payload.find({
+      collection: 'airlines',
+      where: {
+        iata: {
+          equals: airlineCode.slice(0, 2), // IATA codes are 2 characters
+        },
+      },
+      limit: 1,
+    })
+
+    if (iataResult.docs.length > 0) {
+      return iataResult.docs[0]
+    }
+
+    return null
+  } catch (error) {
+    console.error('Error fetching airline from database:', error)
+    return null
+  }
 }
 
 // Helper function to create interpolated trajectory for smooth animation
@@ -343,12 +399,12 @@ async function processFlightData(
           const validLat = state[6] !== 0 && Math.abs(state[6]) <= 90
           
           if (!hasCoords || !validLng || !validLat) {
-            console.warn(`Filtering out flight with invalid coords: lng=${state[5]}, lat=${state[6]}`)
             return false
           }
           return true
         }
       )
+      .slice(0, 200) // Limit to first 200 flights for performance
       .map((state: any[]) => {
         const flight: FlightState = {
           icao24: state[0],
@@ -370,8 +426,8 @@ async function processFlightData(
           position_source: state[16] || 0,
         }
         
-        // Debug log to check coordinates
-        if (Math.random() < 0.1) { // Log 10% of flights to avoid spam
+        // Minimal debug logging for better performance
+        if (Math.random() < 0.02) { // Log only 2% of flights
           console.log(`Flight ${flight.callsign}: lng=${flight.longitude}, lat=${flight.latitude}`)
         }
 

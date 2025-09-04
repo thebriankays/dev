@@ -1,5 +1,37 @@
 // Use global fonts from src/fonts/fonts.ts
 
+/* Canvas and WebGL fixes for shared canvas architecture */
+/* These need to be global to affect the canvas element properly */
+:global(#__canvas) {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none !important;
+  background: transparent !important;
+  z-index: 0 !important;
+  
+  canvas {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: transparent !important;
+    image-rendering: optimizeSpeed !important;
+    -webkit-transform: translateZ(0) !important;
+    transform: translateZ(0) !important;
+    backface-visibility: hidden !important;
+    -webkit-backface-visibility: hidden !important;
+  }
+}
+
+/* Ensure travel data globe block webgl view is properly positioned */
+:global([data-view-track]) {
+  position: relative !important;
+}
+
 .travel-data-globe-block {
   position: relative;
   width: 100%;
@@ -15,14 +47,15 @@
     overflow: hidden !important;
   }
   
-  // Prevent WebGL corruption
-  canvas {
-    image-rendering: optimizeSpeed !important;
-    image-rendering: -webkit-optimize-contrast !important;
-    transform: translateZ(0) !important;
-    backface-visibility: hidden !important;
-    -webkit-backface-visibility: hidden !important;
-    -webkit-transform: translateZ(0) !important;
+  // Ensure WebGL View container is transparent and fixed
+  :global(.webgl-view) {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: transparent !important;
+    pointer-events: auto !important;
   }
 }
 
@@ -44,22 +77,45 @@
   }
 }
 
-/* Globe pane - contains the 3D globe */
+/* Globe pane - dynamic sizing based on panel states */
 .tdg-globe-pane {
   position: absolute;
-  left: calc(400px + 7rem);
-  right: 2rem;
   top: 0;
   bottom: 0;
+  left: 280px; // Default with list panel expanded
+  right: 1rem;
   height: 100%;
   overflow: hidden;
-  transition: all 0.6s ease;
+  transition: all 0.4s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   background: transparent !important;
   pointer-events: auto;
   z-index: 5;
+  
+  // Dynamic positioning based on panel states
+  &.tdg-globe-pane--list-collapsed {
+    left: 90px; // When list panel is collapsed
+  }
+  
+  &.tdg-globe-pane--detail-expanded {
+    right: 280px; // When detail panel is expanded
+  }
+  
+  &.tdg-globe-pane--detail-collapsed {
+    right: 50px; // When detail panel is collapsed
+  }
+  
+  &.tdg-globe-pane--list-collapsed.tdg-globe-pane--detail-expanded {
+    left: 90px;
+    right: 280px;
+  }
+  
+  &.tdg-globe-pane--list-collapsed.tdg-globe-pane--detail-collapsed {
+    left: 90px;
+    right: 50px;
+  }
 }
 
 .tdg-viewport {
@@ -194,16 +250,39 @@
   transition: color 200ms;
 }
 
-/* Info Panels - Glass effect restored */
-.tdg-info-panels {
+/* List Panel - Left side, collapsible */
+.tdg-list-panel {
   position: absolute;
   left: 5rem;
   top: 0;
   bottom: 0;
-  width: 400px;
+  width: 260px; // Smaller width
   z-index: 40;
   margin: 1rem 0;
   pointer-events: auto;
+  transition: all 0.3s ease;
+  
+  &.tdg-list-panel--collapsed {
+    width: 40px;
+    
+    .tdg-info-panel-glass {
+      overflow: hidden;
+    }
+    
+    .tdg-panel-heading,
+    .tdg-stats-bar,
+    .tdg-key-accordion,
+    .tdg-search-input,
+    .tdg-list-container,
+    .tdg-filter-toggle {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .tdg-collapse-toggle {
+      left: calc(100% - 30px);
+    }
+  }
 }
 
 .tdg-info-panel-glass {
@@ -220,12 +299,51 @@
   box-shadow: 
     0 8px 32px 0 rgba(0, 0, 0, 0.37),
     inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+
+/* Collapse toggle button */
+.tdg-collapse-toggle {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 60px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 50;
+  color: rgba(255, 255, 255, 0.6);
+  
+  &:hover {
+    background: rgba(0, 0, 0, 0.9);
+    color: rgba(255, 255, 255, 0.9);
+  }
+  
+  svg {
+    font-size: 14px;
+    transition: transform 0.3s ease;
+  }
+}
+
+.tdg-list-panel .tdg-collapse-toggle {
+  left: calc(100% - 10px);
+  border-radius: 0 4px 4px 0;
+}
+
+.tdg-detail-panel .tdg-collapse-toggle {
+  right: calc(100% - 10px);
+  border-radius: 4px 0 0 4px;
 }
 
 .tdg-panel-heading {
   margin: 0;
-  padding: 1rem 1.5rem;
-  font-size: 0.875rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -233,10 +351,26 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   color: #e2e8f0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  overflow: hidden;
+  transition: opacity 0.3s ease;
+  
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  img {
+    flex-shrink: 0;
+  }
+  
+  svg {
+    flex-shrink: 0;
+  }
 }
 
 /* Stats Bar */
@@ -249,12 +383,15 @@
   justify-content: center;
   gap: 1rem;
   flex-wrap: nowrap;
+  transition: opacity 0.3s ease;
 }
 
 .tdg-stat {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: rgba(226, 232, 240, 0.7);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   
   strong {
     color: #e2e8f0;
@@ -274,6 +411,7 @@
 .tdg-key-accordion {
   background: rgba(0, 0, 0, 0.2);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: opacity 0.3s ease;
 }
 
 .tdg-key-toggle {
@@ -354,7 +492,7 @@
   font-size: 0.875rem;
   font-family: var(--font-saira-extra-condensed, var(--font-fk-grotesk-neue, sans-serif));
   outline: none;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   
   &::placeholder {
     color: rgba(226, 232, 240, 0.4);
@@ -371,6 +509,7 @@
   padding: 0.5rem 1rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(0, 0, 0, 0.2);
+  transition: opacity 0.3s ease;
 }
 
 .tdg-checkbox-label {
@@ -393,322 +532,210 @@
   accent-color: #81d6e3;
 }
 
-/* List Container - Scrollable */
+/* List Container - Scrollable with no wrapping */
 .tdg-list-container {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  padding-right: 0.5rem;
+  transition: opacity 0.3s ease;
   
   &::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
   }
   
   &::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
+    border-radius: 3px;
     
     &:hover {
       background: rgba(255, 255, 255, 0.3);
     }
   }
-  
-  &::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.2);
-  }
 }
 
-/* Advisory Items - Fixed no wrap */
-.tdg-country-item {
-  display: grid;
-  grid-template-columns: 24px 1fr auto;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  background: transparent;
-  
-  &:hover {
-    background: rgba(255, 255, 255, 0.05);
-  }
-  
-  &.tdg-selected {
-    background: rgba(129, 214, 227, 0.1);
-    border-left: 3px solid #81d6e3;
-    padding-left: calc(1rem - 3px);
-  }
-}
-
-.tdg-advisory-header {
-  display: contents;
-}
-
-.tdg-advisory-country {
-  color: #e2e8f0;
-  font-size: 0.875rem;
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.tdg-advisory-level {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.125rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-  white-space: nowrap;
-  
-  &.tdg-level-1 {
-    background: rgba(76, 175, 80, 0.2);
-    color: #4caf50;
-  }
-  
-  &.tdg-level-2 {
-    background: rgba(255, 179, 0, 0.2);
-    color: #ffb300;
-  }
-  
-  &.tdg-level-3 {
-    background: rgba(244, 81, 30, 0.2);
-    color: #f4511e;
-  }
-  
-  &.tdg-level-4 {
-    background: rgba(183, 28, 28, 0.2);
-    color: #ef4444;
-  }
-}
-
-.tdg-new-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  margin-left: 8px;
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #fff;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 9999px;
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  white-space: nowrap;
-}
-
-/* Visa Items - Fixed no wrap */
-.tdg-visa-item {
-  display: grid;
-  grid-template-columns: 24px 1fr;
-  grid-template-rows: auto auto;
-  gap: 0.25rem 0.75rem;
-  padding: 0.75rem 1rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  background: transparent;
-  
-  &:hover {
-    background: rgba(255, 255, 255, 0.05);
-  }
-  
-  &.tdg-selected {
-    background: rgba(129, 214, 227, 0.1);
-    border-left: 3px solid #81d6e3;
-    padding-left: calc(1rem - 3px);
-  }
-}
-
-.tdg-visa-header {
-  display: contents;
-}
-
-.tdg-visa-country {
-  color: #e2e8f0;
-  font-size: 0.875rem;
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.tdg-visa-stats {
-  grid-column: 2;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  color: rgba(226, 232, 240, 0.6);
-  white-space: nowrap;
-}
-
-/* Restaurant Items - Fixed layout */
-.tdg-restaurant-item {
+/* List Items - Prevent wrapping */
+.tdg-country-list,
+.tdg-restaurant-list,
+.tdg-airport-list {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  padding: 0.75rem 1rem;
+}
+
+.tdg-advisory-item,
+.tdg-country-item,
+.tdg-restaurant-item,
+.tdg-airport-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
   cursor: pointer;
   transition: all 0.2s;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  background: transparent;
+  white-space: nowrap;
+  overflow: hidden;
   
   &:hover {
     background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(129, 214, 227, 0.2);
   }
   
   &.tdg-selected {
     background: rgba(129, 214, 227, 0.1);
-    border-left: 3px solid #81d6e3;
-    padding-left: calc(1rem - 3px);
+    border-color: rgba(129, 214, 227, 0.3);
+  }
+  
+  // Prevent text wrapping
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
-.tdg-restaurant-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+.tdg-advisory-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  
+  &.tdg-level-1 { background: #4caf50; }
+  &.tdg-level-2 { background: #ffb300; }
+  &.tdg-level-3 { background: #f4511e; }
+  &.tdg-level-4 { background: #b71c1c; }
 }
 
-.tdg-restaurant-name {
+.tdg-flag {
+  width: 24px;
+  height: 16px;
+  object-fit: contain;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.tdg-flag-placeholder {
+  width: 24px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.tdg-advisory-country,
+.tdg-country-name,
+.tdg-restaurant-name,
+.tdg-airport-name {
+  flex: 1;
   color: #e2e8f0;
   font-size: 0.875rem;
-  font-weight: 500;
-  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.tdg-restaurant-details {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding-left: calc(24px + 0.75rem);
+.tdg-new-pill {
+  padding: 0.125rem 0.375rem;
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  border-radius: 0.25rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  flex-shrink: 0;
 }
 
-.tdg-restaurant-rating {
-  color: #ffd700;
-  font-size: 0.75rem;
+.tdg-advisory-level {
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
   white-space: nowrap;
+  flex-shrink: 0;
+  
+  &.tdg-level-1 { 
+    background: rgba(76, 175, 80, 0.2); 
+    color: #4caf50; 
+  }
+  &.tdg-level-2 { 
+    background: rgba(255, 179, 0, 0.2); 
+    color: #ffb300; 
+  }
+  &.tdg-level-3 { 
+    background: rgba(244, 81, 30, 0.2); 
+    color: #f4511e; 
+  }
+  &.tdg-level-4 { 
+    background: rgba(183, 28, 28, 0.2); 
+    color: #ef4444; 
+  }
 }
 
-.tdg-restaurant-cuisine {
-  color: rgba(226, 232, 240, 0.7);
-  font-size: 0.75rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.tdg-restaurant-location {
-  padding-left: calc(24px + 0.75rem);
-  font-size: 0.75rem;
+.tdg-visa-free-count,
+.tdg-restaurant-rating,
+.tdg-airport-code {
   color: rgba(226, 232, 240, 0.6);
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 0.75rem;
   white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tdg-restaurant-stars,
+.tdg-green-star {
+  color: #ffd700;
+  font-size: 0.875rem;
+  flex-shrink: 0;
 }
 
 .tdg-green-star {
   color: #4caf50;
-  font-size: 0.875rem;
 }
 
-/* Airport Items - Fixed layout */
-.tdg-airport-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.75rem 1rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  background: transparent;
-  
-  &:hover {
-    background: rgba(255, 255, 255, 0.05);
-  }
-  
-  &.tdg-selected {
-    background: rgba(129, 214, 227, 0.1);
-    border-left: 3px solid #81d6e3;
-    padding-left: calc(1rem - 3px);
-  }
-}
-
-.tdg-airport-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.tdg-airport-name {
-  color: #e2e8f0;
-  font-size: 0.875rem;
-  font-weight: 500;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.tdg-airport-code {
-  color: #81d6e3;
-  font-weight: 600;
-  font-size: 0.875rem;
-  white-space: nowrap;
-  background: rgba(129, 214, 227, 0.1);
-  padding: 0.125rem 0.375rem;
-  border-radius: 0.25rem;
-}
-
-.tdg-airport-location {
-  padding-left: calc(24px + 0.75rem);
-  font-size: 0.75rem;
-  color: rgba(226, 232, 240, 0.6);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Flag styles */
-.tdg-flag {
-  width: 24px;
-  height: auto !important;
-  max-height: 16px;
-  object-fit: cover;
-  border-radius: 2px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  flex-shrink: 0;
-}
-
-/* Detail overlays */
-.tdg-detail-overlay {
+/* Detail Panel - Right side, collapsible */
+.tdg-detail-panel {
   position: absolute;
+  top: 0;
   bottom: 0;
-  left: calc(400px + 7rem);
-  right: 2rem;
-  height: calc(50% - 1rem);
-  max-height: 600px;
+  right: 1rem;
+  width: 260px; // Smaller to match list panel
   z-index: 45;
-  animation: slideUp 0.5s ease-out;
-  margin-bottom: 1rem;
+  margin: 1rem 0;
+  pointer-events: auto;
+  transition: all 0.3s ease;
+  
+  &.tdg-detail-panel--collapsed {
+    width: 40px;
+    
+    .tdg-detail-glass {
+      overflow: hidden;
+    }
+    
+    .tdg-detail-header,
+    .tdg-detail-content {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .tdg-collapse-toggle {
+      right: calc(100% - 30px);
+    }
+  }
 }
 
-/* Glass morphism for detail panels */
 .tdg-detail-glass {
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -719,6 +746,7 @@
   box-shadow: 
     0 12px 32px rgba(0, 0, 0, 0.35),
     inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  position: relative;
 }
 
 .tdg-detail-header {
@@ -730,20 +758,35 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   color: #e2e8f0;
   background: rgba(0, 0, 0, 0.3);
+  transition: opacity 0.3s ease;
 }
 
 .tdg-detail-header-left {
   display: inline-flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  
+  > * {
+    flex-shrink: 0;
+  }
+  
+  .tdg-detail-title {
+    flex: 1;
+    min-width: 0;
+  }
 }
 
 .tdg-detail-title {
   margin: 0;
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 600;
   color: #e2e8f0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .tdg-detail-level {
@@ -755,6 +798,7 @@
   font-size: 0.7rem;
   font-weight: 700;
   white-space: nowrap;
+  flex-shrink: 0;
   
   &.tdg-level-1 { 
     background: rgba(76, 175, 80, 0.2); 
@@ -782,6 +826,7 @@
   padding: 0.5rem 0.75rem;
   cursor: pointer;
   transition: all 0.2s;
+  flex-shrink: 0;
   
   &:hover { 
     background: rgba(255, 255, 255, 0.1);
@@ -795,6 +840,7 @@
   padding: 1.25rem;
   overflow-y: auto;
   color: #e2e8f0;
+  transition: opacity 0.3s ease;
   
   &::-webkit-scrollbar {
     width: 8px;
@@ -814,186 +860,102 @@
   }
 }
 
-.tdg-detail-logo-bg {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  opacity: 0.05;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.tdg-prose {
-  position: relative;
-  z-index: 1;
-  
-  h3, h4 {
-    color: #e2e8f0;
-    margin-top: 1.5rem;
-    margin-bottom: 0.75rem;
-  }
-  
-  p {
-    color: rgba(226, 232, 240, 0.9);
-    line-height: 1.6;
-    margin-bottom: 1rem;
-  }
-}
-
-.tdg-advisory-meta {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 0.375rem;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-  
-  p {
-    margin: 0.5rem 0;
-    color: rgba(226, 232, 240, 0.9);
-    
-    strong {
-      color: #e2e8f0;
-      font-weight: 600;
-    }
-  }
-}
-
-.tdg-advisory-text-content {
-  p {
-    margin-bottom: 1rem;
-    line-height: 1.7;
-  }
-}
-
-.tdg-detail-footer {
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+/* Detail content specific styles */
+.tdg-info-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-}
-
-.tdg-detail-source {
-  font-size: 0.75rem;
-  color: rgba(226, 232, 240, 0.6);
-  margin: 0;
-}
-
-/* Info rows for restaurant/airport details */
-.tdg-info-row {
-  display: grid;
-  grid-template-columns: 20px auto 1fr;
   gap: 0.5rem;
-  align-items: center;
-  margin-bottom: 0.75rem;
-  color: rgba(226, 232, 240, 0.85);
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
-.tdg-info-icon { 
-  opacity: 0.75;
-  color: #81d6e3;
-}
-
-.tdg-info-label { 
-  color: rgba(226, 232, 240, 0.65);
+.tdg-info-label {
+  color: rgba(226, 232, 240, 0.6);
   font-weight: 500;
+  flex-shrink: 0;
 }
 
-.tdg-info-value { 
+.tdg-info-value {
   color: #e2e8f0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .tdg-location-coordinates {
-  margin-top: 1.5rem;
-  padding: 0.75rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-  color: rgba(226, 232, 240, 0.7);
-  font-family: var(--font-mono);
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(226, 232, 240, 0.5);
+  font-size: 0.7rem;
+  font-family: monospace;
 }
 
-/* Visa details specific styles */
 .tdg-visa-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .tdg-stat-card {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 0.375rem;
-  padding: 0.75rem;
-  text-align: center;
-  
-  .tdg-stat-value {
-    display: block;
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #e2e8f0;
-    margin-bottom: 0.25rem;
-  }
-  
-  .tdg-stat-label {
-    display: block;
-    font-size: 0.75rem;
-    color: rgba(226, 232, 240, 0.6);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-}
-
-.tdg-visa-requirements-grid {
-  display: grid;
-  gap: 0.5rem;
-  max-height: 300px;
-  overflow-y: auto;
-  padding-right: 0.5rem;
-  
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 3px;
-  }
-}
-
-.tdg-visa-requirement-item {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.5rem 0.75rem;
+  flex: 1;
+  padding: 0.5rem;
   background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 0.25rem;
-  transition: background 0.2s;
-  
-  &:hover {
-    background: rgba(255, 255, 255, 0.06);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.tdg-stat-value {
+  display: block;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #81d6e3;
+  margin-bottom: 0.25rem;
+}
+
+.tdg-stat-label {
+  display: block;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  color: rgba(226, 232, 240, 0.6);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tdg-prose {
+  h3 {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #e2e8f0;
   }
-}
-
-.tdg-visa-requirement-country {
-  color: #e2e8f0;
-  font-size: 0.875rem;
-}
-
-.tdg-visa-requirement-status {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  color: rgba(226, 232, 240, 0.8);
   
-  svg {
+  p {
+    margin: 0 0 1rem;
     font-size: 0.875rem;
+    line-height: 1.6;
+    color: rgba(226, 232, 240, 0.9);
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+  
+  .tdg-date {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(226, 232, 240, 0.5);
+    font-size: 0.75rem;
   }
 }
 
+// Rest of the detail styles remain the same...
 @keyframes slideUp {
   from {
     transform: translateY(100%);

@@ -209,14 +209,6 @@ export async function TravelDataGlobeBlock(props: TravelDataGlobeBlockProps) {
 
   const transformedAdvisories: AdvisoryCountry[] = (advisoriesResult.docs as AdvisoryDoc[])
     .map((doc, index): AdvisoryCountry => {
-      if (index < 1) {
-        console.log('Advisory debug sample:', {
-          keys: Object.keys(doc),
-          level: doc.level,
-          advisoryLevel: doc.advisoryLevel,
-          threatLevel: doc.threatLevel,
-        })
-      }
 
       const countryName = doc.country?.name || doc.name || 'Unknown'
       const countryData =

@@ -1,0 +1,63 @@
+.glass-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--glass-radius, 0.5rem);
+  
+  .glass-filter {
+    position: absolute;
+    inset: 0;
+    backdrop-filter: blur(var(--glass-blur, 12px));
+    -webkit-backdrop-filter: blur(var(--glass-blur, 12px));
+    background: rgba(255, 255, 255, 0.05);
+    z-index: 0;
+  }
+  
+  .glass-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.02) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--glass-radius, 0.5rem);
+    z-index: 1;
+  }
+  
+  .glass-content {
+    position: relative;
+    z-index: 2;
+  }
+  
+  &.glass-variant-card {
+    .glass-filter {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(var(--glass-blur, 12px)) saturate(180%);
+      -webkit-backdrop-filter: blur(var(--glass-blur, 12px)) saturate(180%);
+    }
+    
+    .glass-overlay {
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.15) 0%,
+        rgba(255, 255, 255, 0.05) 100%
+      );
+    }
+  }
+  
+  &.glass-variant-panel {
+    .glass-filter {
+      background: rgba(0, 0, 0, 0.3);
+    }
+    
+    .glass-overlay {
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.08) 0%,
+        rgba(255, 255, 255, 0.01) 100%
+      );
+    }
+  }
+}

@@ -63,7 +63,7 @@ export function AdvisoryPanel({
                     width={24}
                     height={16}
                     className="tdg-flag"
-                    style={{ width: '24px', height: 'auto' }}
+                    style={{ width: '24px', height: '16px', objectFit: 'contain' }}
                     unoptimized
                   />
                 )}
