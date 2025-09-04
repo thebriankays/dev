@@ -1,0 +1,104 @@
+/* Custom admin panel styles */
+
+/* Override global opacity that might affect admin panel */
+html {
+  opacity: 1 !important;
+}
+
+/* Ensure admin panel content is visible and not transparent */
+.payload__root-container {
+  background: var(--theme-bg) !important;
+  opacity: 1 !important;
+}
+
+/* Fix for card text visibility in admin dashboard */
+.dashboard__card-list {
+  .card {
+    /* Ensure card has proper background and text color */
+    background-color: var(--theme-elevation-0);
+    color: var(--theme-text);
+    
+    &__title {
+      /* Ensure title text is visible */
+      color: var(--theme-text);
+      opacity: 1;
+      
+      /* Apply the styles from the browser inspector */
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 13px;
+      line-height: 16px;
+      letter-spacing: 0;
+      width: 100%;
+      margin: 2px 0;
+    }
+    
+    /* Ensure all text in card is visible */
+    p, span, div {
+      color: var(--theme-text);
+    }
+    
+    /* Hover state for better visibility */
+    &:hover {
+      background-color: var(--theme-elevation-50);
+      
+      .card__title {
+        color: var(--theme-text);
+      }
+    }
+  }
+}
+
+/* Additional fixes for card visibility */
+.card {
+  /* Fallback colors if theme variables aren't available */
+  color: inherit;
+  
+  &__title {
+    color: inherit;
+  }
+}
+
+/* Ensure h3 elements in cards are visible */
+.card h3 {
+  color: var(--theme-text);
+  margin: 0;
+  font-size: 20px;
+  line-height: 24px;
+}
+
+/* Fix for any potential theme issues with dark mode */
+[data-theme='dark'] {
+  .dashboard__card-list {
+    .card {
+      background-color: var(--theme-elevation-100);
+      color: var(--theme-text);
+      border: 1px solid var(--theme-elevation-200);
+      
+      &__title {
+        color: var(--theme-text);
+      }
+    }
+  }
+}
+
+/* Fix for light mode */
+[data-theme='light'] {
+  .dashboard__card-list {
+    .card {
+      background-color: var(--theme-elevation-0);
+      color: var(--theme-text);
+      border: 1px solid var(--theme-elevation-100);
+      
+      &__title {
+        color: var(--theme-text);
+      }
+    }
+  }
+}
+
+/* Ensure AdminWebGLProvider canvas doesn't interfere with card visibility */
+.payload__root-container canvas {
+  pointer-events: none !important;
+  z-index: -1 !important;
+}

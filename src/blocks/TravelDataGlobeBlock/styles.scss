@@ -1,14 +1,28 @@
+// Use global fonts from src/fonts/fonts.ts
+
 .travel-data-globe-block {
   position: relative;
   width: 100%;
   height: 100vh;
   min-height: 100vh;
   background: transparent !important;
+  overflow: hidden !important;
   
   .block-wrapper {
     width: 100%;
     height: 100vh;
     background: transparent !important;
+    overflow: hidden !important;
+  }
+  
+  // Prevent WebGL corruption
+  canvas {
+    image-rendering: optimizeSpeed !important;
+    image-rendering: -webkit-optimize-contrast !important;
+    transform: translateZ(0) !important;
+    backface-visibility: hidden !important;
+    -webkit-backface-visibility: hidden !important;
+    -webkit-transform: translateZ(0) !important;
   }
 }
 
@@ -23,10 +37,10 @@
   contain: layout;
   isolation: isolate;
   background: transparent !important;
-  pointer-events: none; /* Allow WebGL to show through */
+  pointer-events: none;
   
   > * {
-    pointer-events: auto; /* Re-enable for children */
+    pointer-events: auto;
   }
 }
 
@@ -55,11 +69,6 @@
   background: transparent !important;
   isolation: isolate;
   z-index: 1;
-
-  canvas {
-    background: transparent !important;
-    pointer-events: auto;
-  }
 }
 
 /* Vertical Marquee */
@@ -142,7 +151,7 @@
   transition: all 200ms ease;
   position: relative;
   z-index: 1;
-  font-family: var(--font-monument-extended);
+  font-family: var(--font-saira-extra-condensed, var(--font-monument-extended));
   
   &:hover:not(.tdg-tab--active) {
     --c: rgba(129, 214, 227, 0.8);
@@ -343,7 +352,7 @@
   border-radius: 0.25rem;
   color: #e2e8f0;
   font-size: 0.875rem;
-  font-family: var(--font-fk-grotesk-neue);
+  font-family: var(--font-saira-extra-condensed, var(--font-fk-grotesk-neue, sans-serif));
   outline: none;
   transition: all 0.2s;
   
@@ -357,7 +366,34 @@
   }
 }
 
-/* List Container */
+/* Filter Toggle */
+.tdg-filter-toggle {
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.tdg-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: rgba(226, 232, 240, 0.8);
+  
+  &:hover {
+    color: #81d6e3;
+  }
+}
+
+.tdg-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #81d6e3;
+}
+
+/* List Container - Scrollable */
 .tdg-list-container {
   flex: 1 1 auto;
   min-height: 0;
@@ -514,12 +550,11 @@
   white-space: nowrap;
 }
 
-/* Restaurant Items - Fixed no wrap */
+/* Restaurant Items - Fixed layout */
 .tdg-restaurant-item {
-  display: grid;
-  grid-template-columns: 24px 1fr auto;
-  grid-template-rows: auto auto auto;
-  gap: 0.25rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
   padding: 0.75rem 1rem;
   cursor: pointer;
   transition: all 0.2s;
@@ -538,42 +573,46 @@
 }
 
 .tdg-restaurant-header {
-  display: contents;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .tdg-restaurant-name {
   color: #e2e8f0;
   font-size: 0.875rem;
   font-weight: 500;
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .tdg-restaurant-details {
-  grid-column: 2 / -1;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.75rem;
+  gap: 0.75rem;
+  padding-left: calc(24px + 0.75rem);
 }
 
 .tdg-restaurant-rating {
   color: #ffd700;
+  font-size: 0.75rem;
   white-space: nowrap;
 }
 
 .tdg-restaurant-cuisine {
-  color: rgba(226, 232, 240, 0.6);
+  color: rgba(226, 232, 240, 0.7);
+  font-size: 0.75rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .tdg-restaurant-location {
-  grid-column: 2 / -1;
+  padding-left: calc(24px + 0.75rem);
   font-size: 0.75rem;
-  color: rgba(226, 232, 240, 0.5);
+  color: rgba(226, 232, 240, 0.6);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -582,15 +621,13 @@
 .tdg-green-star {
   color: #4caf50;
   font-size: 0.875rem;
-  justify-self: end;
 }
 
-/* Airport Items - Fixed no wrap */
+/* Airport Items - Fixed layout */
 .tdg-airport-item {
-  display: grid;
-  grid-template-columns: 24px 1fr auto;
-  grid-template-rows: auto auto;
-  gap: 0.25rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
   padding: 0.75rem 1rem;
   cursor: pointer;
   transition: all 0.2s;
@@ -609,13 +646,16 @@
 }
 
 .tdg-airport-header {
-  display: contents;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .tdg-airport-name {
   color: #e2e8f0;
   font-size: 0.875rem;
   font-weight: 500;
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -626,10 +666,13 @@
   font-weight: 600;
   font-size: 0.875rem;
   white-space: nowrap;
+  background: rgba(129, 214, 227, 0.1);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
 }
 
 .tdg-airport-location {
-  grid-column: 2 / -1;
+  padding-left: calc(24px + 0.75rem);
   font-size: 0.75rem;
   color: rgba(226, 232, 240, 0.6);
   overflow: hidden;
@@ -640,40 +683,12 @@
 /* Flag styles */
 .tdg-flag {
   width: 24px;
-  height: 16px;
+  height: auto !important;
+  max-height: 16px;
   object-fit: cover;
   border-radius: 2px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   flex-shrink: 0;
-}
-
-/* Globe pane - ensure transparency */
-.tdg-globe-pane {
-  position: absolute;
-  left: calc(400px + 7rem);
-  right: 2rem;
-  top: 0;
-  bottom: 0;
-  height: 100%;
-  overflow: hidden;
-  transition: all 0.6s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent !important;
-  pointer-events: auto;
-}
-
-.tdg-viewport {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  background: transparent !important;
-  isolation: isolate;
-  
-  canvas {
-    background: transparent !important;
-  }
 }
 
 /* Detail overlays */
@@ -977,96 +992,6 @@
   svg {
     font-size: 0.875rem;
   }
-}
-
-/* List item styles for airports and restaurants */
-.tdg-list-item-content {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  width: 100%;
-}
-
-.tdg-country-flag {
-  flex-shrink: 0;
-  border-radius: 2px;
-  object-fit: cover;
-}
-
-.tdg-list-item-details {
-  flex: 1;
-  min-width: 0; /* Allow text truncation */
-}
-
-.tdg-list-item-name {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.tdg-airport-code {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-family: monospace;
-  font-size: 0.875rem;
-  flex-shrink: 0;
-}
-
-.tdg-airport-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.tdg-list-item-location {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.6);
-  margin-top: 2px;
-}
-
-.tdg-michelin-stars {
-  color: gold;
-  margin-right: 0.5rem;
-}
-
-.tdg-restaurant-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.tdg-list-item-cuisine {
-  font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.7);
-  font-style: italic;
-}
-
-.tdg-green-star {
-  flex-shrink: 0;
-  font-size: 1.25rem;
-}
-
-.tdg-airport-type {
-  background: rgba(100, 200, 255, 0.2);
-  color: rgba(100, 200, 255, 0.9);
-  padding: 2px 8px;
-  border-radius: 3px;
-  font-size: 0.75rem;
-  flex-shrink: 0;
-}
-
-.tdg-restaurant-badges {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  flex-shrink: 0;
-}
-
-.tdg-search-wrapper {
-  margin-bottom: 0.5rem;
 }
 
 @keyframes slideUp {

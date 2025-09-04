@@ -1,10 +1,4 @@
-/* Import AlienRobot font */
-@font-face {
-  font-family: 'AlienRobot';
-  src: url('/fonts/AlienRobot.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-}
+/* AlienRobot font is now loaded globally via var(--font-alien-robot) */
 
 .alien-integrations {
   position: relative;
@@ -29,7 +23,7 @@
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 1; // Behind 3D model
-    font-family: 'AlienRobot', sans-serif;
+    font-family: var(--font-alien-robot), sans-serif;
     font-size: clamp(4vh, 6vw, 12vh); // Further reduced to prevent overflow
     font-weight: normal;
     text-align: center;
@@ -51,7 +45,7 @@
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 3; // Above 3D model
-    font-family: 'AlienRobot', sans-serif;
+    font-family: var(--font-alien-robot), sans-serif;
     font-size: clamp(4vh, 6vw, 12vh); // Match back text size
     font-weight: normal;
     text-align: center;

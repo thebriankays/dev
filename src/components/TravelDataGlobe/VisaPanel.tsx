@@ -19,51 +19,53 @@ export function VisaPanel({
   selectedCountry,
   onCountryClick,
 }: VisaPanelProps) {
-  const q = (searchQuery || '').toLowerCase()
-  
-  const filteredCountries = (countries || []).filter(country =>
-    country && (country.countryName || '').toLowerCase().includes(q)
+  const filteredCountries = countries.filter(country =>
+    country.countryName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (country.countryCode && country.countryCode.toLowerCase().includes(searchQuery.toLowerCase()))
   )
 
   return (
     <>
       <input
         type="text"
-        placeholder="Search passport countries…"
+        placeholder="Search countries..."
         value={searchQuery}
         onChange={(e) => onSearchChange(e.target.value)}
         className="tdg-search-input"
       />
-      
-      <div className="tdg-list-container" data-lenis-prevent>
-        {filteredCountries.map((country, idx) => (
-          <div
-            key={`visa-${country.countryId}-${idx}`}
+
+      <ul className="tdg-list-container">
+        {filteredCountries.map((country) => (
+          <li
+            key={country.countryId}
+            className={`tdg-visa-item ${
+              selectedCountry === country.countryName ? 'tdg-selected' : ''
+            }`}
             onClick={() => onCountryClick(country)}
-            className={`tdg-visa-item ${selectedCountry === country.countryName ? 'tdg-selected' : ''}`}
           >
             <div className="tdg-visa-header">
               {country.countryFlag && (
-                <Image 
-                  src={country.countryFlag} 
-                  alt={`${country.countryName} flag`} 
-                  width={24} 
-                  height={16} 
-                  className="tdg-flag" 
-                  unoptimized 
+                <Image
+                  src={country.countryFlag}
+                  alt={`${country.countryName} flag`}
+                  width={24}
+                  height={16}
+                  className="tdg-flag"
+                  style={{ width: '24px', height: 'auto' }}
+                  unoptimized
                 />
               )}
+              
               <span className="tdg-visa-country">{country.countryName}</span>
             </div>
+            
             <div className="tdg-visa-stats">
-              <span className="tdg-visa-count">{country.totalDestinations} destinations</span>
-              {country.visaFreeCount && country.visaFreeCount > 0 && (
-                <span className="tdg-visa-free">{country.visaFreeCount} visa-free</span>
-              )}
+              <span>{country.visaFreeCount || 0} visa-free</span>
+              <span>{country.totalDestinations} total</span>
             </div>
-          </div>
+          </li>
         ))}
-      </div>
+      </ul>
     </>
   )
 }

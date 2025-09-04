@@ -20,6 +20,13 @@ import {
 import { BlockWrapper } from '@/blocks/_shared/BlockWrapper'
 import VerticalMarquee from '@/components/VerticalMarquee/VerticalMarquee'
 import type { Feature, Polygon, MultiPolygon } from 'geojson'
+
+// Import centralized country mappings
+import { 
+  normalizeCountryName, 
+  getCountryNameVariations
+} from '@/lib/country-mappings'
+
 import { AdvisoryPanel } from '@/components/TravelDataGlobe/AdvisoryPanel'
 import { AdvisoryDetails } from '@/components/TravelDataGlobe/AdvisoryDetails'
 import { VisaPanel } from '@/components/TravelDataGlobe/VisaPanel'
@@ -38,19 +45,12 @@ import type {
 } from './types'
 import './styles.scss'
 
-// ✅ Lazy import (remove the direct import to avoid duplication)
+// Lazy import the globe
 const TravelDataGlobe = lazy(
   () => import('@/webgl/components/globe/TravelDataGlobe/TravelDataGlobeManual')
 )
 
-// Helpers
-function normalizeName(s: string) {
-  return (s || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
+// ---------- helpers ----------
 
 type WorldFeature = Feature<
   Polygon | MultiPolygon,
@@ -105,10 +105,8 @@ function getCentroidFromFeature(feature: WorldFeature): { lat: number; lng: numb
       return { lat: sy / n, lng: sx / n }
     }
 
-    if (geom.type === 'Polygon' && geom.coordinates && geom.coordinates[0]) {
-      return collect(geom.coordinates[0] as number[][])
-    }
-    if (geom.type === 'MultiPolygon' && geom.coordinates && geom.coordinates.length > 0) {
+    if (geom.type === 'Polygon' && geom.coordinates?.[0]) return collect(geom.coordinates[0] as number[][])
+    if (geom.type === 'MultiPolygon' && geom.coordinates?.length) {
       const rings = (geom.coordinates as number[][][][])
         .map((poly) => poly[0])
         .filter((ring) => ring && ring.length > 0)
@@ -116,8 +114,7 @@ function getCentroidFromFeature(feature: WorldFeature): { lat: number; lng: numb
       if (rings.length > 0) return collect(rings[0] as number[][])
     }
     return null
-  } catch (e) {
-    console.warn('Failed to get centroid:', e)
+  } catch {
     return null
   }
 }
@@ -141,6 +138,8 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
 
   const [polygons, setPolygons] = useState(initialPolygons)
   const [borders, setBorders] = useState(initialBorders)
+
+  // Centroid lookup supporting many name variants + ISO-2
   const [centroids, setCentroids] = useState<Map<string, { lat: number; lng: number }>>(new Map())
 
   const advisoryByCode = useMemo(() => {
@@ -151,16 +150,45 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
 
   const advisoryByName = useMemo(() => {
     const m = new Map<string, AdvisoryCountry>()
-    advisories.forEach((a) => m.set(normalizeName(a.country), a))
+    advisories.forEach((a) => {
+      // Use centralized normalization
+      const normalized = normalizeCountryName(a.country)
+      m.set(normalized, a)
+      // Also add all variations
+      getCountryNameVariations(a.country).forEach(variation => m.set(variation, a))
+    })
     return m
   }, [advisories])
+
+  const visaByName = useMemo(() => {
+    const m = new Map<string, CountryVisaData>()
+    visaCountries.forEach((c) => {
+      // Use centralized normalization
+      const normalized = normalizeCountryName(c.countryName)
+      m.set(normalized, c)
+      // Also add all variations
+      getCountryNameVariations(c.countryName).forEach(variation => m.set(variation, c))
+    })
+    return m
+  }, [visaCountries])
+
+  // Put a centroid under many useful keys (raw name, iso, aliases)
+  const addCentroidKeys = (
+    store: Map<string, { lat: number; lng: number }>,
+    keys: string[],
+    value: { lat: number; lng: number }
+  ) => {
+    keys
+      .map(k => normalizeCountryName(k))
+      .filter(Boolean)
+      .forEach((k) => store.set(k, value))
+  }
 
   useEffect(() => {
     fetch('/datamaps.world.json')
       .then((res) => res.json())
       .then((geoData: { features: WorldFeature[] }) => {
         const localCentroids = new Map<string, { lat: number; lng: number }>()
-
         const advisoryPolygons = geoData.features.map((feature) => {
           const props = feature.properties || {}
           const iso2 = String(
@@ -181,29 +209,53 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
             props.name || props.NAME || props.name_en || props.NAME_EN || props.admin || props.ADMIN || ''
           ).trim()
 
-          let joined: AdvisoryCountry | undefined
-          if (iso2 && advisoryByCode.has(iso2)) joined = advisoryByCode.get(iso2)
-          if (!joined) {
-            const nameVariants = [
-              normalizeName(rawName),
-              normalizeName(props.sovereignt || props.SOVEREIGNT || ''),
-              normalizeName(props.geounit || props.GEOUNIT || ''),
-              normalizeName(props.name_long || props.NAME_LONG || ''),
-            ].filter((n) => n.length > 0)
-            for (const variant of nameVariants) {
-              if (advisoryByName.has(variant)) {
-                joined = advisoryByName.get(variant)
-                break
+          const sovereign = String(props.sovereignt || props.SOVEREIGNT || '').trim()
+          const nameLong = String(props.name_long || props.NAME_LONG || '').trim()
+          const geounit = String(props.geounit || props.GEOUNIT || '').trim()
+
+          const centroid = getCentroidFromFeature(feature)
+          if (centroid) {
+            // Add all variations using centralized function
+            const allNames = [rawName, sovereign, nameLong, geounit].filter(Boolean)
+            const allKeys = new Set<string>()
+            
+            allNames.forEach(name => {
+              allKeys.add(normalizeCountryName(name))
+              getCountryNameVariations(name).forEach(v => allKeys.add(v))
+            })
+            
+            if (iso2) allKeys.add(iso2)
+            
+            addCentroidKeys(localCentroids, Array.from(allKeys), centroid)
+
+            // For comma names like "Korea, Republic of" also add reversed version
+            if (rawName.includes(',')) {
+              const parts = rawName.split(',').map((s) => s.trim())
+              if (parts.length === 2) {
+                const reversed = `${parts[1]} ${parts[0]}`
+                addCentroidKeys(localCentroids, [reversed], centroid)
               }
             }
           }
 
-          if (feature.geometry) {
-            const centroid = getCentroidFromFeature(feature)
-            if (centroid) {
-              localCentroids.set(normalizeName(rawName), centroid)
-              if (iso2) localCentroids.set(iso2, centroid)
-              if (props.sovereignt) localCentroids.set(normalizeName(props.sovereignt), centroid)
+          // Join advisory level if present
+          let joined: AdvisoryCountry | undefined
+          if (iso2 && advisoryByCode.has(iso2)) joined = advisoryByCode.get(iso2)
+          if (!joined) {
+            const normalized = normalizeCountryName(rawName)
+            joined = advisoryByName.get(normalized)
+            
+            if (!joined) {
+              // Try other name variations
+              const variants = [sovereign, nameLong, geounit]
+                .filter(Boolean)
+                .map(n => normalizeCountryName(n))
+              for (const v of variants) {
+                if (advisoryByName.has(v)) {
+                  joined = advisoryByName.get(v)
+                  break
+                }
+              }
             }
           }
 
@@ -212,13 +264,15 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
             geometry: feature.geometry,
             properties: { name: rawName, iso_a2: iso2 },
             level: (joined?.level || 1) as 1 | 2 | 3 | 4,
+            advisory: joined || null,
           }
         })
 
         const visaPolygons = geoData.features.map((feature) => {
           const rawName = feature.properties?.name || ''
+          const normalized = normalizeCountryName(rawName)
           const hasData = visaCountries.some(
-            (v) => normalizeName(v.countryName) === normalizeName(rawName)
+            (v) => normalizeCountryName(v.countryName) === normalized
           )
           return {
             type: 'Feature' as const,
@@ -227,7 +281,9 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
               name: rawName,
               iso_a2: (feature.properties?.iso_a2 || '').toUpperCase(),
             },
-            requirement: (hasData ? 'visa_required' : 'no_admission') as 'visa_required' | 'no_admission',
+            requirement: (hasData ? 'visa_required' : 'no_admission') as
+              | 'visa_required'
+              | 'no_admission',
           }
         })
 
@@ -244,11 +300,7 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
 
   const [currentView, setCurrentView] = useState<
     'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports'
-  >((blockConfig.initialView || 'travelAdvisory') as
-    | 'travelAdvisory'
-    | 'visaRequirements'
-    | 'michelinRestaurants'
-    | 'airports')
+  >(blockConfig.initialView as 'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports' || 'travelAdvisory')
   const [searchQuery, setSearchQuery] = useState('')
   const [showAdvisoryKey, setShowAdvisoryKey] = useState(false)
 
@@ -257,54 +309,67 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
   const [selectedRestaurant, setSelectedRestaurant] = useState<MichelinRestaurantData | null>(null)
   const [selectedAirport, setSelectedAirport] = useState<AirportData | null>(null)
 
-  const [_hoveredCountry, _setHoveredCountry] = useState<string | null>(null)
+  const [hoveredCountry, setHoveredCountry] = useState<string | null>(null)
   const [focusTarget, setFocusTarget] = useState<{ lat: number; lng: number } | null>(null)
+  const [showInternationalOnly, setShowInternationalOnly] = useState(true)
 
-  useEffect(() => {
-    const handleWheel = (e: WheelEvent) => {
-      const target = e.target as HTMLElement
-      if (target && (target.tagName === 'CANVAS' || target.closest('.travel-data-globe-block'))) {
-        e.preventDefault()
-        e.stopPropagation()
-      }
-    }
-    window.addEventListener('wheel', handleWheel, { passive: false })
-    return () => window.removeEventListener('wheel', handleWheel)
-  }, [])
+  // Filter airports to only international when needed
+  const filteredAirports = useMemo(() => {
+    if (!showInternationalOnly) return airports
+    
+    return airports.filter(airport => {
+      const isInternational = (airport.name || '').toLowerCase().includes('international') ||
+                            (airport.name || '').toLowerCase().includes('intl') ||
+                            (airport.type || '').toLowerCase() === 'international'
+      return isInternational
+    })
+  }, [airports, showInternationalOnly])
 
+  // Which polygons to render
   const currentPolygons = useMemo(
     () => (currentView === 'visaRequirements' ? polygons.visa : polygons.advisory),
     [currentView, polygons]
   )
 
-  const _visaArcs = useMemo(() => {
-    if (!selectedVisaCountry || currentView !== 'visaRequirements') return []
-    const origin = centroids.get(normalizeName(selectedVisaCountry.countryName))
-    if (!origin) return []
-    const arcs: Array<{
-      startLat: number; startLng: number; endLat: number; endLng: number; color: string
-    }> = []
-    selectedVisaCountry.visaRequirements.forEach((req) => {
-      if (req.requirement === 'visa_free' || req.requirement === 'visa_on_arrival' || req.requirement === 'e_visa') {
-        const dest = centroids.get(normalizeName(req.destinationCountry))
-        if (dest) {
-          arcs.push({
-            startLat: origin.lat,
-            startLng: origin.lng,
-            endLat: dest.lat,
-            endLng: dest.lng,
-            color:
-              req.requirement === 'visa_free'
-                ? '#4caf50'
-                : req.requirement === 'visa_on_arrival'
-                ? '#ffb300'
-                : '#03a9f4',
-          })
+  // ————————————— click/lookup helpers —————————————
+  const resolveByName = useCallback(
+    (name: string, which: 'advisory' | 'visa'): AdvisoryCountry | CountryVisaData | null => {
+      const normalized = normalizeCountryName(name)
+      
+      if (which === 'advisory') {
+        // Try direct match first
+        if (advisoryByName.has(normalized)) return advisoryByName.get(normalized)!
+        
+        // Try all variations
+        const variations = getCountryNameVariations(name)
+        for (const v of variations) {
+          if (advisoryByName.has(v)) return advisoryByName.get(v)!
         }
+        
+        // Loose contains match as a last resort
+        for (const [k, v] of advisoryByName.entries()) {
+          if (k.includes(normalized) || normalized.includes(k)) return v
+        }
+        return null
+      } else {
+        // Try direct match first
+        if (visaByName.has(normalized)) return visaByName.get(normalized)!
+        
+        // Try all variations
+        const variations = getCountryNameVariations(name)
+        for (const v of variations) {
+          if (visaByName.has(v)) return visaByName.get(v)!
+        }
+        
+        // Loose contains match as a last resort
+        for (const [k, v] of visaByName.entries()) {
+          if (k.includes(normalized) || normalized.includes(k)) return v
+        }
+        return null
       }
-    })
-    return arcs
-  }, [selectedVisaCountry, currentView, centroids])
+    },
+    [advisoryByName, visaByName]
+  )
 
   const handleTabChange = useCallback(
     (view: 'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports') => {
@@ -322,8 +387,11 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
   const handleAdvisoryClick = useCallback(
     (advisory: AdvisoryCountry) => {
       setSelectedAdvisory(advisory)
-      const centroid = centroids.get(normalizeName(advisory.country))
-      if (centroid) setFocusTarget(centroid)
+      setSelectedVisaCountry(null)
+      const normalized = normalizeCountryName(advisory.country)
+      const c = centroids.get(normalized)
+        || centroids.get(advisory.countryCode?.toUpperCase() || '')
+      if (c) setFocusTarget(c)
     },
     [centroids]
   )
@@ -331,8 +399,11 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
   const handleVisaCountryClick = useCallback(
     (country: CountryVisaData) => {
       setSelectedVisaCountry(country)
-      const centroid = centroids.get(normalizeName(country.countryName))
-      if (centroid) setFocusTarget(centroid)
+      setSelectedAdvisory(null)
+      const normalized = normalizeCountryName(country.countryName)
+      const c = centroids.get(normalized)
+        || centroids.get(country.countryCode?.toUpperCase() || '')
+      if (c) setFocusTarget(c)
     },
     [centroids]
   )
@@ -347,6 +418,64 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
     setFocusTarget({ lat: airport.location.lat, lng: airport.location.lng })
   }, [])
 
+  // ————————————— visa arcs (fixed) —————————————
+  const visaArcs = useMemo(() => {
+    if (!selectedVisaCountry || currentView !== 'visaRequirements') return []
+    
+    const normalized = normalizeCountryName(selectedVisaCountry.countryName)
+    const origin = centroids.get(normalized) ||
+      centroids.get(selectedVisaCountry.countryCode?.toUpperCase() || '')
+    if (!origin) return []
+
+    const arcs: Array<{
+      startLat: number
+      startLng: number
+      endLat: number
+      endLng: number
+      color: string
+    }> = []
+
+    selectedVisaCountry.visaRequirements.forEach((req) => {
+      if (
+        req.requirement === 'visa_free' ||
+        req.requirement === 'visa_on_arrival' ||
+        req.requirement === 'e_visa' ||
+        req.requirement === 'eta'
+      ) {
+        const destNormalized = normalizeCountryName(req.destinationCountry)
+        let dest = centroids.get(destNormalized)
+        
+        // Try all variations if direct match fails
+        if (!dest) {
+          const variations = getCountryNameVariations(req.destinationCountry)
+          for (const v of variations) {
+            dest = centroids.get(v)
+            if (dest) break
+          }
+        }
+
+        if (dest) {
+          arcs.push({
+            startLat: origin.lat,
+            startLng: origin.lng,
+            endLat: dest.lat,
+            endLng: dest.lng,
+            color:
+              req.requirement === 'visa_free'
+                ? '#4caf50'
+                : req.requirement === 'visa_on_arrival'
+                ? '#8bc34a'
+                : req.requirement === 'e_visa'
+                ? '#03a9f4'
+                : '#00bcd4',
+          })
+        }
+      }
+    })
+    return arcs
+  }, [selectedVisaCountry, currentView, centroids])
+
+  // 3D content
   const webglContent = (
     <Suspense
       fallback={
@@ -365,30 +494,31 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
         currentView={currentView}
         polygons={currentPolygons}
         borders={borders}
-        airports={airports}
+        airports={filteredAirports}
         restaurants={restaurants}
         globeImageUrl={blockConfig.globeImageUrl || '/earth-blue-marble.jpg'}
         bumpImageUrl={blockConfig.bumpImageUrl || '/earth-topology.png'}
         autoRotateSpeed={blockConfig.autoRotateSpeed || 0.3}
-        atmosphereColor={blockConfig.atmosphereColor || '#81d6e3'}  // Changed to light cyan for glow effect
-        atmosphereAltitude={blockConfig.atmosphereAltitude || 0.35}  // Increased for better visibility
+        // Softer look — shader handles the glow; color is just a tint
+        atmosphereColor={blockConfig.atmosphereColor || '#7ecbf1'}
+        atmosphereAltitude={blockConfig.atmosphereAltitude || 0.06}
         onCountryClick={(name: string) => {
           if (currentView === 'travelAdvisory') {
-            const advisory = advisories.find((a) => a.country === name)
-            if (advisory) handleAdvisoryClick(advisory)
+            const adv = resolveByName(name, 'advisory') as AdvisoryCountry | null
+            if (adv) handleAdvisoryClick(adv)
           } else if (currentView === 'visaRequirements') {
-            const country = visaCountries.find((c) => c.countryName === name)
-            if (country) handleVisaCountryClick(country)
+            const vc = resolveByName(name, 'visa') as CountryVisaData | null
+            if (vc) handleVisaCountryClick(vc)
           }
         }}
         onAirportClick={handleAirportClick}
         onRestaurantClick={handleRestaurantClick}
-        onCountryHover={(_name: string | null) => {}}
+        onCountryHover={(n) => setHoveredCountry(n)}
         selectedCountry={selectedAdvisory?.country || selectedVisaCountry?.countryName || null}
         selectedCountryCode={selectedAdvisory?.countryCode || selectedVisaCountry?.countryCode || null}
-        hoveredCountry={_hoveredCountry}
+        hoveredCountry={hoveredCountry}
         passportCountry={selectedVisaCountry?.countryName || null}
-        visaArcs={_visaArcs}
+        visaArcs={visaArcs}
         showMarkers={currentView === 'airports' || currentView === 'michelinRestaurants'}
         focusTarget={focusTarget}
       />
@@ -398,7 +528,7 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
   return (
     <BlockWrapper
       className="travel-data-globe-block"
-      interactive={true}
+      interactive
       disableDefaultCamera={false}
       webglContent={webglContent}
       {...blockConfig}
@@ -451,7 +581,7 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
           </div>
         </div>
 
-        {/* Panel */}
+        {/* Info panel */}
         <aside className="tdg-info-panels">
           <div className="tdg-info-panel-glass">
             <div className="tdg-panel-heading">
@@ -531,7 +661,7 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
                   <span className="tdg-stat tdg-stat-danger">
                     <strong>{statistics.level4Count}</strong> Do Not Travel
                   </span>
-                  {statistics.newAdvisoriesCount > 0 && (
+                  {!!statistics.newAdvisoriesCount && (
                     <span className="tdg-stat tdg-stat-new">
                       <strong>{statistics.newAdvisoriesCount}</strong> New
                     </span>
@@ -599,6 +729,8 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
                 onSearchChange={setSearchQuery}
                 selectedAirport={selectedAirport}
                 onAirportClick={handleAirportClick}
+                showInternationalOnly={showInternationalOnly}
+                onFilterChange={setShowInternationalOnly}
               />
             )}
           </div>

@@ -1,10 +1,4 @@
-// Import AlienRobot font
-@font-face {
-  font-family: 'AlienRobot';
-  src: url('/fonts/AlienRobot.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-}
+// AlienRobot font is now loaded globally via var(--font-alien-robot)
 
 // BeforeLogin component styles for admin login
 .before-login {
@@ -23,7 +17,7 @@
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 0; // Behind the 3D model
-    font-family: 'AlienRobot', sans-serif;
+    font-family: var(--font-alien-robot), sans-serif;
     font-size: 16vh;
     font-weight: normal;
     text-align: center;
@@ -41,7 +35,7 @@
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 3; // Above the 3D model
-    font-family: 'AlienRobot', sans-serif;
+    font-family: var(--font-alien-robot), sans-serif;
     font-size: 16vh;
     font-weight: normal;
     text-align: center;
@@ -82,8 +76,7 @@ body {
   }
 }
 
-// Import Orbitron font for inputs
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@300;400;600&display=swap');
+// Orbitron font is now loaded globally via var(--font-orbitron)
 
 // Position and style the login form at the bottom
 body:has(.before-login) {
@@ -117,7 +110,7 @@ body:has(.before-login) {
   input[type="password"],
   input[type="text"] {
     color: #9da8b2 !important;
-    font-family: 'Orbitron', sans-serif !important;
+    font-family: var(--font-orbitron), sans-serif !important;
     font-size: 1.25em !important;
     font-weight: 300 !important;
     letter-spacing: 0.1em !important;
@@ -135,7 +128,7 @@ body:has(.before-login) {
     
     &::placeholder {
       color: #92989e !important;
-      font-family: 'Orbitron', sans-serif !important;
+      font-family: var(--font-orbitron), sans-serif !important;
       font-weight: 300 !important;
       text-transform: uppercase !important;
       letter-spacing: 0.1em !important;
@@ -214,7 +207,7 @@ body:has(.before-login) {
     height: 5rem !important;
     padding: 0 !important;
     margin: 1.5rem auto 1rem !important;
-    font-family: 'Orbitron', sans-serif !important;
+    font-family: var(--font-orbitron), sans-serif !important;
     font-size: 1.25rem !important;
     font-weight: 600 !important;
     text-transform: uppercase !important;
@@ -340,7 +333,7 @@ body:has(.before-login) {
   .error,
   .field-error {
     color: #ff6666 !important;
-    font-family: 'Orbitron', sans-serif !important;
+    font-family: var(--font-orbitron), sans-serif !important;
     font-size: 0.9rem !important;
     text-align: center !important;
     margin-bottom: 1rem !important;

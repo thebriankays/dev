@@ -44,20 +44,21 @@ export function RestaurantPanel({
         {filteredRestaurants.map((restaurant) => (
           <div
             key={restaurant.id}
-            className={`tdg-list-item ${
-              selectedRestaurant?.id === restaurant.id ? 'tdg-list-item--selected' : ''
+            className={`tdg-restaurant-item ${
+              selectedRestaurant?.id === restaurant.id ? 'tdg-selected' : ''
             }`}
             onClick={() => onRestaurantClick(restaurant)}
           >
-            <div className="tdg-list-item-content">
+            <div className="tdg-restaurant-header">
               {/* Country Flag */}
               {restaurant.location?.countryFlag && (
                 <Image
                   src={restaurant.location.countryFlag}
                   alt=""
-                  className="tdg-country-flag"
+                  className="tdg-flag"
                   width={24}
                   height={16}
+                  style={{ width: '24px', height: 'auto' }}
                   unoptimized
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none'
@@ -65,34 +66,27 @@ export function RestaurantPanel({
                 />
               )}
               
-              {/* Restaurant Info */}
-              <div className="tdg-list-item-details">
-                <div className="tdg-list-item-name">
-                  <span className="tdg-restaurant-name">{restaurant.name}</span>
-                </div>
-                {restaurant.cuisine && (
-                  <div className="tdg-list-item-cuisine">
-                    {restaurant.cuisine}
-                  </div>
-                )}
-                <div className="tdg-list-item-location">
-                  {restaurant.location?.city && restaurant.location?.country && 
-                    `${restaurant.location.city}, ${restaurant.location.country}`
-                  }
-                </div>
-              </div>
-
+              <div className="tdg-restaurant-name">{restaurant.name}</div>
+              
               {/* Michelin Stars and Green Star */}
-              <div className="tdg-restaurant-badges">
+              {restaurant.greenStar && (
+                <span className="tdg-green-star" title="Michelin Green Star">🌿</span>
+              )}
+            </div>
+            
+            <div className="tdg-restaurant-details">
+              <span className="tdg-restaurant-rating">
                 {restaurant.rating && restaurant.rating > 0 && (
-                  <span className="tdg-michelin-stars">
-                    {'⭐'.repeat(restaurant.rating)}
-                  </span>
+                  <>{'⭐'.repeat(Math.min(restaurant.rating, 3))}</>
                 )}
-                {restaurant.greenStar && (
-                  <span className="tdg-green-star" title="Michelin Green Star">🍃</span>
-                )}
-              </div>
+              </span>
+              <span className="tdg-restaurant-cuisine">{restaurant.cuisine}</span>
+            </div>
+            
+            <div className="tdg-restaurant-location">
+              {restaurant.location?.city && restaurant.location?.country && 
+                `${restaurant.location.city}, ${restaurant.location.country}`
+              }
             </div>
           </div>
         ))}

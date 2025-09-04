@@ -43,7 +43,7 @@ export function BlockWrapper({
 
   useEffect(() => {
     if (!ref.current || !glassEffect.enabled) return
-    const element = ref.current // Capture ref value
+    const element = ref.current
     glass.applyGlass(element, glassEffect.variant)
     return () => {
       if (element) glass.removeGlass(element)
@@ -66,7 +66,7 @@ export function BlockWrapper({
         style={{
           position: 'relative',
           width: '100%',
-          minHeight: '100vh',      // <- critical so <View> has real size
+          minHeight: '100vh',
         }}
       >
         {children}

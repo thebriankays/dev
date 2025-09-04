@@ -49,14 +49,18 @@ export function SharedCanvas({
             alpha: true,
             stencil: false,
             depth: !postprocessing,
+            preserveDrawingBuffer: true, // Add this to preserve content
           }}
           onCreated={(state) => {
-            const { gl } = state
+            const { gl, scene } = state
             gl.setClearColor(0x000000, 0)
             gl.setClearAlpha(0)
-            gl.autoClear = false // Don't auto clear - let Views handle their own clearing
+            gl.autoClear = false // Don't auto clear
             gl.outputColorSpace = THREE.SRGBColorSpace
             gl.toneMapping = THREE.NoToneMapping
+            
+            // Ensure scene has no background
+            scene.background = null
             
             // Store R3F state globally for invalidation
             ;(window as any).__r3f = state
