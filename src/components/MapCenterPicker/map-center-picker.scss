@@ -34,7 +34,7 @@
         border-radius: 0.25rem;
         background: var(--theme-bg);
         color: var(--theme-text);
-        font-family: monospace;
+        font-family: var(--font-mono);
         
         &:focus {
           outline: none;

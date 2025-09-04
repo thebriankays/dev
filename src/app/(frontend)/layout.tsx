@@ -41,7 +41,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       fonts.orbitron.variable,
       fonts.matter.variable,
       fonts.circularStd.variable,
-      fonts.overusedGrotesk.variable
+      fonts.overusedGrotesk.variable,
+      fonts.plusJakartaSans.variable
     )} lang="en" suppressHydrationWarning>
       <head>
         <InitTheme />

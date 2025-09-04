@@ -48,6 +48,10 @@
     --warning: 34 89% 85%;
     --error: 10 100% 86%;
 
+    /* System font stacks */
+    --font-system: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+
     /* Whatamesh gradient colors */
     --gradient-color-1: #667eea;
     --gradient-color-2: #764ba2;

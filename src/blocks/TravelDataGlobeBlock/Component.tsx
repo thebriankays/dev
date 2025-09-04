@@ -256,13 +256,13 @@ export async function TravelDataGlobeBlock(props: TravelDataGlobeBlockProps) {
           }
           if (typeof parsed === 'number') {
             levelRaw = parsed
-            console.log(`Found level in field '${levelField}':`, parsed)
+            // Level found in field
           }
         }
       }
 
       if (!levelRaw) {
-        console.warn(`No level found for ${countryName}, defaulting to 1`)
+        // No level found, defaulting to 1
         levelRaw = 1
       }
 

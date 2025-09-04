@@ -299,7 +299,7 @@ body:has(.before-login) {
   // Add forgot password link styles
   a[href*="forgot"] {
     color: rgba(255, 255, 255, 0.9) !important;
-    font-family: 'AlienRobot', sans-serif !important;
+    font-family: var(--font-alien-robot), sans-serif !important;
     font-size: 1.4rem !important;
     font-weight: normal !important;
     text-decoration: none !important;

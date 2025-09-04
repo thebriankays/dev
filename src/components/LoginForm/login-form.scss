@@ -1,9 +1,4 @@
-@font-face {
-  font-family: 'AlienRobot';
-  src: url('/fonts/AlienRobot.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-}
+// AlienRobot font is now loaded globally via var(--font-alien-robot)
 
 .login-form {
   position: relative;
@@ -24,7 +19,7 @@
   }
 
   &__title {
-    font-family: 'AlienRobot', sans-serif;
+    font-family: var(--font-alien-robot), sans-serif;
     font-size: 2.5rem;
     color: #fff;
     text-align: center;
@@ -51,13 +46,13 @@
     padding: 0.75rem 0;
     font-size: 1rem;
     color: #fff;
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--font-orbitron), sans-serif;
     letter-spacing: 0.05em;
     transition: all 0.3s ease;
 
     &::placeholder {
       color: rgba(255, 255, 255, 0.5);
-      font-family: 'AlienRobot', sans-serif;
+      font-family: var(--font-alien-robot), sans-serif;
       letter-spacing: 0.1em;
     }
 

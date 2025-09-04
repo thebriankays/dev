@@ -227,7 +227,7 @@ body:has(.bulk-add-modal) {
               .destination-coords {
                 font-size: 0.75rem;
                 color: var(--theme-text-light);
-                font-family: monospace;
+                font-family: var(--font-mono);
               }
             }
           }
@@ -304,7 +304,7 @@ body:has(.bulk-add-modal) {
     border-radius: 0.25rem;
     background: var(--theme-bg);
     color: var(--theme-text);
-    font-family: monospace;
+    font-family: var(--font-mono);
     font-size: 0.875rem;
     resize: vertical;
     

@@ -1,4 +1,4 @@
-import { Saira_Extra_Condensed, Orbitron } from 'next/font/google'
+import { Saira_Extra_Condensed, Orbitron, Plus_Jakarta_Sans } from 'next/font/google'
 import localFont from 'next/font/local'
 
 // 1) Saira Extra Condensed (from Google)
@@ -13,12 +13,12 @@ export const sairaExtraCondensed = Saira_Extra_Condensed({
 export const newOrder = localFont({
   src: [
     {
-      path: '/fonts/New_Order_Light.otf',
+      path: '../../public/fonts/New_Order_Light.otf',
       weight: '300',
       style: 'normal',
     },
     {
-      path: '/fonts/New_Order_Bold.otf',
+      path: '../../public/fonts/New_Order_Bold.otf',
       weight: '700',
       style: 'normal',
     },
@@ -31,37 +31,37 @@ export const newOrder = localFont({
 export const graphie = localFont({
   src: [
     {
-      path: '/fonts/Graphie_Thin.otf',
+      path: '../../public/fonts/Graphie_Thin.otf',
       weight: '100',
       style: 'normal',
     },
     {
-      path: '/fonts/Graphie_ExtraLight.otf',
+      path: '../../public/fonts/Graphie_ExtraLight.otf',
       weight: '200',
       style: 'normal',
     },
     {
-      path: '/fonts/Graphie_Light.otf',
+      path: '../../public/fonts/Graphie_Light.otf',
       weight: '300',
       style: 'normal',
     },
     {
-      path: '/fonts/Graphie_Book.otf',
+      path: '../../public/fonts/Graphie_Book.otf',
       weight: '400',
       style: 'normal',
     },
     {
-      path: '/fonts/Graphie_Book_Italic.otf',
+      path: '../../public/fonts/Graphie_Book_Italic.otf',
       weight: '400',
       style: 'italic',
     },
     {
-      path: '/fonts/Graphie_Bold.otf',
+      path: '../../public/fonts/Graphie_Bold.otf',
       weight: '700',
       style: 'normal',
     },
     {
-      path: '/fonts/Graphie_Bold_Italic.otf',
+      path: '../../public/fonts/Graphie_Bold_Italic.otf',
       weight: '700',
       style: 'italic',
     },
@@ -74,7 +74,7 @@ export const graphie = localFont({
 export const antiqueOlive = localFont({
   src: [
     {
-      path: '/fonts/AntiqueOlive.woff2',
+      path: '../../public/fonts/AntiqueOlive.woff2',
       weight: '400',
       style: 'normal',
     },
@@ -86,7 +86,7 @@ export const antiqueOlive = localFont({
 export const ppNeueCorp = localFont({
   src: [
     {
-      path: '/fonts/PPNeueCorp-TightUltrabold.woff2',
+      path: '../../public/fonts/PPNeueCorp-TightUltrabold.woff2',
       weight: '700',
       style: 'normal',
     },
@@ -99,12 +99,12 @@ export const ppNeueCorp = localFont({
 export const oakesGrotesk = localFont({
   src: [
     {
-      path: '/fonts/OakesGrotesk-Regular.ttf',
+      path: '../../public/fonts/OakesGrotesk-Regular.ttf',
       weight: '400',
       style: 'normal',
     },
     {
-      path: '/fonts/OakesGrotesk-Semi-Bold.woff',
+      path: '../../public/fonts/OakesGrotesk-Semi-Bold.woff',
       weight: '600',
       style: 'normal',
     },
@@ -117,7 +117,7 @@ export const oakesGrotesk = localFont({
 export const sixCaps = localFont({
   src: [
     {
-      path: '/fonts/SixCaps.woff2',
+      path: '../../public/fonts/SixCaps.woff2',
       weight: '400',
       style: 'normal',
     },
@@ -130,12 +130,12 @@ export const sixCaps = localFont({
 export const monumentExtended = localFont({
   src: [
     {
-      path: '/fonts/monument-extended-regular.woff2',
+      path: '../../public/fonts/monument-extended-regular.woff2',
       weight: '400',
       style: 'normal',
     },
     {
-      path: '/fonts/monument-extended-bold.woff2',
+      path: '../../public/fonts/monument-extended-bold.woff2',
       weight: '700',
       style: 'normal',
     },
@@ -148,7 +148,7 @@ export const monumentExtended = localFont({
 export const fkGroteskNeue = localFont({
   src: [
     {
-      path: '/fonts/FKGroteskNeue-Regular.woff2',
+      path: '../../public/fonts/FKGroteskNeue-Regular.woff2',
       weight: '400',
       style: 'normal',
     },
@@ -161,7 +161,7 @@ export const fkGroteskNeue = localFont({
 export const alienRobot = localFont({
   src: [
     {
-      path: '/fonts/AlienRobot.ttf',
+      path: '../../public/fonts/AlienRobot.ttf',
       weight: '400',
       style: 'normal',
     },
@@ -182,12 +182,12 @@ export const orbitron = Orbitron({
 export const matter = localFont({
   src: [
     {
-      path: '/fonts/matter-light.woff2',
+      path: '../../public/fonts/matter-light.woff2',
       weight: '300',
       style: 'normal',
     },
     {
-      path: '/fonts/matter-regular.woff2',
+      path: '../../public/fonts/matter-regular.woff2',
       weight: '400',
       style: 'normal',
     },
@@ -200,22 +200,22 @@ export const matter = localFont({
 export const circularStd = localFont({
   src: [
     {
-      path: '/fonts/circular-std-font-family/CircularStd-Book.woff2',
+      path: '../../public/fonts/circular-std-font-family/CircularStd-Book.woff2',
       weight: '400',
       style: 'normal',
     },
     {
-      path: '/fonts/circular-std-font-family/CircularStd-Medium.woff2',
+      path: '../../public/fonts/circular-std-font-family/CircularStd-Medium.woff2',
       weight: '500',
       style: 'normal',
     },
     {
-      path: '/fonts/circular-std-font-family/CircularStd-Bold.woff2',
+      path: '../../public/fonts/circular-std-font-family/CircularStd-Bold.woff2',
       weight: '700',
       style: 'normal',
     },
     {
-      path: '/fonts/circular-std-font-family/CircularStd-Black.woff2',
+      path: '../../public/fonts/circular-std-font-family/CircularStd-Black.woff2',
       weight: '900',
       style: 'normal',
     },
@@ -228,36 +228,44 @@ export const circularStd = localFont({
 export const overusedGrotesk = localFont({
   src: [
     {
-      path: '/fonts/overused-grotesk/OverusedGrotesk-Light.woff',
+      path: '../../public/fonts/overused-grotesk/OverusedGrotesk-Light.woff',
       weight: '300',
       style: 'normal',
     },
     {
-      path: '/fonts/overused-grotesk/OverusedGrotesk-Book.woff',
+      path: '../../public/fonts/overused-grotesk/OverusedGrotesk-Book.woff',
       weight: '400',
       style: 'normal',
     },
     {
-      path: '/fonts/overused-grotesk/OverusedGrotesk-Roman.woff',
+      path: '../../public/fonts/overused-grotesk/OverusedGrotesk-Roman.woff',
       weight: '400',
       style: 'normal',
     },
     {
-      path: '/fonts/overused-grotesk/OverusedGrotesk-Medium.woff',
+      path: '../../public/fonts/overused-grotesk/OverusedGrotesk-Medium.woff',
       weight: '500',
       style: 'normal',
     },
     {
-      path: '/fonts/overused-grotesk/OverusedGrotesk-SemiBold.woff',
+      path: '../../public/fonts/overused-grotesk/OverusedGrotesk-SemiBold.woff',
       weight: '600',
       style: 'normal',
     },
     {
-      path: '/fonts/overused-grotesk/OverusedGrotesk-Bold.woff',
+      path: '../../public/fonts/overused-grotesk/OverusedGrotesk-Bold.woff',
       weight: '700',
       style: 'normal',
     },
   ],
   variable: '--font-overused-grotesk',
   display: 'swap',
+})
+
+// 14) Plus Jakarta Sans (from Google)
+export const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['200', '300', '400', '500', '600', '700', '800'],
+  display: 'swap',
+  variable: '--font-plus-jakarta-sans',
 })

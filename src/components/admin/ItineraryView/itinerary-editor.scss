@@ -3,7 +3,7 @@
   gap: 0;
   height: calc(100vh - 200px);
   min-height: 600px;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: var(--font-system);
   background: #f8f9fa;
 
   &__sidebar {
