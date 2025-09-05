@@ -3,6 +3,7 @@ import { getAirlineByCode, getAirportDisplay, getAircraftImage } from '@/lib/fli
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import * as cheerio from 'cheerio'
+import { getFlightPath } from '@/utils/flight-calculations'
 
 // FlightAware scraper for flight details
 // Now extracts data from embedded JSON instead of HTML scraping
@@ -10,29 +11,6 @@ import * as cheerio from 'cheerio'
 // Cache for FlightAware data to reduce requests
 const flightAwareCache = new Map<string, { data: Record<string, unknown>; timestamp: number }>()
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
-
-// Helper function to parse time strings like "2h 6m" to object
-// Currently unused but kept for potential future use
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function parseTimeString(timeStr: string): { hours: number; minutes: number } | null {
-  if (!timeStr) return null
-  
-  const match = timeStr.match(/(?:(\d+)h)?\s*(?:(\d+)m)?/i)
-  if (!match) return null
-  
-  return {
-    hours: parseInt(match[1] || '0'),
-    minutes: parseInt(match[2] || '0')
-  }
-}
-
-// Helper function to extract text from cheerio element safely
-// Currently unused but kept for potential future use
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function extractText($: cheerio.CheerioAPI, selector: string): string | null {
-  const element = $(selector).first()
-  return element.length > 0 ? element.text().trim() : null
-}
 
 interface FlightAwareData {
   flightCode?: string
@@ -137,38 +115,17 @@ async function scrapeFlightAware(flightCode: string): Promise<FlightAwareData> {
     console.log('\n=== HTML Response Length:', html.length, 'characters ===')
     console.log('First 500 chars of HTML:', html.substring(0, 500))
     
-    // Check if we got a valid response
-    if (html.includes('Page Not Found') || html.includes('404') || html.length < 1000) {
-      console.error('\n!!! Possible 404 or invalid page detected !!!')
+    // Check if we got a valid response but be more lenient with detection
+    if (html.includes('Page Not Found') || html.includes('404')) {
+      console.error('\n!!! 404 page detected !!!')
       console.log('HTML snippet:', html.substring(0, 1000))
+      return getMockFlightData(flightCode)
     }
     
     const $ = cheerio.load(html)
     console.log('\n=== Page Title:', $('title').text(), '===\n')
     
-    // Check if we're on a valid flight page
-    const pageTitle = $('title').text()
-    if (!pageTitle.includes(flightCode.toUpperCase()) && !pageTitle.includes('Flight Status')) {
-      console.error('\n!!! WARNING: Page title does not contain flight code, might be wrong page !!!')
-      console.log('Expected flight code in title:', flightCode.toUpperCase())
-    }
-    
-    // Try to detect if we're being blocked
-    if (html.includes('cloudflare') || html.includes('cf-browser-verification')) {
-      console.error('\n!!! BLOCKED BY CLOUDFLARE !!!')
-      console.log('Returning mock data due to Cloudflare blocking')
-      return getMockFlightData(flightCode)
-    }
-    
-    // Check if we got a very small response (likely an error page)
-    if (html.length < 5000) {
-      console.error('\n!!! Response too small, likely an error page !!!')
-      console.log('HTML length:', html.length)
-      console.log('Returning mock data')
-      return getMockFlightData(flightCode)
-    }
-    
-    // Initialize data object
+    // Initialize data object first
     const data: FlightAwareData = {
       flightCode: flightCode.toUpperCase(),
       source: 'flightaware',
@@ -214,6 +171,37 @@ async function scrapeFlightAware(flightCode: string): Promise<FlightAwareData> {
       plannedSpeed: undefined,
       plannedAltitude: undefined,
       route: undefined,
+    }
+    
+    // Extract data from page title if available
+    const pageTitle = $('title').text()
+    console.log('Page title analysis:', pageTitle)
+    
+    // Extract airline from title (e.g., "LXJ569 Flexjet Flight Tracking...")
+    if (pageTitle && !data.airline) {
+      const titleMatch = pageTitle.match(/([A-Z0-9]+)\s+([A-Za-z\s]+)\s+Flight/i)
+      if (titleMatch) {
+        data.callsign = titleMatch[1]
+        data.airline = titleMatch[2].trim()
+        data.flightNumber = titleMatch[1].replace(/[A-Z]+/i, '')
+        data.friendlyFlightIdentifier = `${data.airline} ${data.flightNumber}`
+        console.log('Extracted from title:', { airline: data.airline, callsign: data.callsign, flightNumber: data.flightNumber })
+      }
+    }
+    
+    // Try to detect if we're being blocked
+    if (html.includes('cloudflare') || html.includes('cf-browser-verification')) {
+      console.error('\n!!! BLOCKED BY CLOUDFLARE !!!')
+      console.log('Returning mock data due to Cloudflare blocking')
+      return getMockFlightData(flightCode)
+    }
+    
+    // Check if we got a very small response (likely an error page)
+    if (html.length < 5000) {
+      console.error('\n!!! Response too small, likely an error page !!!')
+      console.log('HTML length:', html.length)
+      console.log('Returning mock data')
+      return getMockFlightData(flightCode)
     }
     
     // Look for trackpollBootstrap JSON data (FlightAware embeds flight data as JSON)
@@ -466,7 +454,7 @@ async function scrapeFlightAware(flightCode: string): Promise<FlightAwareData> {
 
       // Extract gate information
       const gateElements = $('.flightPageAirportGate')
-      gateElements.each((i, el) => {
+      gateElements.each((_, el) => {
         const gateText = $(el).text()
         const leftGateMatch = gateText.match(/left\s+Gate\s+([A-Z0-9]+)/i)
         const arrivingGateMatch = gateText.match(/arriving\s+at\s+Gate\s+([A-Z0-9]+)/i)
@@ -476,6 +464,56 @@ async function scrapeFlightAware(flightCode: string): Promise<FlightAwareData> {
         }
         if (arrivingGateMatch && !data.arrivalGate) {
           data.arrivalGate = arrivingGateMatch[1]
+        }
+      })
+
+      // Extract departure times
+      const departureTimeElements = $('.flightPageSummaryDeparture')
+      if (departureTimeElements.length > 0) {
+        const departureText = departureTimeElements.first().text().trim()
+        if (departureText && !data.gateDepartureTime) {
+          data.gateDepartureTime = departureText
+        }
+      }
+
+      // Extract arrival times
+      const arrivalTimeElements = $('.flightPageSummaryArrival')
+      if (arrivalTimeElements.length > 0) {
+        const arrivalText = arrivalTimeElements.first().text().trim()
+        if (arrivalText && !data.gateArrivalTime) {
+          data.gateArrivalTime = arrivalText
+        }
+      }
+
+      // Extract progress information from any progress elements
+      const progressElements = $('.flightPageProgress span')
+      progressElements.each((_, el) => {
+        const text = $(el).text().trim()
+        if (text.includes('elapsed') && !data.elapsedTime) {
+          const match = text.match(/(\d+h\s*\d+m|\d+m|\d+h)/i)
+          if (match) data.elapsedTime = match[1]
+        }
+        if (text.includes('remaining') && !data.remainingTime) {
+          const match = text.match(/(\d+h\s*\d+m|\d+m|\d+h)/i)
+          if (match) data.remainingTime = match[1]
+        }
+        if (text.includes('total') && !data.totalTravelTime) {
+          const match = text.match(/(\d+h\s*\d+m|\d+m|\d+h)/i)
+          if (match) data.totalTravelTime = match[1]
+        }
+      })
+
+      // Try to extract distance information
+      const distanceElements = $('.flightPageProgressDistance span')
+      distanceElements.each((_, el) => {
+        const text = $(el).text().trim()
+        if (text.includes('flown') && !data.flownDistance) {
+          const match = text.match(/(\d+(?:,\d+)*)\s*mi/i)
+          if (match) data.flownDistance = parseInt(match[1].replace(/,/g, ''))
+        }
+        if (text.includes('to go') && !data.remainingDistanceScraped) {
+          const match = text.match(/(\d+(?:,\d+)*)\s*mi/i)
+          if (match) data.remainingDistanceScraped = parseInt(match[1].replace(/,/g, ''))
         }
       })
     }
@@ -512,6 +550,29 @@ async function scrapeFlightAware(flightCode: string): Promise<FlightAwareData> {
     
     console.log('\n=== FINAL SCRAPED DATA ===\n', JSON.stringify(data, null, 2))
     console.log('\n=== END OF SCRAPING ===\n')
+    
+    // If we only got minimal data, enhance with mock data but keep what we found
+    if ((!data.departureAirportCode && !data.arrivalAirportCode) || (!data.gateDepartureTime && !data.gateArrivalTime)) {
+      console.log('Limited data extracted, enhancing with demo data...')
+      const mockData = getMockFlightData(flightCode)
+      
+      // Keep real data we found, fill gaps with mock data
+      const enhancedData = {
+        ...mockData,
+        ...data, // Real scraped data takes precedence
+        isMockData: true,
+        mockReason: `Limited data available for ${flightCode} - supplemented with demo data`,
+      }
+      
+      // Save enhanced data to memory cache
+      flightAwareCache.set(flightCode, {
+        data: enhancedData,
+        timestamp: Date.now(),
+      })
+      
+      console.log('Enhanced with demo data for better user experience')
+      return enhancedData
+    }
 
     // Save to memory cache
     flightAwareCache.set(flightCode, {
@@ -536,38 +597,38 @@ async function scrapeFlightAware(flightCode: string): Promise<FlightAwareData> {
         registration: data.registration || null,
         departureAirport: data.departureAirport || null,
         departureAirportCode: String(data.departureAirportCode || ''),
-        arrivalAirport: data.arrivalAirport || null,
+        arrivalAirport: (data.arrivalAirport && typeof data.arrivalAirport === 'string') ? data.arrivalAirport : null,
         arrivalAirportCode: String(data.arrivalAirportCode || ''),
         departureGate: data.departureGate,
         arrivalGate: data.arrivalGate,
         status: data.status,
         distance: data.distance ? parseInt(String(data.distance)) : null,
-        duration: data.duration,
-        route: data.route,
+        duration: data.duration ? String(data.duration) : null,
+        route: data.route ? String(data.route) : null,
         altitude: data.altitude ? parseInt(String(data.altitude).replace(/[^\d]/g, '')) : null,
         speed: data.speed ? parseFloat(String(data.speed).replace(/[^\d.]/g, '')) : null,
-        elapsedTime: data.elapsedTime,
-        remainingTime: data.remainingTime,
-        gateDepartureTime: data.gateDepartureTime,
-        gateArrivalTime: data.gateArrivalTime,
-        takeoffTime: data.actualDepartureTime,
-        landingTime: data.landingTime,
-        taxiOut: data.taxiOut,
-        taxiIn: data.taxiIn,
-        averageDelay: data.averageDelay,
-        airlineLogoUrl: data.airlineLogoUrl,
-        friendlyFlightIdentifier: data.friendlyFlightIdentifier,
-        callsign: data.callsign,
-        iataCode: data.iataCode,
-        departureCity: data.departureCity,
-        departureState: data.departureState,
-        arrivalCity: data.arrivalCity,
-        arrivalState: data.arrivalState,
-        flightProgressStatus: data.flightProgressStatus,
-        flightProgressTimeRemaining: data.flightProgressTimeRemaining,
-        totalTravelTime: data.totalTravelTime,
-        flownDistance: data.flownDistance,
-        remainingDistanceScraped: data.remainingDistanceScraped,
+        elapsedTime: data.elapsedTime ? String(data.elapsedTime) : null,
+        remainingTime: data.remainingTime ? String(data.remainingTime) : null,
+        gateDepartureTime: data.gateDepartureTime ? String(data.gateDepartureTime) : null,
+        gateArrivalTime: data.gateArrivalTime ? String(data.gateArrivalTime) : null,
+        takeoffTime: data.actualDepartureTime ? String(data.actualDepartureTime) : null,
+        landingTime: data.landingTime ? String(data.landingTime) : null,
+        taxiOut: data.taxiOut ? String(data.taxiOut) : null,
+        taxiIn: data.taxiIn ? String(data.taxiIn) : null,
+        averageDelay: data.averageDelay ? String(data.averageDelay) : null,
+        airlineLogoUrl: data.airlineLogoUrl ? String(data.airlineLogoUrl) : null,
+        friendlyFlightIdentifier: data.friendlyFlightIdentifier ? String(data.friendlyFlightIdentifier) : null,
+        callsign: (data.callsign && typeof data.callsign === 'string') ? data.callsign : null,
+        iataCode: (data.iataCode && typeof data.iataCode === 'string') ? data.iataCode : null,
+        departureCity: (data.departureCity && typeof data.departureCity === 'string') ? data.departureCity : null,
+        departureState: (data.departureState && typeof data.departureState === 'string') ? data.departureState : null,
+        arrivalCity: (data.arrivalCity && typeof data.arrivalCity === 'string') ? data.arrivalCity : null,
+        arrivalState: (data.arrivalState && typeof data.arrivalState === 'string') ? data.arrivalState : null,
+        flightProgressStatus: data.flightProgressStatus ? String(data.flightProgressStatus) : null,
+        flightProgressTimeRemaining: data.flightProgressTimeRemaining ? String(data.flightProgressTimeRemaining) : null,
+        totalTravelTime: data.totalTravelTime ? String(data.totalTravelTime) : null,
+        flownDistance: (data.flownDistance && typeof data.flownDistance === 'number') ? data.flownDistance : null,
+        remainingDistanceScraped: (data.remainingDistanceScraped && typeof data.remainingDistanceScraped === 'number') ? data.remainingDistanceScraped : null,
         plannedSpeed: data.plannedSpeed
           ? parseFloat(String(data.plannedSpeed).replace(/[^\d.]/g, ''))
           : null,
@@ -577,6 +638,35 @@ async function scrapeFlightAware(flightCode: string): Promise<FlightAwareData> {
         rawData: data,
         lastUpdated: new Date().toISOString(),
         cacheExpiry: cacheExpiry.toISOString(),
+      }
+      
+      // Add smart calculations if we have departure and arrival codes
+      if (data.departureAirportCode && data.arrivalAirportCode) {
+        try {
+          const flightPath = await getFlightPath(
+            data.departureAirportCode,
+            data.arrivalAirportCode,
+            payload
+          )
+          
+          if (flightPath) {
+            cacheData.calculatedDistance = flightPath.distance
+            cacheData.calculatedDuration = `${flightPath.duration.hours}h ${flightPath.duration.minutes}m`
+            cacheData.flightPath = flightPath.path
+            cacheData.calculatedHeading = flightPath.heading
+            cacheData.estimatedCruiseAltitude = flightPath.cruiseAltitude
+            
+            // Use calculated values if actual ones are missing
+            if (!cacheData.distance) {
+              cacheData.distance = flightPath.distance
+            }
+            if (!cacheData.plannedAltitude) {
+              cacheData.plannedAltitude = flightPath.cruiseAltitude
+            }
+          }
+        } catch (error) {
+          console.log('Smart calculation error:', error)
+        }
       }
 
       if (existing.docs.length > 0 && existing.docs[0]) {
@@ -605,13 +695,15 @@ async function scrapeFlightAware(flightCode: string): Promise<FlightAwareData> {
     return data
   } catch (error) {
     console.error('Error scraping FlightAware:', error)
-    return getMockFlightData(flightCode)
+    const mockData = getMockFlightData(flightCode)
+    mockData.mockReason = `FlightAware access limited - using demo data for ${flightCode}`
+    return mockData
   }
 }
 
 // Mock data generator for testing and fallback
 function getMockFlightData(code: string): FlightAwareData {
-  // Parse common airline codes
+  // Parse common airline codes including private jets and cargo
   const airlineMap: Record<string, string> = {
     'DAL': 'Delta Air Lines',
     'DL': 'Delta Air Lines',
@@ -621,12 +713,51 @@ function getMockFlightData(code: string): FlightAwareData {
     'UA': 'United Airlines',
     'SWA': 'Southwest Airlines',
     'WN': 'Southwest Airlines',
+    'JBU': 'JetBlue Airways',
+    'B6': 'JetBlue Airways',
+    'ASA': 'Alaska Airlines',
+    'AS': 'Alaska Airlines',
+    'NKS': 'Spirit Airlines',
+    'NK': 'Spirit Airlines',
+    'FFT': 'Frontier Airlines',
+    'F9': 'Frontier Airlines',
     'BAW': 'British Airways',
     'BA': 'British Airways',
     'AFR': 'Air France',
     'AF': 'Air France',
     'DLH': 'Lufthansa',
     'LH': 'Lufthansa',
+    'KLM': 'KLM Royal Dutch Airlines',
+    'KL': 'KLM Royal Dutch Airlines',
+    'UAE': 'Emirates',
+    'EK': 'Emirates',
+    'QTR': 'Qatar Airways',
+    'QR': 'Qatar Airways',
+    'SIA': 'Singapore Airlines',
+    'SQ': 'Singapore Airlines',
+    'ACA': 'Air Canada',
+    'AC': 'Air Canada',
+    'CPA': 'Cathay Pacific',
+    'CX': 'Cathay Pacific',
+    'ANA': 'All Nippon Airways',
+    'NH': 'All Nippon Airways',
+    'JAL': 'Japan Airlines',
+    'JL': 'Japan Airlines',
+    // Private jet operators
+    'LXJ': 'Flexjet',
+    'EJA': 'NetJets',
+    'TMC': 'TMC Jets',
+    'XOJ': 'XOJET',
+    'FLX': 'Flexjet',
+    'NJE': 'NetJets Europe',
+    'QS': 'NetJets',
+    // Cargo carriers
+    'FDX': 'FedEx',
+    'UPS': 'UPS',
+    'ATI': 'Air Transport International',
+    'ABX': 'ABX Air',
+    'GTI': 'Atlas Air',
+    'GEC': 'Lufthansa Cargo',
   }
 
   // Extract airline and flight number
@@ -844,7 +975,7 @@ export async function GET(request: NextRequest) {
       status: flightData.status,
       aircraft: flightData.aircraft,
       registration: flightData.registration,
-      distance: (flightData.distance as number) || calculatedDistance,
+      distance: (flightData.distance as number) || calculatedDistance || undefined,
       duration: flightData.duration,
       altitude: flightData.altitude,
       speed: flightData.speed,
@@ -854,8 +985,8 @@ export async function GET(request: NextRequest) {
       flightStatus: flightData.status,
       flightDuration: flightData.duration,
       flightDistance: (flightData.distance as number) || calculatedDistance,
-      aircraft_image: aircraftImageUrl?.url || aircraftImageUrl as string,
-      aircraftImage: aircraftImageUrl?.url || aircraftImageUrl as string,
+      aircraft_image: (aircraftImageUrl && typeof aircraftImageUrl === 'object' && 'url' in aircraftImageUrl) ? aircraftImageUrl.url : (aircraftImageUrl as unknown as string | undefined),
+      aircraftImage: (aircraftImageUrl && typeof aircraftImageUrl === 'object' && 'url' in aircraftImageUrl) ? aircraftImageUrl.url : (aircraftImageUrl as unknown as string | undefined),
       departureTime: flightData.scheduledDepartureTime as string,
       arrivalTime: flightData.scheduledArrivalTime as string,
       elapsedTime: flightData.elapsedTime,

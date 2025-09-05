@@ -354,6 +354,13 @@
     }
   }
   
+  &__gate {
+    font-size: 0.7rem;
+    color: #60a5fa;
+    font-weight: 600;
+    margin-top: 0.25rem;
+  }
+  
   &__route-line {
     flex: 2;
     position: relative;

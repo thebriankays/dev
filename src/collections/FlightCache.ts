@@ -386,6 +386,42 @@ export const FlightCache: CollectionConfig = {
         description: 'Aircraft IATA code',
       },
     },
+    // Smart calculation fields
+    {
+      name: 'calculatedDistance',
+      type: 'number',
+      admin: {
+        description: 'Calculated great circle distance in miles',
+      },
+    },
+    {
+      name: 'calculatedDuration',
+      type: 'text',
+      admin: {
+        description: 'Calculated flight duration (e.g., 2h 30m)',
+      },
+    },
+    {
+      name: 'flightPath',
+      type: 'json',
+      admin: {
+        description: 'Calculated great circle flight path coordinates',
+      },
+    },
+    {
+      name: 'calculatedHeading',
+      type: 'number',
+      admin: {
+        description: 'Calculated initial heading in degrees',
+      },
+    },
+    {
+      name: 'estimatedCruiseAltitude',
+      type: 'number',
+      admin: {
+        description: 'Estimated cruise altitude based on distance and direction',
+      },
+    },
     {
       name: 'rawData',
       type: 'json',

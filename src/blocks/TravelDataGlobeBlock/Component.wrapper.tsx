@@ -15,7 +15,6 @@ import {
   faPassport,
   faUtensils,
   faPlane,
-  faChevronDown,
   faChevronLeft,
   faChevronRight,
 } from '@fortawesome/free-solid-svg-icons'
@@ -292,7 +291,6 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
     'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports'
   >(blockConfig.initialView as 'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports' || 'travelAdvisory')
   const [searchQuery, setSearchQuery] = useState('')
-  const [showAdvisoryKey, setShowAdvisoryKey] = useState(false)
 
   const [selectedAdvisory, setSelectedAdvisory] = useState<AdvisoryCountry | null>(null)
   const [selectedVisaCountry, setSelectedVisaCountry] = useState<CountryVisaData | null>(null)
@@ -528,13 +526,19 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
   )
 
   return (
-    <BlockWrapper
-      className="travel-data-globe-block"
-      interactive={true}
-      disableDefaultCamera={true}
-      fixedWebGL={true}
-      webglContent={webglContent}
-    >
+    <div className="travel-data-globe-section">
+      {/* WebGL Globe Background */}
+      <div className="tdg-globe-background">
+        <BlockWrapper
+          className="travel-data-globe-block"
+          interactive={true}
+          webglContent={webglContent}
+        >
+          <div className="tdg-fixed-inner" />
+        </BlockWrapper>
+      </div>
+      
+      {/* UI Overlay */}
       <div className="tdg-container">
         <div className="tdg-vertical-marquee">
           <VerticalMarquee text="Sweet Serenity Getaways" animationSpeed={0.5} position="left" />
@@ -632,41 +636,6 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
               )}
             </div>
 
-            {currentView === 'travelAdvisory' && (
-              <div className="tdg-key-accordion">
-                <button
-                  className={`tdg-key-toggle ${showAdvisoryKey ? 'tdg-key-toggle--open' : ''}`}
-                  onClick={() => setShowAdvisoryKey(!showAdvisoryKey)}
-                  type="button"
-                >
-                  <span>Advisory Level Key</span>
-                  <FontAwesomeIcon icon={faChevronDown} className="tdg-key-icon" />
-                </button>
-                {showAdvisoryKey && (
-                  <div className="tdg-key-content tdg-key-content--open">
-                    <div className="tdg-key-items">
-                      <div className="tdg-key-item">
-                        <span className="tdg-key-indicator tdg-level-1"></span>
-                        <span>Level 1: Exercise Normal Precautions</span>
-                      </div>
-                      <div className="tdg-key-item">
-                        <span className="tdg-key-indicator tdg-level-2"></span>
-                        <span>Level 2: Exercise Increased Caution</span>
-                      </div>
-                      <div className="tdg-key-item">
-                        <span className="tdg-key-indicator tdg-level-3"></span>
-                        <span>Level 3: Reconsider Travel</span>
-                      </div>
-                      <div className="tdg-key-item">
-                        <span className="tdg-key-indicator tdg-level-4"></span>
-                        <span>Level 4: Do Not Travel</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
             <div className="tdg-stats-bar">
               {currentView === 'travelAdvisory' && (
                 <>
@@ -755,6 +724,6 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
 
 
       </div>
-    </BlockWrapper>
+    </div>
   )
 }

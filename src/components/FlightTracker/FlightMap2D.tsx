@@ -1,53 +1,33 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { FlightMapProps } from './types'
 import { gsap } from 'gsap'
 import dynamic from 'next/dynamic'
 
-// Dynamic import of Mapbox component
+// Dynamic import of Mapbox component - simplified loading
 const MapComponent = dynamic(
   () => import('./MapboxMap').then((mod) => mod.default || mod.MapboxMap || mod), 
   { 
     ssr: false,
-    loading: () => (
-      <div style={{ 
-        width: '100%', 
-        height: '100%', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        background: '#1a1a1a',
-        color: '#fff'
-      }}>
-        <div className="flight-tracker__loading">
-          <div className="flight-tracker__loading-spinner" />
-          <p>Loading map...</p>
-        </div>
-      </div>
-    )
+    loading: () => null // Remove loading spinner to prevent delays
   }
 )
 
 export const FlightMap2D: React.FC<FlightMapProps> = (props) => {
-  const [mapReady, setMapReady] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
-
+  
+  // Simple container animation without delays
   useEffect(() => {
-    // Animate container on mount
     if (containerRef.current) {
       const tween = gsap.fromTo(
         containerRef.current,
-        { opacity: 0, scale: 0.95 },
-        { opacity: 1, scale: 1, duration: 0.5, ease: 'power2.out' }
+        { opacity: 0 },
+        { opacity: 1, duration: 0.3, ease: 'power2.out' }
       )
-      
-      // Small delay to ensure proper rendering
-      const timer = setTimeout(() => setMapReady(true), 100)
       
       return () => {
         tween.kill()
-        clearTimeout(timer)
       }
     }
   }, [])
@@ -60,7 +40,7 @@ export const FlightMap2D: React.FC<FlightMapProps> = (props) => {
       background: '#1a1a1a',
       isolation: 'isolate'
     }}>
-      {mapReady && <MapComponent {...props} />}
+      <MapComponent {...props} />
     </div>
   )
 }

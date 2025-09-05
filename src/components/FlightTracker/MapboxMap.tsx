@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
+import { useTempus } from 'tempus/react'
 import { Flight, FlightMapProps } from './types'
 
 // Set Mapbox token
@@ -12,6 +13,21 @@ interface FlightWithPrediction extends Flight {
   predicted_position?: { longitude: number; latitude: number }
   interpolated_position?: { longitude: number; latitude: number }
   trajectory?: Array<[number, number]>
+  departureAirport?: string
+  destinationAirport?: string
+}
+
+interface RouteFeature {
+  type: 'Feature'
+  properties: {
+    icao24: string
+    callsign: string | null
+    selected: boolean
+  }
+  geometry: {
+    type: 'LineString'
+    coordinates: number[][]
+  }
 }
 
 export const MapboxMap: React.FC<FlightMapProps> = ({
@@ -67,6 +83,47 @@ export const MapboxMap: React.FC<FlightMapProps> = ({
       map.current.on('load', () => {
         mapLoaded.current = true
         setIsMapReady(true)
+        
+        // Add sources and layers for route lines
+        map.current!.addSource('flight-routes', {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: []
+          }
+        })
+        
+        map.current!.addLayer({
+          id: 'flight-routes',
+          type: 'line',
+          source: 'flight-routes',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#60a5fa',
+            'line-width': 2,
+            'line-opacity': 0.6
+          }
+        })
+        
+        // Add layer for selected flight route (highlighted)
+        map.current!.addLayer({
+          id: 'selected-flight-route',
+          type: 'line',
+          source: 'flight-routes',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#fbbf24',
+            'line-width': 4,
+            'line-opacity': 0.8
+          },
+          filter: ['==', ['get', 'selected'], true]
+        })
       })
       
       // Ensure proper map resize
@@ -99,13 +156,90 @@ export const MapboxMap: React.FC<FlightMapProps> = ({
     }
   }, [userLocation])
 
-  // Update flight markers
-  useEffect(() => {
+  // Function to update route lines
+  const updateRouteLines = useCallback(() => {
+    if (!map.current || !mapLoaded.current || !isMapReady) return
+    if (!flights || !Array.isArray(flights) || flights.length === 0) return
+
+    // Create features for flights with route information
+    const routeFeatures: RouteFeature[] = []
+
+    flights.forEach((flight: FlightWithPrediction) => {
+      // Check if flight has valid data and route information
+      if (!flight || typeof flight !== 'object') return
+      if (!flight.longitude || !flight.latitude) return
+      if (!flight.departureAirport && !flight.destinationAirport) return
+      
+      try {
+        // For now, create a simple great circle route between current position and destination
+        // In a real implementation, you'd use the actual route waypoints
+        const currentPos = flight.interpolated_position || {
+          longitude: flight.longitude,
+          latitude: flight.latitude,
+        }
+
+        // Create a simple route line from current position extending in the direction of travel
+        // This is a placeholder - ideally you'd have airport coordinates and waypoints
+        const routeCoordinates: number[][] = []
+        
+        // Add current position
+        routeCoordinates.push([currentPos.longitude, currentPos.latitude])
+        
+        // Use smart flight path if available
+        if ('flightPath' in flight && flight.flightPath && Array.isArray(flight.flightPath)) {
+          // Flight path is already a complete great circle route
+          routeCoordinates.length = 0 // Clear and use the full path
+          routeCoordinates.push(...flight.flightPath)
+        } else if (flight.trajectory && flight.trajectory.length > 0) {
+          // Use trajectory data from the server
+          routeCoordinates.push(...flight.trajectory)
+        } else if (flight.true_track !== null && flight.velocity) {
+          // Create a simple projected path based on heading and velocity
+          const headingRad = (flight.true_track * Math.PI) / 180
+          const distance = 2 // degrees (rough approximation)
+          const endLng = currentPos.longitude + distance * Math.sin(headingRad)
+          const endLat = currentPos.latitude + distance * Math.cos(headingRad)
+          routeCoordinates.push([endLng, endLat])
+        }
+
+        if (routeCoordinates.length >= 2) {
+          const isSelected = !!(selectedFlight && selectedFlight.icao24 === flight.icao24)
+          
+          routeFeatures.push({
+            type: 'Feature',
+            properties: {
+              icao24: flight.icao24,
+              callsign: flight.callsign,
+              selected: isSelected
+            },
+            geometry: {
+              type: 'LineString',
+              coordinates: routeCoordinates
+            }
+          })
+        }
+      } catch (error) {
+        console.warn('Error creating route line for flight:', flight.icao24, error)
+      }
+    })
+
+    // Update the route source
+    const source = map.current.getSource('flight-routes') as mapboxgl.GeoJSONSource
+    if (source) {
+      source.setData({
+        type: 'FeatureCollection',
+        features: routeFeatures
+      })
+    }
+  }, [flights, selectedFlight, isMapReady])
+
+  // Create update markers callback
+  const updateMarkers = useCallback(() => {
     if (!map.current || !mapLoaded.current || !isMapReady) return
 
     // Remove markers for flights that no longer exist
     Object.entries(markers.current).forEach(([icao24, marker]) => {
-      const stillExists = (flights as FlightWithPrediction[]).some(f => f.icao24 === icao24)
+      const stillExists = flights.some(f => f.icao24 === icao24)
       if (!stillExists) {
         marker.remove()
         delete markers.current[icao24]
@@ -113,7 +247,7 @@ export const MapboxMap: React.FC<FlightMapProps> = ({
     });
 
     // Update or add markers
-    (flights as FlightWithPrediction[]).forEach((flight: FlightWithPrediction) => {
+    flights.forEach((flight: FlightWithPrediction) => {
       const position = flight.interpolated_position || {
         longitude: flight.longitude,
         latitude: flight.latitude,
@@ -182,7 +316,17 @@ export const MapboxMap: React.FC<FlightMapProps> = ({
         element.style.zIndex = isSelected ? '10' : '1'
       }
     })
-  }, [flights, selectedFlight, onSelectFlight, isMapReady])
+
+    // Update route lines for flights with departure/arrival airports
+    if (flights && Array.isArray(flights)) {
+      updateRouteLines()
+    }
+  }, [flights, selectedFlight, onSelectFlight, isMapReady, updateRouteLines])
+
+  // Use tempus for smooth marker updates
+  useTempus(() => {
+    updateMarkers()
+  }, { priority: 10 })
 
   // Center on selected flight
   useEffect(() => {

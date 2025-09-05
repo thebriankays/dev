@@ -25,7 +25,6 @@ interface BlockWrapperProps {
   interactive?: boolean
   id?: string
   disableDefaultCamera?: boolean
-  fixedWebGL?: boolean
 }
 
 export function BlockWrapper({
@@ -37,7 +36,6 @@ export function BlockWrapper({
   interactive = false,
   id,
   disableDefaultCamera = false,
-  fixedWebGL = false,
 }: BlockWrapperProps) {
   const ref = useRef<HTMLDivElement>(null)
   useView(ref)
@@ -80,7 +78,7 @@ export function BlockWrapper({
       {webglContent && (
         <WebGLTunnel>
           <View
-            track={fixedWebGL ? undefined : ref as React.RefObject<HTMLElement>}
+            track={className?.includes('travel-data-globe') ? undefined : ref as React.RefObject<HTMLElement>}
             className="webgl-view"
             style={{ 
               pointerEvents: interactive ? 'auto' : 'none',

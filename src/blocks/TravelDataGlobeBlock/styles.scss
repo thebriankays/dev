@@ -1,39 +1,75 @@
 // Use global fonts from src/fonts/fonts.ts
 
-.travel-data-globe-block {
+// Main wrapper
+.travel-data-globe-section {
   position: relative;
   width: 100%;
   height: 100vh;
-  min-height: 100vh;
+  overflow: hidden;
+}
+
+// Globe background container
+.tdg-globe-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+// WebGL container
+.travel-data-globe-block {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
   background: transparent !important;
   overflow: hidden !important;
-  isolation: isolate !important; // Create stacking context
-  contain: layout style !important; // Contain layout changes
+  pointer-events: auto;
   
   .block-wrapper {
+    position: absolute !important;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100vh;
     background: transparent !important;
     overflow: hidden !important;
-    position: relative !important;
-    z-index: 1 !important;
+    pointer-events: auto;
   }
 }
 
-/* Container - ensure transparent and confined to parent */
-.tdg-container {
-  position: relative;
-  height: 100vh;
+// Fixed inner reference for WebGL
+.tdg-fixed-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  overflow: hidden;
+  height: 100%;
+  pointer-events: auto;
+}
+
+/* Container - UI overlay */
+.tdg-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  overflow: visible; // Changed to visible to ensure globe shows
   display: flex;
   padding: 0;
-  contain: layout;
-  isolation: isolate;
   background: transparent !important;
+  z-index: 2; // Reduced z-index to allow globe to show through
   pointer-events: none;
   
-  > * {
+  // Allow interaction with specific UI elements
+  .tdg-vertical-marquee,
+  .tdg-tabs-wrapper,
+  .tdg-list-panel {
     pointer-events: auto;
   }
 }
@@ -52,7 +88,7 @@
   align-items: center;
   justify-content: center;
   background: transparent !important;
-  pointer-events: auto;
+  pointer-events: none; // Changed to none since it's just a visual indicator
   z-index: 5;
   
   // Dynamic positioning based on panel states
@@ -62,13 +98,16 @@
   }
 }
 
+/* Viewport for WebGL - sticky to prevent scroll issues */
 .tdg-viewport {
+  position: sticky;
+  top: 0;
   width: 100%;
-  height: 100%;
-  position: relative;
-  background: transparent !important;
-  isolation: isolate;
-  z-index: 1;
+  height: 100vh;
+  background: transparent;
+  pointer-events: none;
+  z-index: 0;
+  transform: translateZ(0); // Force GPU layer
 }
 
 /* Vertical Marquee */
@@ -99,27 +138,27 @@
   }
 }
 
-/* Tabs with active state - FIXED POSITIONING */
+/* Tabs with active state - HIGH Z-INDEX TO BE ABOVE EVERYTHING */
 .tdg-tabs-wrapper {
-  position: fixed !important; // Changed from absolute
+  position: fixed !important;
   top: 1rem;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 999999;
+  z-index: 10000 !important; // Very high to be above panels
   pointer-events: auto;
   padding: 0 1rem;
   display: flex;
   justify-content: center;
   width: auto;
-  max-width: 90vw; // Prevent overflow on small screens
+  max-width: 90vw;
 }
 
 .tdg-tabs-container {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 8px;
   width: max-content;
-  height: 80px;
+  height: 70px;
   box-sizing: border-box;
   padding: 8px 12px 10px;
   margin: 0 auto;
@@ -130,9 +169,57 @@
   -webkit-backdrop-filter: blur(12px) saturate(150%);
   box-shadow: 
     inset 0 0 0 1px rgba(255, 255, 255, 0.1),
-    0px 1px 5px 0px rgba(0, 0, 0, 0.2),
-    0px 6px 16px 0px rgba(0, 0, 0, 0.15);
+    inset 1.8px 3px 0px -2px rgba(255, 255, 255, 0.9),
+    inset -2px -2px 0px -2px rgba(255, 255, 255, 0.8),
+    inset -3px -8px 1px -6px rgba(255, 255, 255, 0.6),
+    inset -0.3px -1px 4px 0px rgba(0, 0, 0, 0.12),
+    inset -1.5px 2.5px 0px -2px rgba(0, 0, 0, 0.2),
+    inset 0px 3px 4px -2px rgba(0, 0, 0, 0.2),
+    inset 2px -6.5px 1px -4px rgba(0, 0, 0, 0.1),
+    0px 1px 5px 0px rgba(0, 0, 0, 0.1),
+    0px 6px 16px 0px rgba(0, 0, 0, 0.08);
   position: relative;
+}
+
+/* Active toggle backdrop */
+.tdg-tabs-container::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  display: block;
+  width: 176px;
+  height: calc(100% - 10px);
+  border-radius: 99em;
+  background-color: rgba(30, 30, 30, 0.4);
+  backdrop-filter: blur(8px);
+  z-index: 0;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 2px 1px 0px -1px rgba(255, 255, 255, 0.9),
+    inset -1.5px -1px 0px -1px rgba(255, 255, 255, 0.8),
+    inset -2px -6px 1px -5px rgba(255, 255, 255, 0.6),
+    inset -1px 2px 3px -1px rgba(0, 0, 0, 0.2),
+    inset 0px -4px 1px -2px rgba(0, 0, 0, 0.1),
+    0px 3px 6px 0px rgba(0, 0, 0, 0.08);
+  transition: translate 400ms cubic-bezier(1, 0, 0.4, 1);
+}
+
+/* Move toggle based on active tab */
+.tdg-tabs-container:has(.tdg-tab:nth-child(1).tdg-tab--active)::after {
+  translate: 0 0;
+}
+
+.tdg-tabs-container:has(.tdg-tab:nth-child(2).tdg-tab--active)::after {
+  translate: 184px 0;
+}
+
+.tdg-tabs-container:has(.tdg-tab:nth-child(3).tdg-tab--active)::after {
+  translate: 368px 0;
+}
+
+.tdg-tabs-container:has(.tdg-tab:nth-child(4).tdg-tab--active)::after {
+  translate: 552px 0;
 }
 
 .tdg-tab {
@@ -142,69 +229,65 @@
   justify-content: center;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.5rem 1rem;
-  width: 170px;
+  padding: 0 16px;
+  width: 168px;
   height: 100%;
   box-sizing: border-box;
   border-radius: 99em;
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: all 200ms ease;
+  transition: all 160ms;
   position: relative;
   z-index: 1;
   font-family: var(--font-saira-extra-condensed, var(--font-monument-extended));
   
   &:hover:not(.tdg-tab--active) {
-    --c: rgba(129, 214, 227, 0.8);
-    background: rgba(255, 255, 255, 0.05);
+    --c: rgba(129, 214, 227, 1);
     
     .tdg-tab-icon { 
-      transform: scale(1.1);
+      scale: 1.2;
     }
   }
   
   &.tdg-tab--active {
-    --c: #81d6e3;
-    background: rgba(30, 30, 30, 0.5);
-    box-shadow: 
-      inset 0 0 0 1px rgba(129, 214, 227, 0.3),
-      inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    --c: #e2e8f0;
+    cursor: auto;
     
     .tdg-tab-icon { 
-      transform: scale(1.15);
-      color: #81d6e3;
+      scale: 1;
+      color: #e2e8f0;
     }
     
     .tdg-tab-label {
-      color: #81d6e3;
+      color: #e2e8f0;
       font-weight: 600;
     }
   }
 }
 
 .tdg-tab-icon {
+  display: block;
   font-size: 1.5rem;
   color: var(--c);
-  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: scale 200ms cubic-bezier(0.5, 0, 0, 1);
 }
 
 .tdg-tab-label {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--c);
   white-space: nowrap;
-  transition: color 200ms;
+  transition: all 160ms;
 }
 
 /* List Panel - Left side, collapsible */
 .tdg-list-panel {
   position: absolute;
   left: 5rem;
-  top: 0;
-  bottom: 0;
-  width: 380px; // Increased width from 260px
+  top: 6rem; // Move down to avoid tab overlap
+  bottom: 1rem;
+  width: 420px; // Increased width to prevent cutoff
   z-index: 40;
-  margin: 1rem 0;
   pointer-events: auto;
   transition: all 0.3s ease;
   
@@ -217,7 +300,7 @@
     
     .tdg-panel-heading,
     .tdg-stats-bar,
-    .tdg-key-accordion,
+    .tdg-key-section,
     .tdg-search-input,
     .tdg-list-container,
     .tdg-filter-toggle {
@@ -234,18 +317,45 @@
 .tdg-info-panel-glass {
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(20, 20, 20, 0.95); // Darker, more opaque background
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 0.5rem;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 
-    0 8px 32px 0 rgba(0, 0, 0, 0.37),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
   position: relative;
+}
+
+/* Panel heading - FIXED FOR LOGO SIZE */
+.tdg-panel-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.3);
+  min-height: 60px; // Bigger for logo
+  flex-shrink: 0;
+  
+  img {
+    width: 48px !important;
+    height: 48px !important;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+  
+  svg {
+    font-size: 1.8rem;
+    color: #e2e8f0;
+  }
+  
+  span {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    white-space: nowrap;
+  }
 }
 
 /* Collapse toggle button */
@@ -783,14 +893,15 @@
   min-width: 0; // Allow flexbox to shrink
 }
 
-// Expanded details section for accordion
+// Expanded details section for accordion - FIXED TO SHOW ALL TEXT
 .tdg-advisory-details {
   padding: 1rem;
   background: rgba(0, 0, 0, 0.3);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   animation: slideDown 0.3s ease;
-  max-height: 300px;
+  // Remove max-height to show all content
   overflow-y: auto;
+  max-height: 400px; // Increased height
   
   &::-webkit-scrollbar {
     width: 6px;
@@ -809,6 +920,14 @@
     background: transparent;
   }
   
+  .tdg-detail-date {
+    font-size: 0.75rem;
+    color: rgba(226, 232, 240, 0.5);
+    margin-bottom: 0.75rem; // Move date to top
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  
   .tdg-detail-title {
     font-size: 0.9rem;
     font-weight: 600;
@@ -821,12 +940,16 @@
     line-height: 1.4;
     color: rgba(226, 232, 240, 0.8);
     margin: 0 0 0.75rem 0;
+    white-space: pre-wrap; // Show all text
+    word-wrap: break-word;
   }
   
   .tdg-detail-text {
     font-size: 0.85rem;
     line-height: 1.5;
     color: rgba(226, 232, 240, 0.9);
+    white-space: pre-wrap; // Show all text
+    word-wrap: break-word;
     
     ul, ol {
       margin: 0.5rem 0;
@@ -835,10 +958,12 @@
     
     li {
       margin: 0.25rem 0;
+      white-space: normal;
     }
     
     p {
       margin: 0.5rem 0;
+      white-space: pre-wrap;
       
       &:first-child {
         margin-top: 0;
@@ -849,14 +974,6 @@
       }
     }
   }
-  
-  .tdg-detail-date {
-    font-size: 0.75rem;
-    color: rgba(226, 232, 240, 0.5);
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-  }
 }
 
 @keyframes slideDown {
@@ -866,8 +983,121 @@
   }
   to {
     opacity: 1;
-    max-height: 300px;
+    max-height: 400px;
   }
+}
+
+/* Search container */
+.tdg-search-container {
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tdg-search-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.375rem;
+  color: #e2e8f0;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  
+  &::placeholder {
+    color: rgba(226, 232, 240, 0.5);
+  }
+  
+  &:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(129, 214, 227, 0.5);
+  }
+}
+
+/* Key/Filter section - Always visible */
+.tdg-key-section {
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.tdg-key-header {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: rgba(226, 232, 240, 0.6);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.tdg-key-filters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.tdg-filter-btn {
+  padding: 0.25rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.25rem;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(226, 232, 240, 0.8);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  &.active {
+    background: rgba(129, 214, 227, 0.2);
+    border-color: rgba(129, 214, 227, 0.5);
+    color: #81d6e3;
+  }
+  
+  &.tdg-filter-all {
+    font-weight: 600;
+  }
+  
+  &.tdg-level-1.active { background: rgba(76, 175, 80, 0.2); border-color: #4caf50; color: #4caf50; }
+  &.tdg-level-2.active { background: rgba(255, 179, 0, 0.2); border-color: #ffb300; color: #ffb300; }
+  &.tdg-level-3.active { background: rgba(244, 81, 30, 0.2); border-color: #f4511e; color: #f4511e; }
+  &.tdg-level-4.active { background: rgba(183, 28, 28, 0.2); border-color: #ef4444; color: #ef4444; }
+}
+
+/* Sort controls */
+.tdg-sort-controls {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tdg-sort-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 0.25rem;
+  color: rgba(226, 232, 240, 0.8);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #e2e8f0;
+  }
+}
+
+.tdg-sort-icon {
+  font-size: 0.75rem;
+  opacity: 0.8;
 }
 
 /* Detail Panel - Right side, collapsible */

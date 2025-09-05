@@ -3050,6 +3050,34 @@ export interface FlightCache {
    */
   aircraftIata?: string | null;
   /**
+   * Calculated great circle distance in miles
+   */
+  calculatedDistance?: number | null;
+  /**
+   * Calculated flight duration (e.g., 2h 30m)
+   */
+  calculatedDuration?: string | null;
+  /**
+   * Calculated great circle flight path coordinates
+   */
+  flightPath?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Calculated initial heading in degrees
+   */
+  calculatedHeading?: number | null;
+  /**
+   * Estimated cruise altitude based on distance and direction
+   */
+  estimatedCruiseAltitude?: number | null;
+  /**
    * Complete flight data from source
    */
   rawData:
@@ -5298,6 +5326,11 @@ export interface FlightCacheSelect<T extends boolean = true> {
   arrivalCountry?: T;
   statusCode?: T;
   aircraftIata?: T;
+  calculatedDistance?: T;
+  calculatedDuration?: T;
+  flightPath?: T;
+  calculatedHeading?: T;
+  estimatedCruiseAltitude?: T;
   rawData?: T;
   lastUpdated?: T;
   cacheExpiry?: T;

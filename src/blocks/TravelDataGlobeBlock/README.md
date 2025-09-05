@@ -1,116 +1,152 @@
-# TravelDataGlobeBlock
+# Travel Data Globe Block
 
-An interactive 3D globe visualization component for displaying travel-related data including travel advisories, visa requirements, Michelin restaurants, and airports.
+An interactive 3D globe visualization for displaying travel advisories, visa requirements, Michelin restaurants, and international airports.
 
-## Overview
+## Features
 
-This block renders an interactive 3D globe using React Three Fiber with multiple data visualization layers:
-- **Travel Advisories**: U.S. Department of State travel advisory levels (1-4) displayed as colored country polygons
-- **Visa Requirements**: Interactive visa requirement visualization with arc connections
-- **Michelin Restaurants**: Location markers for Michelin-starred restaurants worldwide
-- **Airports**: International airport location markers
+- **Interactive 3D Globe**: WebGL-powered globe with rotation and zoom controls
+- **Travel Advisories**: U.S. State Department travel advisory levels (1-4) with detailed information
+- **Visa Requirements**: Global visa requirements for different passport countries
+- **Michelin Restaurants**: Locations and ratings of Michelin-starred restaurants worldwide
+- **International Airports**: Major international airports with location data
+- **Dynamic UI**: Collapsible panels, searchable lists, and responsive design
+- **Tab Navigation**: Smooth switching between different data views with animated toggle
 
-## Architecture
+## Components
 
-The component uses a shared canvas architecture where:
-- The WebGL canvas is rendered at the root level
-- UI components overlay the canvas with transparent backgrounds
-- The globe is rendered using Three.js with React Three Fiber
-- Data is loaded from GeoJSON files for country polygons
+### Main Components
+- `Component.tsx` - Main block component with data fetching
+- `Component.wrapper.tsx` - Client-side wrapper with state management
+- `config.ts` - Block configuration and field definitions
+- `styles.scss` - Complete styling for the block
 
-## File Structure
+### Data Types
+- `types.ts` - TypeScript interfaces for all data structures
 
-```
-TravelDataGlobeBlock/
-├── Component.wrapper.tsx    # Main component wrapper with state management
-├── Component.tsx           # Server component for data fetching
-├── types.ts               # TypeScript type definitions
-├── styles.scss            # Component styles with glass morphism effects
-└── README.md              # This file
-```
+### Features
+- **Filtering & Sorting**: 
+  - Filter advisories by level (1-4)
+  - Sort by country name or advisory level
+  - Search functionality across all data types
 
-## Key Features
+- **Visual Indicators**:
+  - Color-coded advisory levels
+  - NEW badge for recent advisories
+  - Country flags
+  - Michelin star ratings
 
-### Visual Features
-- **3D Earth Globe**: Textured sphere with bump mapping for terrain
-- **Atmosphere Effect**: Subtle blue glow around the globe
-- **Country Borders**: Color-coded based on advisory levels or visa requirements
-- **Interactive Markers**: Clickable markers for restaurants and airports
-- **Camera Animation**: Smooth camera transitions when selecting items
-- **Auto-rotation**: Optional globe rotation when idle
-
-### UI Components
-- **Glass Panel**: Backdrop-filtered glass effect for the information panel
-- **Tab Navigation**: Switch between different data views
-- **Search Functionality**: Filter countries, restaurants, or airports
-- **List Views**: Scrollable lists with country flags and status indicators
-- **Detail Overlays**: Popup panels with detailed information
-
-## Dependencies
-
-- `@react-three/fiber`: React renderer for Three.js
-- `@react-three/drei`: Useful helpers for React Three Fiber
-- `three`: 3D graphics library
-- `gsap`: Animation library for smooth transitions
-- `@turf/centroid`: Geographic calculations
-- `three-geojson-geometry`: Convert GeoJSON to Three.js geometries
-
-## Data Sources
-
-- **Travel Advisories**: U.S. Department of State API
-- **Visa Requirements**: Passport visa requirement database
-- **Michelin Restaurants**: Michelin Guide data
-- **Airports**: International airport database
-- **Country Polygons**: GeoJSON world map data (`/datamaps.world.json`)
-
-## Styling
-
-The component uses SCSS with:
-- **CSS Grid**: For list item layouts to prevent text wrapping
-- **Flexbox**: For component alignment
-- **Glass morphism**: `backdrop-filter: blur()` for panel effects
-- **Custom scrollbars**: Styled scrollbar for list containers
-- **Responsive design**: Mobile-friendly layout adjustments
-
-## Known Issues & Solutions
-
-### Text Wrapping in Lists
-- **Solution**: Uses CSS Grid with explicit column templates to ensure flag, text, and badges stay on one line
-
-### Globe Texture Not Loading
-- **Solution**: Ensure `/earth-blue-marble.jpg` and `/earth-topology.png` exist in the public folder
-
-### White Background Issues
-- **Solution**: Canvas containers use `background: transparent !important` in globals.css
-
-### Performance
-- **Solution**: Uses React.lazy() for code splitting and Suspense for loading states
-
-## Configuration
-
-The block accepts configuration through Payload CMS:
-```typescript
-{
-  globeImageUrl: string         // Earth texture URL
-  bumpImageUrl: string          // Bump map texture URL
-  autoRotateSpeed: number       // Rotation speed (0 to disable)
-  atmosphereColor: string       // Atmosphere glow color
-  atmosphereAltitude: number    // Atmosphere size (0.1 - 0.3)
-  enabledViews: string[]        // Which tabs to show
-  initialView: string           // Default tab
-}
-```
+- **Responsive Design**:
+  - Collapsible side panels
+  - Mobile-friendly layout
+  - Adaptive globe sizing
 
 ## Usage
 
-The component is integrated into Payload CMS as a block and can be added to any page through the admin interface.
+```typescript
+import TravelDataGlobeBlock from '@/blocks/TravelDataGlobeBlock'
 
-## Recent Updates
+// In your page component
+<TravelDataGlobeBlock {...blockData} />
+```
 
-- Fixed list item wrapping issues with CSS Grid layout
-- Improved globe texture loading with drei's useTexture hook
-- Added proper TypeScript types throughout
-- Fixed atmosphere rendering with subtle glow effect
-- Ensured canvas transparency in shared canvas architecture
-- Added country flags to all list views
-- Improved marker positioning and visibility
+## Data Sources
+
+- **Travel Advisories**: Fetched from `/api/global-travel-data/advisories`
+- **Visa Requirements**: Fetched from `/api/global-travel-data/visa-requirements`
+- **Michelin Restaurants**: Fetched from `/api/global-travel-data/michelin-restaurants` 
+- **Airports**: Fetched from `/api/global-travel-data/airports`
+- **GeoJSON**: World borders from `/datamaps.world.json`
+
+## Styling
+
+The block uses SCSS with CSS variables for theming:
+- Dark glassmorphic panels
+- Smooth animations and transitions
+- Custom scrollbars
+- Responsive typography
+
+## Key Features
+
+### Advisory Panel
+- Expandable accordion items
+- Published date at top of details
+- Full text display (no truncation)
+- Level-based color coding
+
+### Tab System
+- Glass morphism design inspired by the codepen example
+- Smooth toggle animation
+- Active state indication
+- Icon and label for each tab
+
+### Globe Interaction
+- Click countries to view details
+- Hover for country names
+- Zoom with scroll
+- Rotate with mouse drag
+- Focus animation to selected locations
+
+## Browser Compatibility
+
+- Chrome (recommended)
+- Firefox
+- Safari
+- Edge
+
+Requires WebGL support for 3D globe rendering.
+
+## Performance Considerations
+
+- Globe uses React Three Fiber for optimized WebGL rendering
+- Data is fetched once on component mount
+- Memoized computations for filtering and sorting
+- Lazy loading of globe component
+
+## Accessibility
+
+- Keyboard navigation support
+- ARIA labels on interactive elements
+- High contrast text on dark backgrounds
+- Readable font sizes and spacing
+
+## Configuration
+
+The block accepts configuration through the CMS:
+- Initial view selection
+- Auto-rotate speed
+- Globe texture URLs
+- Atmosphere color and altitude
+- Enabled data views
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
+```
+
+## Dependencies
+
+- React 18+
+- Three.js / React Three Fiber
+- FontAwesome icons
+- Next.js Image component
+- TypeScript
+
+## Future Enhancements
+
+- Real-time data updates
+- Additional data layers (weather, flights, etc.)
+- Export functionality
+- User preferences persistence
+- Multi-language support
+
+## License
+
+Proprietary - All rights reserved

@@ -57,11 +57,10 @@ const FlightMap2D = dynamic(() => import('./FlightMap2D'), {
   ),
 })
 
-// API rate limit compliant intervals
+// API rate limit compliant intervals - using position prediction between calls
 const UPDATE_INTERVAL_AUTHENTICATED = 30000 // 30 seconds for authenticated users
 const UPDATE_INTERVAL_ANONYMOUS = 60000 // 60 seconds for anonymous users
-const ANIMATION_INTERVAL = 100 // Update positions every 100ms for smooth animation
-const ANIMATION_SEGMENTS = 300 // More segments for longer update intervals
+const ANIMATION_INTERVAL = 5000 // Update positions every 5 seconds using prediction (reduced for performance)
 
 interface FlightTrackerProps {
   enableSearch?: boolean
@@ -76,6 +75,10 @@ interface FlightWithPrediction extends Flight {
     latitude: number
   }
   interpolated_position?: {
+    longitude: number
+    latitude: number
+  }
+  actual_position?: {
     longitude: number
     latitude: number
   }
@@ -110,16 +113,19 @@ export const FlightTracker: React.FC<FlightTrackerProps> = ({
   const animationFrameRef = useRef<number>(0)
   const previousFlightsRef = useRef<Map<string, FlightWithPrediction>>(new Map())
   const lastFetchRef = useRef<{ location: string; timestamp: number } | null>(null)
+  const displayFlightsRef = useRef<FlightWithPrediction[]>([])
   const MIN_FETCH_INTERVAL = 25000 // Minimum 25 seconds between fetches
   const fetchInProgressRef = useRef<boolean>(false)
+  const geolocationRequestedRef = useRef<boolean>(false)
 
-  // Get user location
+  // Get user location (only once)
   useEffect(() => {
-    if (enableGeolocation && navigator.geolocation) {
-      console.log('Requesting geolocation permission...')
+    if (enableGeolocation && navigator.geolocation && !geolocationRequestedRef.current) {
+      geolocationRequestedRef.current = true
+      console.log('📍 Requesting location access...')
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          console.log('Got location:', position.coords.latitude, position.coords.longitude)
+          console.log(`📍 Location found: ${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`)
           setUserLocation({
             lat: position.coords.latitude,
             lng: position.coords.longitude,
@@ -153,8 +159,10 @@ export const FlightTracker: React.FC<FlightTrackerProps> = ({
           maximumAge: 300000
         }
       )
+    } else if (!enableGeolocation) {
+      setUserLocation(defaultLocation)
     }
-  }, [enableGeolocation, defaultLocation])
+  }, [enableGeolocation, defaultLocation]) // Dependencies for geolocation effect
 
   // Enrich flight data with airline info
   const enrichFlightData = async (flights: FlightWithPrediction[]): Promise<FlightWithPrediction[]> => {
@@ -205,7 +213,7 @@ export const FlightTracker: React.FC<FlightTrackerProps> = ({
       return
     }
 
-    // Prevent concurrent fetches
+    // Prevent concurrent fetches (but allow if it's been more than 30 seconds)
     if (fetchInProgressRef.current) {
       console.log(`[FlightTracker ${instanceId}] Skipping fetch - already in progress`)
       return
@@ -224,7 +232,7 @@ export const FlightTracker: React.FC<FlightTrackerProps> = ({
 
     fetchInProgressRef.current = true
     
-    console.log(`[FlightTracker ${instanceId}] Fetching flights for location: lat=${userLocation.lat}, lng=${userLocation.lng}, radius=${searchRadius}`)
+    console.log(`🌐 Fetching flights near ${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)} (${searchRadius}° radius)`)
     
     try {
       const params = new URLSearchParams({
@@ -264,7 +272,7 @@ export const FlightTracker: React.FC<FlightTrackerProps> = ({
       if (data.flights && Array.isArray(data.flights)) {
         const newFlights: FlightWithPrediction[] = data.flights
         
-        console.log(`Received ${newFlights.length} flights from API`)
+        console.log(`✈️ Loaded ${newFlights.length} flights`)
         
         // Update fetch cache
         lastFetchRef.current = {
@@ -272,22 +280,66 @@ export const FlightTracker: React.FC<FlightTrackerProps> = ({
           timestamp: now
         }
         
-        // Set flights immediately for display
+        // Merge new flights with existing predicted positions to avoid jumping
+        const mergedFlights = newFlights.map(newFlight => {
+          const existingFlight = displayFlightsRef.current.find(f => f.icao24 === newFlight.icao24)
+          if (existingFlight && existingFlight.interpolated_position) {
+            // Keep the predicted position, but update the actual position for next prediction cycle
+            return {
+              ...newFlight,
+              interpolated_position: existingFlight.interpolated_position,
+              // Store the new actual position for future predictions
+              actual_position: {
+                longitude: newFlight.longitude,
+                latitude: newFlight.latitude
+              }
+            }
+          }
+          return {
+            ...newFlight,
+            interpolated_position: {
+              longitude: newFlight.longitude,
+              latitude: newFlight.latitude
+            },
+            actual_position: {
+              longitude: newFlight.longitude,
+              latitude: newFlight.latitude
+            }
+          }
+        })
+
+        // Set flights for API data, but use merged flights for display to prevent jumping
         setFlights(newFlights)
-        setDisplayFlights(newFlights)
+        setDisplayFlights(mergedFlights)
         setLastUpdateTime(data.timestamp || Date.now())
         setError(null)
-        animationFrameRef.current = 0
+        // Don't reset animation frame - let prediction continue smoothly
         setInitialLoading(false)
         
-        console.log(`Displaying ${newFlights.length} flights on map`)
-        
-        // Enrich flight data in the background without affecting display
+        // Enrich flight data in the background without affecting display positions
         enrichFlightData(newFlights).then(enrichedFlights => {
           if (enrichedFlights && enrichedFlights.length > 0) {
+            // Update flights data for future use, but don't reset display positions
             setFlights(enrichedFlights)
-            setDisplayFlights(enrichedFlights)
-            console.log(`Updated with enriched data: ${enrichedFlights.length} flights`)
+            
+            // Merge enrichment data with current display flights without losing positions
+            setDisplayFlights(prevDisplay => 
+              prevDisplay.map(displayFlight => {
+                const enriched = enrichedFlights.find(ef => ef.icao24 === displayFlight.icao24)
+                if (enriched) {
+                  return {
+                    ...enriched,
+                    interpolated_position: displayFlight.interpolated_position,
+                    actual_position: displayFlight.actual_position || {
+                      longitude: enriched.longitude,
+                      latitude: enriched.latitude
+                    }
+                  }
+                }
+                return displayFlight
+              })
+            )
+            console.log(`🔍 Enhanced ${enrichedFlights.length} flights with airline data`)
           }
         }).catch(error => {
           console.error('Error enriching flight data:', error)
@@ -303,74 +355,79 @@ export const FlightTracker: React.FC<FlightTrackerProps> = ({
     }
   }, [userLocation, searchRadius, isRateLimited, retryAfter, instanceId])
 
-  // Restore smooth animation with fixes for phantom flights
+  // Keep displayFlightsRef synchronized with displayFlights state
   useEffect(() => {
-    const animatePositions = () => {
-      animationFrameRef.current += 1
-      const progress = Math.min(animationFrameRef.current / ANIMATION_SEGMENTS, 1)
+    displayFlightsRef.current = displayFlights
+  }, [displayFlights])
+
+  // Animation system that uses position prediction without API calls
+  useEffect(() => {
+    const predictPositions = () => {
+      const now = Date.now()
+      const elapsedSinceLastFetch = lastFetchRef.current ? now - lastFetchRef.current.timestamp : 0
       
-      const updatedFlights = flights.map(flight => {
-        if (flight.on_ground) {
+      const currentFlights = displayFlightsRef.current
+      if (!currentFlights || currentFlights.length === 0) return
+      
+      const predictedFlights = currentFlights.map(flight => {
+        if (flight.on_ground || !flight.velocity || !flight.true_track) {
           return {
             ...flight,
-            interpolated_position: {
+            interpolated_position: flight.interpolated_position || {
               longitude: flight.longitude,
               latitude: flight.latitude
             }
           }
         }
         
-        const animatedFlight = { ...flight }
-        const previous = previousFlightsRef.current.get(flight.icao24)
-        
-        // Only interpolate if we have valid previous position and it's not too far apart
-        if (previous && previous.longitude && previous.latitude) {
-          const deltaLng = Math.abs(flight.longitude - previous.longitude)
-          const deltaLat = Math.abs(flight.latitude - previous.latitude)
-          
-          // Only interpolate if the change is reasonable (not a teleport)
-          if (deltaLng < 1 && deltaLat < 1) {
-            const startLng = previous.interpolated_position?.longitude ?? previous.longitude
-            const startLat = previous.interpolated_position?.latitude ?? previous.latitude
-            const endLng = flight.longitude
-            const endLat = flight.latitude
-            
-            const interpolatedLng = startLng + (endLng - startLng) * progress
-            const interpolatedLat = startLat + (endLat - startLat) * progress
-            
-            animatedFlight.interpolated_position = {
-              longitude: interpolatedLng,
-              latitude: interpolatedLat
-            }
-          } else {
-            // Jump directly to new position if too far apart
-            animatedFlight.interpolated_position = {
-              longitude: flight.longitude,
-              latitude: flight.latitude
-            }
-          }
-        } else {
-          animatedFlight.interpolated_position = {
-            longitude: flight.longitude,
-            latitude: flight.latitude
-          }
+        // Use actual_position as base for prediction, or fall back to current longitude/latitude
+        const basePosition = flight.actual_position || {
+          longitude: flight.longitude,
+          latitude: flight.latitude
         }
         
-        return animatedFlight
+        // Predict position based on velocity and heading from the actual position
+        const velocityMs = flight.velocity // m/s
+        const headingDeg = flight.true_track // degrees
+        const timeElapsedSec = elapsedSinceLastFetch / 1000
+        
+        // Convert to km/h and calculate distance
+        const velocityKmh = velocityMs * 3.6
+        const distanceKm = velocityKmh * (timeElapsedSec / 3600)
+        
+        // Simple prediction using bearing and distance
+        const earthRadius = 6371 // km
+        const bearingRad = (headingDeg * Math.PI) / 180
+        const latRad = (basePosition.latitude * Math.PI) / 180
+        const lonRad = (basePosition.longitude * Math.PI) / 180
+        const distRad = distanceKm / earthRadius
+        
+        const newLatRad = Math.asin(
+          Math.sin(latRad) * Math.cos(distRad) +
+          Math.cos(latRad) * Math.sin(distRad) * Math.cos(bearingRad)
+        )
+        
+        const newLonRad = lonRad + Math.atan2(
+          Math.sin(bearingRad) * Math.sin(distRad) * Math.cos(latRad),
+          Math.cos(distRad) - Math.sin(latRad) * Math.sin(newLatRad)
+        )
+        
+        return {
+          ...flight,
+          interpolated_position: {
+            longitude: (newLonRad * 180) / Math.PI,
+            latitude: (newLatRad * 180) / Math.PI
+          }
+        }
       })
       
-      setDisplayFlights(updatedFlights)
+      setDisplayFlights(predictedFlights)
       
-      // Update selected flight data but keep position stable
+      // Update selected flight if it exists
       if (selectedFlight) {
-        const updatedSelectedFlight = updatedFlights.find(f => f.icao24 === selectedFlight.icao24)
+        const updatedSelectedFlight = predictedFlights.find(f => f.icao24 === selectedFlight.icao24)
         if (updatedSelectedFlight) {
-          setSelectedFlight(prev => prev ? {
-            ...updatedSelectedFlight,
-            // Keep some stable fields from selection
-            callsign: prev.callsign || updatedSelectedFlight.callsign,
-            origin_country: prev.origin_country || updatedSelectedFlight.origin_country
-          } : null)
+          setSelectedFlight(updatedSelectedFlight)
         }
       }
     }
@@ -379,9 +436,9 @@ export const FlightTracker: React.FC<FlightTrackerProps> = ({
       clearInterval(animationIntervalRef.current)
     }
     
-    // Only animate if we have flights
-    if (flights.length > 0) {
-      animationIntervalRef.current = setInterval(animatePositions, ANIMATION_INTERVAL)
+    // Only animate if we have flights and they're not loading
+    if (flights.length > 0 && !initialLoading) {
+      animationIntervalRef.current = setInterval(predictPositions, ANIMATION_INTERVAL)
     }
     
     return () => {
@@ -389,7 +446,7 @@ export const FlightTracker: React.FC<FlightTrackerProps> = ({
         clearInterval(animationIntervalRef.current)
       }
     }
-  }, [flights, selectedFlight?.icao24]) // Only depend on selectedFlight ID to avoid loops
+  }, [flights.length, selectedFlight, initialLoading]) // Remove displayFlights to prevent excessive re-renders
 
   // Update rate limit countdown
   useEffect(() => {
@@ -407,9 +464,9 @@ export const FlightTracker: React.FC<FlightTrackerProps> = ({
     }
   }, [isRateLimited, retryAfter])
 
-  // Initial fetch - only when userLocation changes
+  // Initial fetch - only when userLocation changes and we're not already fetching
   useEffect(() => {
-    if (userLocation && userLocation.lat !== null && userLocation.lng !== null) {
+    if (userLocation && userLocation.lat !== null && userLocation.lng !== null && !fetchInProgressRef.current) {
       console.log(`[FlightTracker ${instanceId}] Initial fetch for location: ${userLocation.lat}, ${userLocation.lng}`)
       fetchFlights()
     }
@@ -419,7 +476,7 @@ export const FlightTracker: React.FC<FlightTrackerProps> = ({
   const fetchFlightsRef = useRef(fetchFlights)
   fetchFlightsRef.current = fetchFlights
   
-  // Set up periodic updates
+  // Set up periodic updates with proper caching
   useEffect(() => {
     if (updateIntervalRef.current) {
       clearInterval(updateIntervalRef.current)
@@ -434,8 +491,15 @@ export const FlightTracker: React.FC<FlightTrackerProps> = ({
     console.log(`[FlightTracker ${instanceId}] Setting up flight update interval: ${interval/1000}s (${authenticated ? 'authenticated' : 'anonymous'})`)
     
     updateIntervalRef.current = setInterval(() => {
-      console.log(`[FlightTracker ${instanceId}] Interval triggered - fetching updates...`)
-      fetchFlightsRef.current()
+      console.log(`[FlightTracker ${instanceId}] Interval triggered - checking if fetch needed...`)
+      // Only fetch if minimum interval has passed
+      const now = Date.now()
+      if (!lastFetchRef.current || now - lastFetchRef.current.timestamp >= MIN_FETCH_INTERVAL) {
+        console.log(`[FlightTracker ${instanceId}] Fetching updates...`)
+        fetchFlightsRef.current()
+      } else {
+        console.log(`[FlightTracker ${instanceId}] Skipping fetch - using prediction (${Math.round((now - lastFetchRef.current.timestamp) / 1000)}s since last fetch)`)
+      }
     }, interval)
     
     return () => {
@@ -554,6 +618,7 @@ export const FlightTracker: React.FC<FlightTrackerProps> = ({
       setTimeout(() => setLoading(false), 1000) // Ensure loading state is cleared
     }
   }
+
 
   return (
     <div className={`flight-tracker ${selectedFlight ? 'flight-tracker--has-selection' : ''}`} ref={containerRef}>
