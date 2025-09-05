@@ -117,182 +117,6 @@ function getCentroidFromFeature(feature: WorldFeature): { lat: number; lng: numb
   }
 }
 
-// Simplified details panel component integrated here
-const DetailsPanel = ({ 
-  advisory, 
-  visaCountry, 
-  restaurant, 
-  airport, 
-  onClose 
-}: {
-  advisory?: AdvisoryCountry | null
-  visaCountry?: CountryVisaData | null
-  restaurant?: MichelinRestaurantData | null
-  airport?: AirportData | null
-  onClose: () => void
-}) => {
-  if (!advisory && !visaCountry && !restaurant && !airport) return null
-
-  const renderContent = () => {
-    if (advisory) {
-      return (
-        <>
-          <div className="tdg-detail-header">
-            <div className="tdg-detail-header-left">
-              <Image 
-                src="/department-of-state.png" 
-                alt="U.S. Department of State" 
-                width={40} 
-                height={40} 
-                style={{ opacity: 0.9, flexShrink: 0, width: '40px', height: '40px' }}
-                unoptimized
-              />
-              <h2 className="tdg-detail-title">{advisory.country}</h2>
-              <span className={`tdg-detail-level tdg-level-${advisory.level}`}>
-                Level {advisory.level}
-              </span>
-            </div>
-            <button className="tdg-detail-close" onClick={onClose}>
-              <FontAwesomeIcon icon={faChevronLeft} />
-            </button>
-          </div>
-          <div className="tdg-detail-content">
-            <div className="tdg-prose">
-              <h3>{advisory.levelText}</h3>
-              <p>{advisory.levelDescription}</p>
-              {advisory.advisoryText && (
-                <div dangerouslySetInnerHTML={{ __html: advisory.advisoryText }} />
-              )}
-              {advisory.dateAdded && (
-                <p className="tdg-date">
-                  Published {new Date(advisory.dateAdded).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </p>
-              )}
-            </div>
-          </div>
-        </>
-      )
-    }
-    
-    if (visaCountry) {
-      return (
-        <>
-          <div className="tdg-detail-header">
-            <div className="tdg-detail-header-left">
-              <FontAwesomeIcon icon={faPassport} />
-              <h2 className="tdg-detail-title">{visaCountry.countryName}</h2>
-            </div>
-            <button className="tdg-detail-close" onClick={onClose}>
-              <FontAwesomeIcon icon={faChevronLeft} />
-            </button>
-          </div>
-          <div className="tdg-detail-content">
-            <div className="tdg-visa-stats">
-              <div className="tdg-stat-card">
-                <span className="tdg-stat-value">{visaCountry.visaFreeCount}</span>
-                <span className="tdg-stat-label">Visa Free</span>
-              </div>
-              <div className="tdg-stat-card">
-                <span className="tdg-stat-value">{visaCountry.visaOnArrivalCount}</span>
-                <span className="tdg-stat-label">On Arrival</span>
-              </div>
-              <div className="tdg-stat-card">
-                <span className="tdg-stat-value">{visaCountry.totalDestinations}</span>
-                <span className="tdg-stat-label">Total</span>
-              </div>
-            </div>
-          </div>
-        </>
-      )
-    }
-    
-    if (restaurant) {
-      return (
-        <>
-          <div className="tdg-detail-header">
-            <div className="tdg-detail-header-left">
-              <FontAwesomeIcon icon={faUtensils} />
-              <h2 className="tdg-detail-title">{restaurant.name}</h2>
-              {restaurant.rating && (
-                <span className="tdg-restaurant-stars">
-                  {'★'.repeat(restaurant.rating)}
-                </span>
-              )}
-            </div>
-            <button className="tdg-detail-close" onClick={onClose}>
-              <FontAwesomeIcon icon={faChevronLeft} />
-            </button>
-          </div>
-          <div className="tdg-detail-content">
-            <div className="tdg-info-row">
-              <span className="tdg-info-label">Cuisine:</span>
-              <span className="tdg-info-value">{restaurant.cuisine}</span>
-            </div>
-            {restaurant.location?.city && (
-              <div className="tdg-info-row">
-                <span className="tdg-info-label">City:</span>
-                <span className="tdg-info-value">{restaurant.location.city}</span>
-              </div>
-            )}
-            {restaurant.greenStar && (
-              <div className="tdg-info-row">
-                <span className="tdg-green-star">🌿 Green Star</span>
-              </div>
-            )}
-          </div>
-        </>
-      )
-    }
-    
-    if (airport) {
-      return (
-        <>
-          <div className="tdg-detail-header">
-            <div className="tdg-detail-header-left">
-              <FontAwesomeIcon icon={faPlane} />
-              <h2 className="tdg-detail-title">{airport.name}</h2>
-            </div>
-            <button className="tdg-detail-close" onClick={onClose}>
-              <FontAwesomeIcon icon={faChevronLeft} />
-            </button>
-          </div>
-          <div className="tdg-detail-content">
-            {airport.code && (
-              <div className="tdg-info-row">
-                <span className="tdg-info-label">IATA:</span>
-                <span className="tdg-info-value">{airport.code}</span>
-              </div>
-            )}
-            {airport.location?.city && (
-              <div className="tdg-info-row">
-                <span className="tdg-info-label">City:</span>
-                <span className="tdg-info-value">{airport.location.city}</span>
-              </div>
-            )}
-            {airport.location && (
-              <div className="tdg-location-coordinates">
-                {airport.location.lat.toFixed(4)}, {airport.location.lng.toFixed(4)}
-              </div>
-            )}
-          </div>
-        </>
-      )
-    }
-    
-    return null
-  }
-
-  return (
-    <div className="tdg-detail-glass">
-      {renderContent()}
-    </div>
-  )
-}
-
 interface TravelDataGlobeWrapperProps {
   data: PreparedData
 }
@@ -316,8 +140,6 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
   
   // Panel collapse states
   const [isListPanelCollapsed, setIsListPanelCollapsed] = useState(false)
-  const [isDetailPanelCollapsed, setIsDetailPanelCollapsed] = useState(false)
-  const [showDetails, setShowDetails] = useState(false)
 
   const advisoryByCode = useMemo(() => {
     const m = new Map<string, AdvisoryCountry>()
@@ -539,7 +361,6 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
       setSelectedRestaurant(null)
       setSelectedAirport(null)
       setFocusTarget(null)
-      setShowDetails(false)
     },
     []
   )
@@ -550,7 +371,6 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
       setSelectedVisaCountry(null)
       setSelectedRestaurant(null)
       setSelectedAirport(null)
-      setShowDetails(true)
       const normalized = normalizeCountryName(advisory.country)
       const c = centroids.get(normalized)
         || centroids.get(advisory.countryCode?.toUpperCase() || '')
@@ -565,7 +385,6 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
       setSelectedAdvisory(null)
       setSelectedRestaurant(null)
       setSelectedAirport(null)
-      setShowDetails(true)
       const normalized = normalizeCountryName(country.countryName)
       const c = centroids.get(normalized)
         || centroids.get(country.countryCode?.toUpperCase() || '')
@@ -579,7 +398,6 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
     setSelectedAdvisory(null)
     setSelectedVisaCountry(null)
     setSelectedAirport(null)
-    setShowDetails(true)
     setFocusTarget({ lat: restaurant.location.lat, lng: restaurant.location.lng })
   }, [])
 
@@ -588,17 +406,10 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
     setSelectedAdvisory(null)
     setSelectedVisaCountry(null)
     setSelectedRestaurant(null)
-    setShowDetails(true)
     setFocusTarget({ lat: airport.location.lat, lng: airport.location.lng })
   }, [])
 
-  const handleCloseDetails = useCallback(() => {
-    setShowDetails(false)
-    setSelectedAdvisory(null)
-    setSelectedVisaCountry(null)
-    setSelectedRestaurant(null)
-    setSelectedAirport(null)
-  }, [])
+
 
   // Visa arcs calculation (fixed)
   const visaArcs = useMemo(() => {
@@ -660,21 +471,12 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
   const globePaneClass = useMemo(() => {
     let className = 'tdg-globe-pane'
     
-    // Only affect positioning if detail panel is actually visible
-    if (showDetails) {
-      if (!isDetailPanelCollapsed) {
-        className += ' tdg-globe-pane--detail-expanded'
-      } else {
-        className += ' tdg-globe-pane--detail-collapsed'
-      }
-    }
-    
     if (isListPanelCollapsed) {
       className += ' tdg-globe-pane--list-collapsed'
     }
     
     return className
-  }, [isListPanelCollapsed, isDetailPanelCollapsed, showDetails])
+  }, [isListPanelCollapsed])
 
   // 3D content
   const webglContent = (
@@ -730,6 +532,7 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
       className="travel-data-globe-block"
       interactive={true}
       disableDefaultCamera={true}
+      fixedWebGL={true}
       webglContent={webglContent}
     >
       <div className="tdg-container">
@@ -950,26 +753,7 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
           </div>
         </aside>
 
-        {/* Details panel - right side next to list, collapsible */}
-        {showDetails && (
-          <aside className={`tdg-detail-panel ${isDetailPanelCollapsed ? 'tdg-detail-panel--collapsed' : ''}`}>
-            <button
-              className="tdg-collapse-toggle"
-              onClick={() => setIsDetailPanelCollapsed(!isDetailPanelCollapsed)}
-              type="button"
-            >
-              <FontAwesomeIcon icon={isDetailPanelCollapsed ? faChevronLeft : faChevronRight} />
-          </button>
-          
-          <DetailsPanel
-            advisory={selectedAdvisory}
-            visaCountry={selectedVisaCountry}
-            restaurant={selectedRestaurant}
-            airport={selectedAirport}
-            onClose={handleCloseDetails}
-          />
-          </aside>
-        )}
+
       </div>
     </BlockWrapper>
   )

@@ -25,6 +25,7 @@ interface BlockWrapperProps {
   interactive?: boolean
   id?: string
   disableDefaultCamera?: boolean
+  fixedWebGL?: boolean
 }
 
 export function BlockWrapper({
@@ -36,6 +37,7 @@ export function BlockWrapper({
   interactive = false,
   id,
   disableDefaultCamera = false,
+  fixedWebGL = false,
 }: BlockWrapperProps) {
   const ref = useRef<HTMLDivElement>(null)
   useView(ref)
@@ -67,6 +69,9 @@ export function BlockWrapper({
           position: 'relative',
           width: '100%',
           minHeight: '100vh',
+          contain: 'layout',
+          isolation: 'isolate',
+          transform: 'translateZ(0)', // Force layer creation
         }}
       >
         {children}
@@ -75,9 +80,15 @@ export function BlockWrapper({
       {webglContent && (
         <WebGLTunnel>
           <View
-            track={ref as React.RefObject<HTMLElement>}
+            track={fixedWebGL ? undefined : ref as React.RefObject<HTMLElement>}
             className="webgl-view"
-            style={{ pointerEvents: interactive ? 'auto' : 'none' }}
+            style={{ 
+              pointerEvents: interactive ? 'auto' : 'none',
+              position: 'fixed',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+            }}
           >
             {!disableDefaultCamera && (
               <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={50} />

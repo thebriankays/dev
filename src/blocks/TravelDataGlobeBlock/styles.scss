@@ -1,37 +1,5 @@
 // Use global fonts from src/fonts/fonts.ts
 
-/* Canvas and WebGL fixes for shared canvas architecture */
-/* These need to be global to affect the canvas element properly */
-:global(#__canvas) {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  pointer-events: none !important;
-  background: transparent !important;
-  z-index: 0 !important;
-  
-  canvas {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    background: transparent !important;
-    image-rendering: optimizeSpeed !important;
-    -webkit-transform: translateZ(0) !important;
-    transform: translateZ(0) !important;
-    backface-visibility: hidden !important;
-    -webkit-backface-visibility: hidden !important;
-  }
-}
-
-/* Ensure travel data globe block webgl view is properly positioned */
-:global([data-view-track]) {
-  position: relative !important;
-}
-
 .travel-data-globe-block {
   position: relative;
   width: 100%;
@@ -39,23 +7,16 @@
   min-height: 100vh;
   background: transparent !important;
   overflow: hidden !important;
+  isolation: isolate !important; // Create stacking context
+  contain: layout style !important; // Contain layout changes
   
   .block-wrapper {
     width: 100%;
     height: 100vh;
     background: transparent !important;
     overflow: hidden !important;
-  }
-  
-  // Ensure WebGL View container is transparent and fixed
-  :global(.webgl-view) {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    background: transparent !important;
-    pointer-events: auto !important;
+    position: relative !important;
+    z-index: 1 !important;
   }
 }
 
@@ -82,7 +43,7 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 280px; // Default with list panel expanded
+  left: 400px; // Adjusted for wider list panel (380px + 20px margin)
   right: 1rem;
   height: 100%;
   overflow: hidden;
@@ -97,24 +58,7 @@
   // Dynamic positioning based on panel states
   &.tdg-globe-pane--list-collapsed {
     left: 90px; // When list panel is collapsed
-  }
-  
-  &.tdg-globe-pane--detail-expanded {
-    right: 280px; // When detail panel is expanded
-  }
-  
-  &.tdg-globe-pane--detail-collapsed {
-    right: 50px; // When detail panel is collapsed
-  }
-  
-  &.tdg-globe-pane--list-collapsed.tdg-globe-pane--detail-expanded {
-    left: 90px;
-    right: 280px;
-  }
-  
-  &.tdg-globe-pane--list-collapsed.tdg-globe-pane--detail-collapsed {
-    left: 90px;
-    right: 50px;
+    right: 1rem;
   }
 }
 
@@ -155,10 +99,10 @@
   }
 }
 
-/* Tabs with active state */
+/* Tabs with active state - FIXED POSITIONING */
 .tdg-tabs-wrapper {
-  position: absolute;
-  top: 1.5rem;
+  position: fixed !important; // Changed from absolute
+  top: 1rem;
   left: 50%;
   transform: translateX(-50%);
   z-index: 999999;
@@ -166,6 +110,8 @@
   padding: 0 1rem;
   display: flex;
   justify-content: center;
+  width: auto;
+  max-width: 90vw; // Prevent overflow on small screens
 }
 
 .tdg-tabs-container {
@@ -256,7 +202,7 @@
   left: 5rem;
   top: 0;
   bottom: 0;
-  width: 260px; // Smaller width
+  width: 380px; // Increased width from 260px
   z-index: 40;
   margin: 1rem 0;
   pointer-events: auto;
@@ -573,16 +519,10 @@
 .tdg-country-item,
 .tdg-restaurant-item,
 .tdg-airport-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid transparent;
   border-radius: 0.25rem;
-  cursor: pointer;
   transition: all 0.2s;
-  white-space: nowrap;
   overflow: hidden;
   
   &:hover {
@@ -595,11 +535,107 @@
     border-color: rgba(129, 214, 227, 0.3);
   }
   
-  // Prevent text wrapping
-  span {
+  &.tdg-expanded {
+    background: rgba(129, 214, 227, 0.08);
+  }
+}
+
+.tdg-advisory-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  white-space: nowrap;
+  
+  // Prevent any wrapping
+  > * {
+    flex-shrink: 0;
+  }
+  
+  .tdg-advisory-country {
+    flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+}
+
+// Accordion-style expandable details
+.tdg-advisory-details {
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.4);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  animation: slideDown 0.3s ease-out;
+  
+  .tdg-detail-title {
+    margin: 0 0 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #e2e8f0;
+  }
+  
+  .tdg-detail-description {
+    margin: 0 0 0.75rem;
+    font-size: 0.85rem;
+    color: rgba(226, 232, 240, 0.9);
+    line-height: 1.4;
+  }
+  
+  .tdg-detail-text {
+    font-size: 0.8rem;
+    color: rgba(226, 232, 240, 0.8);
+    line-height: 1.5;
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+    
+    // Custom scrollbar for details
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 2px;
+    }
+    
+    p {
+      margin: 0 0 0.5rem;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+    
+    // Prevent text truncation
+    * {
+      word-wrap: break-word;
+      white-space: normal;
+    }
+  }
+  
+  .tdg-detail-date {
+    margin: 0.75rem 0 0;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 0.7rem;
+    color: rgba(226, 232, 240, 0.5);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
   }
 }
 
@@ -699,6 +735,139 @@
 
 .tdg-green-star {
   color: #4caf50;
+}
+
+/* Advisory item accordion styles */
+.tdg-advisory-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 0.35rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #e2e8f0;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+  
+  &:hover { 
+    background: rgba(255, 255, 255, 0.06);
+  }
+  
+  &.tdg-selected { 
+    background: rgba(129, 214, 227, 0.1);
+    box-shadow: inset 0 0 0 1px rgba(129, 214, 227, 0.3);
+  }
+  
+  &.tdg-expanded {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
+.tdg-advisory-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  width: 100%;
+  flex-wrap: nowrap; // Prevent wrapping
+}
+
+.tdg-advisory-country {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+  color: #e2e8f0;
+  min-width: 0; // Allow flexbox to shrink
+}
+
+// Expanded details section for accordion
+.tdg-advisory-details {
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  animation: slideDown 0.3s ease;
+  max-height: 300px;
+  overflow-y: auto;
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .tdg-detail-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin: 0 0 0.5rem 0;
+  }
+  
+  .tdg-detail-description {
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: rgba(226, 232, 240, 0.8);
+    margin: 0 0 0.75rem 0;
+  }
+  
+  .tdg-detail-text {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: rgba(226, 232, 240, 0.9);
+    
+    ul, ol {
+      margin: 0.5rem 0;
+      padding-left: 1.5rem;
+    }
+    
+    li {
+      margin: 0.25rem 0;
+    }
+    
+    p {
+      margin: 0.5rem 0;
+      
+      &:first-child {
+        margin-top: 0;
+      }
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+  
+  .tdg-detail-date {
+    font-size: 0.75rem;
+    color: rgba(226, 232, 240, 0.5);
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 300px;
+  }
 }
 
 /* Detail Panel - Right side, collapsible */

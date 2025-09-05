@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import Image from 'next/image'
 import type { AdvisoryCountry } from '@/blocks/TravelDataGlobeBlock/types'
 
@@ -19,6 +19,8 @@ export function AdvisoryPanel({
   selectedCountry,
   onCountryClick,
 }: AdvisoryPanelProps) {
+  const [expandedCountry, setExpandedCountry] = useState<string | null>(null)
+  
   const filteredAdvisories = advisories.filter(advisory =>
     advisory.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (advisory.countryCode && advisory.countryCode.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -31,6 +33,12 @@ export function AdvisoryPanel({
     const count = keyTracker.get(baseKey) || 0
     keyTracker.set(baseKey, count + 1)
     return count === 0 ? baseKey : `${baseKey}-${count}`
+  }
+  
+  const handleRowClick = (advisory: AdvisoryCountry) => {
+    // Toggle expanded state
+    setExpandedCountry(expandedCountry === advisory.country ? null : advisory.country)
+    onCountryClick(advisory)
   }
 
   return (
@@ -46,16 +54,18 @@ export function AdvisoryPanel({
       <ul className="tdg-list-container">
         {filteredAdvisories.map((advisory) => {
           const uniqueKey = getUniqueKey(advisory.country, advisory.countryCode)
+          const isExpanded = expandedCountry === advisory.country
+          const isSelected = selectedCountry === advisory.country
           
           return (
             <li
               key={uniqueKey}
-              className={`tdg-country-item ${
-                selectedCountry === advisory.country ? 'tdg-selected' : ''
-              }`}
-              onClick={() => onCountryClick(advisory)}
+              className={`tdg-advisory-item ${isSelected ? 'tdg-selected' : ''} ${isExpanded ? 'tdg-expanded' : ''}`}
             >
-              <div className="tdg-advisory-header">
+              <div 
+                className="tdg-advisory-header"
+                onClick={() => handleRowClick(advisory)}
+              >
                 {advisory.countryFlag && (
                   <Image
                     src={advisory.countryFlag}
@@ -73,10 +83,32 @@ export function AdvisoryPanel({
                 <span className={`tdg-advisory-level tdg-level-${advisory.level}`}>
                   Level {advisory.level}
                 </span>
+                
+                {advisory.isNew && (
+                  <span className="tdg-new-pill">NEW</span>
+                )}
               </div>
               
-              {advisory.isNew && (
-                <span className="tdg-new-pill">NEW</span>
+              {isExpanded && (
+                <div className="tdg-advisory-details">
+                  <h4 className="tdg-detail-title">{advisory.levelText}</h4>
+                  <p className="tdg-detail-description">{advisory.levelDescription}</p>
+                  {advisory.advisoryText && (
+                    <div 
+                      className="tdg-detail-text"
+                      dangerouslySetInnerHTML={{ __html: advisory.advisoryText }}
+                    />
+                  )}
+                  {advisory.dateAdded && (
+                    <p className="tdg-detail-date">
+                      Published {new Date(advisory.dateAdded).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
+                  )}
+                </div>
               )}
             </li>
           )
