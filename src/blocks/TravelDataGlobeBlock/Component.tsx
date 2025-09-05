@@ -208,7 +208,7 @@ export async function TravelDataGlobeBlock(props: TravelDataGlobeBlockProps) {
   })
 
   const transformedAdvisories: AdvisoryCountry[] = (advisoriesResult.docs as AdvisoryDoc[])
-    .map((doc, index): AdvisoryCountry => {
+    .map((doc): AdvisoryCountry => {
 
       const countryName = doc.country?.name || doc.name || 'Unknown'
       const countryData =
@@ -424,6 +424,18 @@ export async function TravelDataGlobeBlock(props: TravelDataGlobeBlockProps) {
     greenStarCount: transformedRestaurants.filter((r) => r.greenStar).length,
   }
 
+  // Determine enabled views based on config
+  const enabledViews = []
+  if (props.blockConfig?.showTravelAdvisories !== false) enabledViews.push('travelAdvisory')
+  if (props.blockConfig?.showVisaRequirements !== false) enabledViews.push('visaRequirements')
+  if (props.blockConfig?.showMichelinRestaurants !== false) enabledViews.push('michelinRestaurants')
+  if (props.blockConfig?.showAirports !== false) enabledViews.push('airports')
+  
+  // Default to all views if none are enabled
+  if (enabledViews.length === 0) {
+    enabledViews.push('travelAdvisory', 'visaRequirements', 'michelinRestaurants', 'airports')
+  }
+
   const preparedData: PreparedData = {
     advisories: transformedAdvisories,
     visaCountries,
@@ -433,12 +445,7 @@ export async function TravelDataGlobeBlock(props: TravelDataGlobeBlockProps) {
     borders,
     statistics,
     blockConfig: props.blockConfig || {},
-    enabledViews: props.blockConfig?.enabledViews || [
-      'travelAdvisory',
-      'visaRequirements',
-      'michelinRestaurants',
-      'airports',
-    ],
+    enabledViews,
   }
 
   const { TravelDataGlobeWrapper } = await import('./Component.wrapper')

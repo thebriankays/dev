@@ -55,21 +55,19 @@ export function BlockWrapper({
       <div
         ref={ref}
         id={id}
-        className={cn(
-          'block-wrapper',
-          className,
-          {
-            'glass-effect': glassEffect.enabled,
-            [`glass-${glassEffect.variant}`]: glassEffect.enabled && glassEffect.variant,
-          }
-        )}
+        className={cn('block-wrapper', className, {
+          'glass-effect': glassEffect.enabled,
+          [`glass-${glassEffect.variant}`]: glassEffect.enabled && glassEffect.variant,
+        })}
         style={{
           position: 'relative',
           width: '100%',
+          height: '100vh',
           minHeight: '100vh',
           contain: 'layout',
           isolation: 'isolate',
           transform: 'translateZ(0)', // Force layer creation
+          background: 'transparent',
         }}
       >
         {children}
@@ -78,11 +76,11 @@ export function BlockWrapper({
       {webglContent && (
         <WebGLTunnel>
           <View
-            track={className?.includes('travel-data-globe') ? undefined : ref as React.RefObject<HTMLElement>}
+            track={ref as React.RefObject<HTMLElement>}
             className="webgl-view"
-            style={{ 
+            style={{
               pointerEvents: interactive ? 'auto' : 'none',
-              position: 'fixed',
+              position: 'absolute',
               inset: 0,
               width: '100%',
               height: '100%',
@@ -92,10 +90,7 @@ export function BlockWrapper({
               <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={50} />
             )}
             {fluidOverlay.enabled && (
-              <FluidOverlay
-                intensity={fluidOverlay.intensity}
-                color={fluidOverlay.color}
-              />
+              <FluidOverlay intensity={fluidOverlay.intensity} color={fluidOverlay.color} />
             )}
             {webglContent}
           </View>

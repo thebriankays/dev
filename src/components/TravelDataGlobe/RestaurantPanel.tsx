@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import Image from 'next/image'
 import type { MichelinRestaurantData } from '@/blocks/TravelDataGlobeBlock/types'
 
@@ -19,6 +19,8 @@ export function RestaurantPanel({
   selectedRestaurant,
   onRestaurantClick,
 }: RestaurantPanelProps) {
+  const [expandedRestaurant, setExpandedRestaurant] = useState<string | null>(null)
+  
   const filteredRestaurants = restaurants.filter(restaurant =>
     restaurant && (
       (restaurant.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -28,9 +30,14 @@ export function RestaurantPanel({
     )
   )
 
+  const handleRowClick = (restaurant: MichelinRestaurantData) => {
+    setExpandedRestaurant(expandedRestaurant === restaurant.id ? null : restaurant.id)
+    onRestaurantClick(restaurant)
+  }
+
   return (
     <>
-      <div className="tdg-search-wrapper">
+      <div className="tdg-search-container">
         <input
           type="text"
           placeholder="Search restaurants..."
@@ -40,56 +47,92 @@ export function RestaurantPanel({
         />
       </div>
 
-      <div className="tdg-list-container" data-lenis-prevent>
-        {filteredRestaurants.map((restaurant) => (
-          <div
-            key={restaurant.id}
-            className={`tdg-restaurant-item ${
-              selectedRestaurant?.id === restaurant.id ? 'tdg-selected' : ''
-            }`}
-            onClick={() => onRestaurantClick(restaurant)}
-          >
-            <div className="tdg-restaurant-header">
-              {/* Country Flag */}
-              {restaurant.location?.countryFlag && (
-                <Image
-                  src={restaurant.location.countryFlag}
-                  alt=""
-                  className="tdg-flag"
-                  width={24}
-                  height={16}
-                  style={{ width: '24px', height: 'auto' }}
-                  unoptimized
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none'
-                  }}
-                />
-              )}
-              
-              <div className="tdg-restaurant-name">{restaurant.name}</div>
-              
-              {/* Michelin Stars and Green Star */}
-              {restaurant.greenStar && (
-                <span className="tdg-green-star" title="Michelin Green Star">🌿</span>
-              )}
-            </div>
-            
-            <div className="tdg-restaurant-details">
-              <span className="tdg-restaurant-rating">
-                {restaurant.rating && restaurant.rating > 0 && (
-                  <>{'⭐'.repeat(Math.min(restaurant.rating, 3))}</>
+      <div className="tdg-list-container">
+        {filteredRestaurants.map((restaurant) => {
+          const isExpanded = expandedRestaurant === restaurant.id
+          const isSelected = selectedRestaurant?.id === restaurant.id
+          
+          return (
+            <div
+              key={restaurant.id}
+              className={`tdg-restaurant-item ${isSelected ? 'tdg-selected' : ''} ${isExpanded ? 'tdg-expanded' : ''}`}
+            >
+              <div 
+                className="tdg-restaurant-header"
+                onClick={() => handleRowClick(restaurant)}
+              >
+                {/* Country Flag */}
+                {restaurant.location?.countryFlag && (
+                  <Image
+                    src={restaurant.location.countryFlag}
+                    alt=""
+                    className="tdg-flag"
+                    width={24}
+                    height={16}
+                    unoptimized
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none'
+                    }}
+                  />
                 )}
-              </span>
-              <span className="tdg-restaurant-cuisine">{restaurant.cuisine}</span>
+                
+                <div className="tdg-restaurant-name">{restaurant.name}</div>
+                
+                {/* Green Star */}
+                {restaurant.greenStar && (
+                  <span className="tdg-green-star" title="Michelin Green Star">🌿</span>
+                )}
+                
+                {/* Michelin Stars */}
+                {restaurant.rating && restaurant.rating > 0 && (
+                  <span className="tdg-restaurant-rating">
+                    {'⭐'.repeat(Math.min(restaurant.rating, 3))}
+                  </span>
+                )}
+              </div>
+              
+              {isExpanded && (
+                <div className="tdg-advisory-details">
+                  <div className="tdg-detail-title">{restaurant.name}</div>
+                  
+                  {restaurant.cuisine && (
+                    <p className="tdg-detail-description">
+                      <strong>Cuisine:</strong> {restaurant.cuisine}
+                    </p>
+                  )}
+                  
+                  <p className="tdg-detail-description">
+                    <strong>Location:</strong> {restaurant.location?.city}, {restaurant.location?.country}
+                  </p>
+                  
+                  {restaurant.rating && restaurant.rating > 0 && (
+                    <p className="tdg-detail-description">
+                      <strong>Michelin Rating:</strong> {'⭐'.repeat(Math.min(restaurant.rating, 3))} ({restaurant.rating} star{restaurant.rating > 1 ? 's' : ''})
+                    </p>
+                  )}
+                  
+                  {restaurant.greenStar && (
+                    <p className="tdg-detail-description">
+                      <strong>Green Star:</strong> 🌿 Awarded for sustainable gastronomy
+                    </p>
+                  )}
+                  
+                  {restaurant.description && (
+                    <div className="tdg-detail-text">
+                      <p>{restaurant.description}</p>
+                    </div>
+                  )}
+                  
+                  {(restaurant.location?.lat && restaurant.location?.lng) && (
+                    <p className="tdg-detail-date">
+                      Coordinates: {restaurant.location.lat.toFixed(4)}, {restaurant.location.lng.toFixed(4)}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
-            
-            <div className="tdg-restaurant-location">
-              {restaurant.location?.city && restaurant.location?.country && 
-                `${restaurant.location.city}, ${restaurant.location.country}`
-              }
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </>
   )

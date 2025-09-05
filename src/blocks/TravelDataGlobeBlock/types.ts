@@ -122,6 +122,10 @@ export interface TravelDataGlobeBlockConfig {
   atmosphereColor?: string
   atmosphereAltitude?: number
   enableGlassEffect?: boolean
+  showTravelAdvisories?: boolean
+  showVisaRequirements?: boolean
+  showMichelinRestaurants?: boolean
+  showAirports?: boolean
   enabledViews?: Array<'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports'>
   initialView?: 'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports'
   marqueeText?: string

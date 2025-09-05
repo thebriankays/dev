@@ -7,6 +7,7 @@ import React, {
   useMemo,
   Suspense,
   lazy,
+  useRef,
 } from 'react'
 import Image from 'next/image'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -15,8 +16,6 @@ import {
   faPassport,
   faUtensils,
   faPlane,
-  faChevronLeft,
-  faChevronRight,
 } from '@fortawesome/free-solid-svg-icons'
 import { BlockWrapper } from '@/blocks/_shared/BlockWrapper'
 import VerticalMarquee from '@/components/VerticalMarquee/VerticalMarquee'
@@ -28,6 +27,7 @@ import {
   getCountryNameVariations
 } from '@/lib/country-mappings'
 
+// Import updated panel components
 import { AdvisoryPanel } from '@/components/TravelDataGlobe/AdvisoryPanel'
 import { VisaPanel } from '@/components/TravelDataGlobe/VisaPanel'
 import { RestaurantPanel } from '@/components/TravelDataGlobe/RestaurantPanel'
@@ -137,9 +137,6 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
   const [borders, setBorders] = useState(initialBorders)
   const [centroids, setCentroids] = useState<Map<string, { lat: number; lng: number }>>(new Map())
   
-  // Panel collapse states
-  const [isListPanelCollapsed, setIsListPanelCollapsed] = useState(false)
-
   const advisoryByCode = useMemo(() => {
     const m = new Map<string, AdvisoryCountry>()
     advisories.forEach((a) => a.countryCode && m.set(a.countryCode.toUpperCase(), a))
@@ -289,7 +286,7 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
 
   const [currentView, setCurrentView] = useState<
     'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports'
-  >(blockConfig.initialView as 'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports' || 'travelAdvisory')
+  >(enabledViews[0] as 'travelAdvisory' | 'visaRequirements' | 'michelinRestaurants' | 'airports')
   const [searchQuery, setSearchQuery] = useState('')
 
   const [selectedAdvisory, setSelectedAdvisory] = useState<AdvisoryCountry | null>(null)
@@ -407,8 +404,6 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
     setFocusTarget({ lat: airport.location.lat, lng: airport.location.lng })
   }, [])
 
-
-
   // Visa arcs calculation (fixed)
   const visaArcs = useMemo(() => {
     if (!selectedVisaCountry || currentView !== 'visaRequirements') return []
@@ -465,16 +460,20 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
     return arcs
   }, [selectedVisaCountry, currentView, centroids])
 
-  // Dynamic globe pane class based on panel states
-  const globePaneClass = useMemo(() => {
-    let className = 'tdg-globe-pane'
-    
-    if (isListPanelCollapsed) {
-      className += ' tdg-globe-pane--list-collapsed'
+  // Tab refs for indicator positioning
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const [indicatorStyle, setIndicatorStyle] = useState<React.CSSProperties>({})
+
+  useEffect(() => {
+    const activeIndex = enabledViews.indexOf(currentView)
+    const activeTab = tabRefs.current[activeIndex]
+    if (activeTab) {
+      setIndicatorStyle({
+        transform: `translateX(${activeTab.offsetLeft}px)`,
+        width: `${activeTab.offsetWidth}px`
+      })
     }
-    
-    return className
-  }, [isListPanelCollapsed])
+  }, [currentView, enabledViews])
 
   // 3D content
   const webglContent = (
@@ -526,28 +525,146 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
   )
 
   return (
-    <div className="travel-data-globe-section">
-      {/* WebGL Globe Background */}
-      <div className="tdg-globe-background">
-        <BlockWrapper
-          className="travel-data-globe-block"
-          interactive={true}
-          webglContent={webglContent}
-        >
-          <div className="tdg-fixed-inner" />
-        </BlockWrapper>
-      </div>
-      
-      {/* UI Overlay */}
-      <div className="tdg-container">
-        <div className="tdg-vertical-marquee">
-          <VerticalMarquee text="Sweet Serenity Getaways" animationSpeed={0.5} position="left" />
-        </div>
+    <BlockWrapper
+      className="travel-data-globe-block"
+      interactive={true}
+      webglContent={webglContent}
+      disableDefaultCamera={true}
+    >
+      <div className="tdg-globe-section">
+        {/* Main content container */}
+        <div className="tdg-content-wrapper">
+          {/* Vertical Marquee */}
+          <div className="tdg-vertical-marquee">
+            <VerticalMarquee text="Sweet Serenity Getaways" animationSpeed={0.5} position="left" />
+          </div>
 
-        {/* Tabs */}
-        <div className="tdg-tabs-wrapper">
-          <div className="tdg-tabs-container">
-            {enabledViews.map((view: string) => {
+          {/* List panel */}
+          <div className="tdg-list-panel">
+            <div className="tdg-info-panel-glass">
+              <div className="tdg-panel-heading">
+                {currentView === 'travelAdvisory' && (
+                  <>
+                    <Image
+                      src="/department-of-state.png"
+                      alt="U.S. Department of State"
+                      width={40}
+                      height={40}
+                      style={{ opacity: 0.9 }}
+                    />
+                    <span>U.S. Travel Advisories</span>
+                  </>
+                )}
+                {currentView === 'visaRequirements' && (
+                  <>
+                    <FontAwesomeIcon icon={faPassport} />
+                    <span>Select Passport Country</span>
+                  </>
+                )}
+                {currentView === 'michelinRestaurants' && (
+                  <>
+                    <FontAwesomeIcon icon={faUtensils} />
+                    <span>Michelin Restaurants</span>
+                  </>
+                )}
+                {currentView === 'airports' && (
+                  <>
+                    <FontAwesomeIcon icon={faPlane} />
+                    <span>International Airports</span>
+                  </>
+                )}
+              </div>
+
+              <div className="tdg-stats-bar">
+                {currentView === 'travelAdvisory' && (
+                  <>
+                    <span className="tdg-stat">
+                      <strong>{statistics.totalAdvisories}</strong> Countries
+                    </span>
+                    <span className="tdg-stat tdg-stat-danger">
+                      <strong>{statistics.level4Count}</strong> Do Not Travel
+                    </span>
+                    {!!statistics.newAdvisoriesCount && (
+                      <span className="tdg-stat tdg-stat-new">
+                        <strong>{statistics.newAdvisoriesCount}</strong> New
+                      </span>
+                    )}
+                  </>
+                )}
+                {currentView === 'visaRequirements' && (
+                  <>
+                    <span className="tdg-stat">
+                      <strong>{statistics.totalVisaCountries}</strong> Countries
+                    </span>
+                    <span className="tdg-stat">
+                      <strong>{statistics.passportCountriesCount}</strong> Passports
+                    </span>
+                  </>
+                )}
+                {currentView === 'michelinRestaurants' && (
+                  <>
+                    <span className="tdg-stat">
+                      <strong>{statistics.totalRestaurants}</strong> Restaurants
+                    </span>
+                    <span className="tdg-stat">
+                      <strong>{statistics.greenStarCount}</strong> Green Stars
+                    </span>
+                  </>
+                )}
+                {currentView === 'airports' && (
+                  <span className="tdg-stat">
+                    <strong>{statistics.totalAirports}</strong> Airports
+                  </span>
+                )}
+              </div>
+
+              <div className="tdg-list-content">
+                {currentView === 'travelAdvisory' && (
+                  <AdvisoryPanel
+                    advisories={advisories}
+                    searchQuery={searchQuery}
+                    onSearchChange={setSearchQuery}
+                    selectedCountry={selectedAdvisory?.country || null}
+                    onCountryClick={handleAdvisoryClick}
+                  />
+                )}
+                {currentView === 'visaRequirements' && (
+                  <VisaPanel
+                    countries={visaCountries}
+                    searchQuery={searchQuery}
+                    onSearchChange={setSearchQuery}
+                    selectedCountry={selectedVisaCountry?.countryName || null}
+                    onCountryClick={handleVisaCountryClick}
+                  />
+                )}
+                {currentView === 'michelinRestaurants' && (
+                  <RestaurantPanel
+                    restaurants={restaurants}
+                    searchQuery={searchQuery}
+                    onSearchChange={setSearchQuery}
+                    selectedRestaurant={selectedRestaurant}
+                    onRestaurantClick={handleRestaurantClick}
+                  />
+                )}
+                {currentView === 'airports' && (
+                  <AirportPanel
+                    airports={airports}
+                    searchQuery={searchQuery}
+                    onSearchChange={setSearchQuery}
+                    selectedAirport={selectedAirport}
+                    onAirportClick={handleAirportClick}
+                    showInternationalOnly={showInternationalOnly}
+                    onFilterChange={setShowInternationalOnly}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Tab bar - inside the globe section, not fixed to viewport */}
+          <div className="tdg-tab-bar">
+            <div className="tdg-tab-indicator" style={indicatorStyle} />
+            {enabledViews.map((view: string, index: number) => {
               const typedView = view as
                 | 'travelAdvisory'
                 | 'visaRequirements'
@@ -556,6 +673,9 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
               return (
                 <button
                   key={view}
+                  ref={(el) => {
+                    tabRefs.current[index] = el
+                  }}
                   className={`tdg-tab ${currentView === view ? 'tdg-tab--active' : ''}`}
                   onClick={() => handleTabChange(typedView)}
                   type="button"
@@ -586,144 +706,7 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
             })}
           </div>
         </div>
-
-        {/* Globe pane - dynamically sized */}
-        <div className={globePaneClass}>
-          <div className="tdg-viewport" />
-        </div>
-
-        {/* List panel - left side, collapsible */}
-        <aside className={`tdg-list-panel ${isListPanelCollapsed ? 'tdg-list-panel--collapsed' : ''}`}>
-          <button
-            className="tdg-collapse-toggle"
-            onClick={() => setIsListPanelCollapsed(!isListPanelCollapsed)}
-            type="button"
-          >
-            <FontAwesomeIcon icon={isListPanelCollapsed ? faChevronRight : faChevronLeft} />
-          </button>
-          
-          <div className="tdg-info-panel-glass">
-            <div className="tdg-panel-heading">
-              {currentView === 'travelAdvisory' && (
-                <>
-                  <Image
-                    src="/department-of-state.png"
-                    alt="U.S. Department of State"
-                    width={40}
-                    height={40}
-                    style={{ opacity: 0.9, height: 'auto', width: '40px' }}
-                  />
-                  <span>U.S. Travel Advisories</span>
-                </>
-              )}
-              {currentView === 'visaRequirements' && (
-                <>
-                  <FontAwesomeIcon icon={faPassport} />
-                  <span>Select Passport Country</span>
-                </>
-              )}
-              {currentView === 'michelinRestaurants' && (
-                <>
-                  <FontAwesomeIcon icon={faUtensils} />
-                  <span>Michelin Restaurants</span>
-                </>
-              )}
-              {currentView === 'airports' && (
-                <>
-                  <FontAwesomeIcon icon={faPlane} />
-                  <span>International Airports</span>
-                </>
-              )}
-            </div>
-
-            <div className="tdg-stats-bar">
-              {currentView === 'travelAdvisory' && (
-                <>
-                  <span className="tdg-stat">
-                    <strong>{statistics.totalAdvisories}</strong> Countries
-                  </span>
-                  <span className="tdg-stat tdg-stat-danger">
-                    <strong>{statistics.level4Count}</strong> Do Not Travel
-                  </span>
-                  {!!statistics.newAdvisoriesCount && (
-                    <span className="tdg-stat tdg-stat-new">
-                      <strong>{statistics.newAdvisoriesCount}</strong> New
-                    </span>
-                  )}
-                </>
-              )}
-              {currentView === 'visaRequirements' && (
-                <>
-                  <span className="tdg-stat">
-                    <strong>{statistics.totalVisaCountries}</strong> Countries
-                  </span>
-                  <span className="tdg-stat">
-                    <strong>{statistics.passportCountriesCount}</strong> Passports
-                  </span>
-                </>
-              )}
-              {currentView === 'michelinRestaurants' && (
-                <>
-                  <span className="tdg-stat">
-                    <strong>{statistics.totalRestaurants}</strong> Restaurants
-                  </span>
-                  <span className="tdg-stat">
-                    <strong>{statistics.greenStarCount}</strong> Green Stars
-                  </span>
-                </>
-              )}
-              {currentView === 'airports' && (
-                <span className="tdg-stat">
-                  <strong>{statistics.totalAirports}</strong> Airports
-                </span>
-              )}
-            </div>
-
-            <div className="tdg-list-container">
-              {currentView === 'travelAdvisory' && (
-                <AdvisoryPanel
-                  advisories={advisories}
-                  searchQuery={searchQuery}
-                  onSearchChange={setSearchQuery}
-                  selectedCountry={selectedAdvisory?.country || null}
-                  onCountryClick={handleAdvisoryClick}
-                />
-              )}
-              {currentView === 'visaRequirements' && (
-                <VisaPanel
-                  countries={visaCountries}
-                  searchQuery={searchQuery}
-                  onSearchChange={setSearchQuery}
-                  selectedCountry={selectedVisaCountry?.countryName || null}
-                  onCountryClick={handleVisaCountryClick}
-                />
-              )}
-              {currentView === 'michelinRestaurants' && (
-                <RestaurantPanel
-                  restaurants={restaurants}
-                  searchQuery={searchQuery}
-                  onSearchChange={setSearchQuery}
-                  selectedRestaurant={selectedRestaurant}
-                  onRestaurantClick={handleRestaurantClick}
-                />
-              )}
-              {currentView === 'airports' && (
-                <AirportPanel
-                  airports={airports}
-                  searchQuery={searchQuery}
-                  onSearchChange={setSearchQuery}
-                  selectedAirport={selectedAirport}
-                  onAirportClick={handleAirportClick}
-                  showInternationalOnly={showInternationalOnly}
-                  onFilterChange={setShowInternationalOnly}
-                />
-              )}
-            </div>
-          </div>
-        </aside>
-
-
       </div>
-    </div>
+    </BlockWrapper>
   )
 }
