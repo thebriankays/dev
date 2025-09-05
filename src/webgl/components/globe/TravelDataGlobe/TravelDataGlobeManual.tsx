@@ -223,7 +223,7 @@ function Clouds() {
     }
   }, [cloudTexture])
 
-  useFrame((state, delta) => {
+  useFrame(() => {
     if (meshRef.current) {
       meshRef.current.rotation.y += CLOUDS_ROTATION_SPEED
     }
@@ -349,7 +349,7 @@ const TravelDataGlobeManual: React.FC<TravelDataGlobeManualProps> = ({
   showMarkers,
   focusTarget,
 }) => {
-  const { camera, gl, scene } = useThree()
+  const { camera, scene } = useThree()
   const controlsRef = useRef<OrbitControls>(null)
   const groupRef = useRef<THREE.Group>(null)
   const [airlineRoutes, setAirlineRoutes] = useState<AirlineRoute[]>([])
@@ -433,17 +433,19 @@ const TravelDataGlobeManual: React.FC<TravelDataGlobeManualProps> = ({
     }
   }, [currentView])
 
-  // Setup scene for transparency
+  // Setup scene for transparency - but don't override clearing settings
   useEffect(() => {
     scene.background = null
-    gl.setClearColor(0x000000, 0)
-    gl.setClearAlpha(0)
-  }, [gl, scene])
+    // Don't change gl settings here - let PreserveBackgroundRenderer handle it
+  }, [scene])
 
-  // Auto-rotation
-  useFrame((state, delta) => {
-    if (groupRef.current && !selectedCountry && !focusTarget && autoRotateSpeed > 0) {
-      groupRef.current.rotation.y += autoRotateSpeed * 0.001
+  // Auto-rotation and depth clearing
+  useFrame((_state, delta) => {
+    if (groupRef.current && autoRotateSpeed > 0) {
+      // Always rotate unless user is interacting with controls
+      if (!selectedCountry && !focusTarget) {
+        groupRef.current.rotation.y += autoRotateSpeed * delta
+      }
     }
   })
 
@@ -524,12 +526,13 @@ const TravelDataGlobeManual: React.FC<TravelDataGlobeManualProps> = ({
       <OrbitControlsImpl 
         ref={controlsRef as React.MutableRefObject<OrbitControls>}
         enableZoom={true}
-        minDistance={4}
+        minDistance={3.5}
         maxDistance={12}
         enablePan={false}
         enableDamping={true}
         dampingFactor={0.05}
         rotateSpeed={0.5}
+        autoRotate={false} // We handle rotation manually
         makeDefault
       />
 

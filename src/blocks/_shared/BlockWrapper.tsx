@@ -85,14 +85,23 @@ export function BlockWrapper({
               width: '100%',
               height: '100%',
             }}
+            frames={Infinity} // Force continuous rendering
           >
-            {!disableDefaultCamera && (
-              <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={50} />
-            )}
-            {fluidOverlay.enabled && (
-              <FluidOverlay intensity={fluidOverlay.intensity} color={fluidOverlay.color} />
-            )}
-            {webglContent}
+            {/* Ensure depth clearing for this view */}
+            <group
+              onBeforeRender={(renderer) => {
+                // Clear depth before rendering this view's content
+                renderer.clear(false, true, false) // color=false, depth=true, stencil=false
+              }}
+            >
+              {!disableDefaultCamera && (
+                <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={50} />
+              )}
+              {fluidOverlay.enabled && (
+                <FluidOverlay intensity={fluidOverlay.intensity} color={fluidOverlay.color} />
+              )}
+              {webglContent}
+            </group>
           </View>
         </WebGLTunnel>
       )}

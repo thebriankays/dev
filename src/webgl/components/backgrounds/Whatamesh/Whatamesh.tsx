@@ -141,10 +141,11 @@ export function Whatamesh({
       vertexShader,
       fragmentShader,
       transparent: false,
-      depthWrite: false,
-      depthTest: false,
+      depthWrite: true, // Changed to true to write to depth buffer
+      depthTest: false, // Keep false so it's always behind
       stencilWrite: false,
       colorWrite: true,
+      side: THREE.DoubleSide, // Render both sides
     })
   }, [size.width, size.height, sectionColors, shadowPower, darkenTop, freqX, freqY, amplitude, intensity, seed])
   
@@ -170,6 +171,12 @@ export function Whatamesh({
     timeRef.current += frameTime * speed
     material.uniforms.u_time.value = timeRef.current
   })
+  
+  // Remove debug log
+  // useEffect(() => {
+  //   console.log('Whatamesh mounted with colors:', colors)
+  //   return () => console.log('Whatamesh unmounted')
+  // }, [])
   
   // Calculate mesh scale to cover full viewport
   const meshScale = useMemo(() => {

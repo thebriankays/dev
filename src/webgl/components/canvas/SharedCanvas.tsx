@@ -48,14 +48,14 @@ export function SharedCanvas({
             antialias: true,
             alpha: true,
             stencil: false,
-            depth: !postprocessing,
-            preserveDrawingBuffer: true, // Add this to preserve content
+            depth: true, // Always enable depth buffer
+            preserveDrawingBuffer: true, // Need this to preserve Whatamesh
           }}
           onCreated={(state) => {
             const { gl, scene } = state
             gl.setClearColor(0x000000, 0)
             gl.setClearAlpha(0)
-            gl.autoClear = false // Don't auto clear
+            gl.autoClear = false // Keep false to preserve Whatamesh background
             gl.outputColorSpace = THREE.SRGBColorSpace
             gl.toneMapping = THREE.NoToneMapping
             
@@ -81,10 +81,10 @@ export function SharedCanvas({
         >
           <RAF render={render} />
           
-          {/* Background gradient - render first so it's behind everything */}
+          {/* Background MUST render first before any clearing happens */}
           {background === 'whatamesh' && <WhatameshBackground {...backgroundProps} />}
           
-          {/* Preserve background when rendering Views */}
+          {/* Then setup preservation */}
           <PreserveBackgroundRenderer />
           
           <FlowmapProvider>

@@ -1,377 +1,424 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { useTempus } from 'tempus/react'
+import { gsap } from 'gsap'
 import { Flight, FlightMapProps } from './types'
 
-// Set Mapbox token
-if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {
-  mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
+// Set Mapbox token - use a fallback token if not set
+if (typeof window !== 'undefined') {
+  mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || 'pk.eyJ1IjoiZGV2LW1hcGJveCIsImEiOiJjbG93MG5yNmQwMGJhMmpwY3Zld3RmMnB3In0.8H5FcN6K7peOmM4wLrKBXg'
 }
 
-interface FlightWithPrediction extends Flight {
-  predicted_position?: { longitude: number; latitude: number }
-  interpolated_position?: { longitude: number; latitude: number }
-  trajectory?: Array<[number, number]>
-  departureAirport?: string
-  destinationAirport?: string
+interface FlightWithDisplay extends Flight {
+  display_longitude?: number
+  display_latitude?: number
 }
 
-interface RouteFeature {
-  type: 'Feature'
-  properties: {
-    icao24: string
-    callsign: string | null
-    selected: boolean
-  }
-  geometry: {
-    type: 'LineString'
-    coordinates: number[][]
-  }
+interface AnimationRef {
+  kill: () => void
 }
 
 export const MapboxMap: React.FC<FlightMapProps> = ({
   flights,
   selectedFlight,
+  selectedFlightRoute,
   onSelectFlight,
-  userLocation,
+  onMapMove,
+  center = { lat: 40.7128, lng: -74.0060 }, // Default to NYC
+  zoom = 9,
+  onRefresh,
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null)
   const map = useRef<mapboxgl.Map | null>(null)
-  const mapLoaded = useRef<boolean>(false)
-  const markers = useRef<{ [key: string]: mapboxgl.Marker }>({})
+  const markers = useRef<Map<string, mapboxgl.Marker>>(new Map())
+  const animationRefs = useRef<Map<string, AnimationRef>>(new Map())
   const [isMapReady, setIsMapReady] = useState(false)
+  const selectedMarkerRef = useRef<mapboxgl.Marker | null>(null)
 
   // Initialize map
   useEffect(() => {
     if (!mapContainer.current || map.current) return
-    
+
     try {
       const newMap = new mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/dark-v11',
-        center: userLocation ? [userLocation.lng, userLocation.lat] : [-74.0060, 40.7128],
-        zoom: 9,
-        pitch: 0,
-        bearing: 0,
-        antialias: true,
-        trackResize: true,
+        center: [center.lng, center.lat],
+        zoom: zoom,
+        projection: 'mercator',
+        maxZoom: 18,
+        minZoom: 2,
       })
-      
-      map.current = newMap
 
-      // Add navigation controls
-      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right')
+      // Add controls
+      newMap.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right')
+      newMap.addControl(new mapboxgl.ScaleControl(), 'bottom-right')
 
-      // Add user location marker
-      if (userLocation) {
-        const el = document.createElement('div')
-        el.className = 'user-location-marker'
-        el.style.cssText = `
-          width: 20px;
-          height: 20px;
-          background-color: #60a5fa;
-          border: 3px solid #fff;
-          border-radius: 50%;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-          animation: pulse 2s infinite;
-        `
-        new mapboxgl.Marker(el).setLngLat([userLocation.lng, userLocation.lat]).addTo(map.current)
+      // Add refresh button
+      class RefreshControl {
+        onAdd(_map: mapboxgl.Map) {
+          const container = document.createElement('div')
+          container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group'
+          
+          const button = document.createElement('button')
+          button.className = 'mapboxgl-ctrl-icon'
+          button.type = 'button'
+          button.title = 'Refresh flights'
+          button.innerHTML = '🔄'
+          button.style.fontSize = '18px'
+          button.style.lineHeight = '29px'
+          
+          button.addEventListener('click', () => {
+            if (onRefresh) onRefresh()
+          })
+          
+          container.appendChild(button)
+          return container
+        }
+        onRemove() {
+          // Cleanup if needed
+        }
       }
+      
+      newMap.addControl(new RefreshControl() as mapboxgl.IControl, 'bottom-left')
 
-      // Wait for map to load
-      map.current.on('load', () => {
-        mapLoaded.current = true
+      // Handle map events
+      newMap.on('load', () => {
+        console.log('[MapboxMap] Map loaded')
         setIsMapReady(true)
         
-        // Add sources and layers for route lines
-        map.current!.addSource('flight-routes', {
+        // Add route source and layer (initially empty)
+        newMap.addSource('flight-route', {
           type: 'geojson',
           data: {
             type: 'FeatureCollection',
             features: []
           }
         })
-        
-        map.current!.addLayer({
-          id: 'flight-routes',
+
+        newMap.addLayer({
+          id: 'flight-route-line',
           type: 'line',
-          source: 'flight-routes',
+          source: 'flight-route',
           layout: {
             'line-join': 'round',
             'line-cap': 'round'
           },
           paint: {
             'line-color': '#60a5fa',
-            'line-width': 2,
-            'line-opacity': 0.6
+            'line-width': 3,
+            'line-opacity': 0.7,
+            'line-dasharray': [2, 2]
           }
         })
-        
-        // Add layer for selected flight route (highlighted)
-        map.current!.addLayer({
-          id: 'selected-flight-route',
-          type: 'line',
-          source: 'flight-routes',
+
+        // Add airport markers source
+        newMap.addSource('airports', {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: []
+          }
+        })
+
+        newMap.addLayer({
+          id: 'airport-markers',
+          type: 'symbol',
+          source: 'airports',
           layout: {
-            'line-join': 'round',
-            'line-cap': 'round'
+            'icon-image': 'airport-15',
+            'icon-size': 1.5,
+            'text-field': ['get', 'code'],
+            'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+            'text-size': 12,
+            'text-offset': [0, 1.5],
+            'text-anchor': 'top'
           },
           paint: {
-            'line-color': '#fbbf24',
-            'line-width': 4,
-            'line-opacity': 0.8
-          },
-          filter: ['==', ['get', 'selected'], true]
+            'text-color': '#fff',
+            'text-halo-color': 'rgba(0, 0, 0, 0.8)',
+            'text-halo-width': 1
+          }
         })
       })
-      
-      // Ensure proper map resize
-      map.current.on('resize', () => {
-        map.current?.resize()
-      })
-    } catch (error) {
-      console.error('Error initializing map:', error)
-    }
 
-    // Cleanup function
-    return () => {
-      if (map.current) {
-        map.current.remove()
+      newMap.on('move', () => {
+        const mapCenter = newMap.getCenter()
+        const mapZoom = newMap.getZoom()
+        if (onMapMove) {
+          onMapMove({ lat: mapCenter.lat, lng: mapCenter.lng }, mapZoom)
+        }
+      })
+
+      map.current = newMap
+
+      // Store refs for cleanup
+      const currentAnimationRefs = animationRefs.current
+      const currentMarkers = markers.current
+
+      return () => {
+        // Clean up animations
+        currentAnimationRefs.forEach(anim => anim.kill())
+        currentAnimationRefs.clear()
+        
+        // Remove markers
+        currentMarkers.forEach(marker => marker.remove())
+        currentMarkers.clear()
+        
+        // Remove map
+        map.current?.remove()
         map.current = null
-        mapLoaded.current = false
       }
+    } catch (error) {
+      console.error('[MapboxMap] Error initializing map:', error)
     }
-  }, [userLocation])
+  }, [center.lat, center.lng, zoom, onMapMove, onRefresh]) // Include all dependencies
 
-  // Update user location
+  // Update map center when it changes
   useEffect(() => {
-    if (map.current && mapLoaded.current && userLocation) {
+    if (map.current && center) {
       map.current.flyTo({
-        center: [userLocation.lng, userLocation.lat],
-        zoom: 9,
-        essential: true,
-        duration: 1500,
-      })
-    }
-  }, [userLocation])
-
-  // Function to update route lines
-  const updateRouteLines = useCallback(() => {
-    if (!map.current || !mapLoaded.current || !isMapReady) return
-    if (!flights || !Array.isArray(flights) || flights.length === 0) return
-
-    // Create features for flights with route information
-    const routeFeatures: RouteFeature[] = []
-
-    flights.forEach((flight: FlightWithPrediction) => {
-      // Check if flight has valid data and route information
-      if (!flight || typeof flight !== 'object') return
-      if (!flight.longitude || !flight.latitude) return
-      if (!flight.departureAirport && !flight.destinationAirport) return
-      
-      try {
-        // For now, create a simple great circle route between current position and destination
-        // In a real implementation, you'd use the actual route waypoints
-        const currentPos = flight.interpolated_position || {
-          longitude: flight.longitude,
-          latitude: flight.latitude,
-        }
-
-        // Create a simple route line from current position extending in the direction of travel
-        // This is a placeholder - ideally you'd have airport coordinates and waypoints
-        const routeCoordinates: number[][] = []
-        
-        // Add current position
-        routeCoordinates.push([currentPos.longitude, currentPos.latitude])
-        
-        // Use smart flight path if available
-        if ('flightPath' in flight && flight.flightPath && Array.isArray(flight.flightPath)) {
-          // Flight path is already a complete great circle route
-          routeCoordinates.length = 0 // Clear and use the full path
-          routeCoordinates.push(...flight.flightPath)
-        } else if (flight.trajectory && flight.trajectory.length > 0) {
-          // Use trajectory data from the server
-          routeCoordinates.push(...flight.trajectory)
-        } else if (flight.true_track !== null && flight.velocity) {
-          // Create a simple projected path based on heading and velocity
-          const headingRad = (flight.true_track * Math.PI) / 180
-          const distance = 2 // degrees (rough approximation)
-          const endLng = currentPos.longitude + distance * Math.sin(headingRad)
-          const endLat = currentPos.latitude + distance * Math.cos(headingRad)
-          routeCoordinates.push([endLng, endLat])
-        }
-
-        if (routeCoordinates.length >= 2) {
-          const isSelected = !!(selectedFlight && selectedFlight.icao24 === flight.icao24)
-          
-          routeFeatures.push({
-            type: 'Feature',
-            properties: {
-              icao24: flight.icao24,
-              callsign: flight.callsign,
-              selected: isSelected
-            },
-            geometry: {
-              type: 'LineString',
-              coordinates: routeCoordinates
-            }
-          })
-        }
-      } catch (error) {
-        console.warn('Error creating route line for flight:', flight.icao24, error)
-      }
-    })
-
-    // Update the route source
-    const source = map.current.getSource('flight-routes') as mapboxgl.GeoJSONSource
-    if (source) {
-      source.setData({
-        type: 'FeatureCollection',
-        features: routeFeatures
-      })
-    }
-  }, [flights, selectedFlight, isMapReady])
-
-  // Create update markers callback
-  const updateMarkers = useCallback(() => {
-    if (!map.current || !mapLoaded.current || !isMapReady) return
-
-    // Remove markers for flights that no longer exist
-    Object.entries(markers.current).forEach(([icao24, marker]) => {
-      const stillExists = flights.some(f => f.icao24 === icao24)
-      if (!stillExists) {
-        marker.remove()
-        delete markers.current[icao24]
-      }
-    });
-
-    // Update or add markers
-    flights.forEach((flight: FlightWithPrediction) => {
-      const position = flight.interpolated_position || {
-        longitude: flight.longitude,
-        latitude: flight.latitude,
-      }
-
-      if (markers.current[flight.icao24]) {
-        // Update existing marker position
-        markers.current[flight.icao24].setLngLat([position.longitude, position.latitude])
-        
-        // Update rotation
-        if (flight.true_track !== null) {
-          const element = markers.current[flight.icao24].getElement()
-          element.style.transform = `rotate(${flight.true_track}deg)`
-        }
-      } else {
-        // Create new marker
-        const el = document.createElement('div')
-        el.className = 'flight-marker'
-        el.innerHTML = flight.on_ground ? '🛬' : '✈️'
-        el.style.cssText = `
-          width: 32px;
-          height: 32px;
-          font-size: 24px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: transform 0.3s;
-          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-        `
-        
-        if (flight.true_track !== null && !flight.on_ground) {
-          el.style.transform = `rotate(${flight.true_track}deg)`
-        }
-        
-        el.addEventListener('click', () => {
-          onSelectFlight(flight)
-        })
-        
-        const marker = new mapboxgl.Marker(el)
-          .setLngLat([position.longitude, position.latitude])
-          .addTo(map.current!)
-        
-        markers.current[flight.icao24] = marker
-        
-        // Add popup
-        const popup = new mapboxgl.Popup({ offset: 25 })
-          .setHTML(`
-            <div style="color: black; padding: 5px;">
-              <strong>${flight.callsign || flight.icao24}</strong><br/>
-              ${flight.airline || flight.origin_country}<br/>
-              ${flight.on_ground ? 'On Ground' : `${Math.round((flight.baro_altitude || 0) * 3.28084)} ft`}
-            </div>
-          `)
-        
-        marker.setPopup(popup)
-      }
-      
-      // Highlight selected flight
-      const isSelected = selectedFlight && selectedFlight.icao24 === flight.icao24
-      const element = markers.current[flight.icao24]?.getElement()
-      if (element) {
-        element.style.filter = isSelected 
-          ? 'drop-shadow(0 0 10px #60a5fa)' 
-          : 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))'
-        element.style.zIndex = isSelected ? '10' : '1'
-      }
-    })
-
-    // Update route lines for flights with departure/arrival airports
-    if (flights && Array.isArray(flights)) {
-      updateRouteLines()
-    }
-  }, [flights, selectedFlight, onSelectFlight, isMapReady, updateRouteLines])
-
-  // Use tempus for smooth marker updates
-  useTempus(() => {
-    updateMarkers()
-  }, { priority: 10 })
-
-  // Center on selected flight
-  useEffect(() => {
-    if (map.current && selectedFlight && mapLoaded.current) {
-      const position = (selectedFlight as FlightWithPrediction).interpolated_position || {
-        longitude: selectedFlight.longitude,
-        latitude: selectedFlight.latitude,
-      }
-      
-      map.current.flyTo({
-        center: [position.longitude, position.latitude],
-        zoom: 11,
-        essential: true,
+        center: [center.lng, center.lat],
         duration: 1000,
       })
     }
-  }, [selectedFlight])
+  }, [center])
+
+  // Update zoom when it changes
+  useEffect(() => {
+    if (map.current && zoom !== undefined) {
+      map.current.zoomTo(zoom, { duration: 1000 })
+    }
+  }, [zoom])
+
+  // Update route when selected flight changes
+  useEffect(() => {
+    if (!map.current || !isMapReady) return
+
+    const source = map.current.getSource('flight-route') as mapboxgl.GeoJSONSource
+    if (!source) return
+
+    if (selectedFlightRoute) {
+      // Show route for selected flight only
+      source.setData({
+        type: 'FeatureCollection',
+        features: [selectedFlightRoute]
+      })
+
+      // Add airport markers if we have them
+      if (selectedFlight?.originAirport && selectedFlight?.destinationAirport) {
+        // Type guards to ensure we have AirportData objects
+        const origin = selectedFlight.originAirport
+        const destination = selectedFlight.destinationAirport
+        
+        if (typeof origin === 'object' && typeof destination === 'object') {
+          const airportsSource = map.current.getSource('airports') as mapboxgl.GeoJSONSource
+          if (airportsSource) {
+            airportsSource.setData({
+              type: 'FeatureCollection',
+              features: [
+                {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [origin.longitude, origin.latitude]
+                  },
+                  properties: {
+                    code: origin.iata,
+                    name: origin.name
+                  }
+                },
+                {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [destination.longitude, destination.latitude]
+                  },
+                  properties: {
+                    code: destination.iata,
+                    name: destination.name
+                  }
+                }
+              ]
+            })
+          }
+        }
+      }
+    } else {
+      // Clear route when no flight is selected
+      source.setData({
+        type: 'FeatureCollection',
+        features: []
+      })
+      
+      // Clear airport markers
+      const airportsSource = map.current.getSource('airports') as mapboxgl.GeoJSONSource
+      if (airportsSource) {
+        airportsSource.setData({
+          type: 'FeatureCollection',
+          features: []
+        })
+      }
+    }
+  }, [selectedFlightRoute, selectedFlight, isMapReady])
+
+  // Update flight markers with GSAP animations
+  useEffect(() => {
+    if (!map.current || !isMapReady) return
+
+    const validFlights = flights.filter((f: FlightWithDisplay) => 
+      f.latitude !== null && 
+      f.longitude !== null &&
+      !isNaN(f.latitude) &&
+      !isNaN(f.longitude)
+    )
+
+    console.log(`[MapboxMap] Updating ${validFlights.length} flight markers`)
+
+    // Create a set of current flight IDs
+    const currentFlightIds = new Set(validFlights.map(f => f.icao24))
+
+    // Update or create markers for each flight
+    validFlights.forEach((flight: FlightWithDisplay) => {
+      const markerId = flight.icao24
+      let marker = markers.current.get(markerId)
+
+      // Use display position if available (from GSAP animation), otherwise use actual position
+      const lng = flight.display_longitude ?? flight.longitude
+      const lat = flight.display_latitude ?? flight.latitude
+
+      if (!marker) {
+        // Create new marker
+        const el = document.createElement('div')
+        el.className = 'flight-marker'
+        el.style.width = '24px'
+        el.style.height = '24px'
+        el.style.cursor = 'pointer'
+        el.style.transition = 'transform 0.2s'
+        
+        // Create airplane icon
+        const icon = document.createElement('div')
+        icon.innerHTML = '✈️'
+        icon.style.fontSize = '20px'
+        icon.style.transform = `rotate(${flight.true_track || 0}deg)`
+        icon.style.transformOrigin = 'center'
+        icon.style.filter = flight.on_ground ? 'grayscale(1)' : 'none'
+        el.appendChild(icon)
+
+        // Add hover effect
+        el.addEventListener('mouseenter', () => {
+          el.style.transform = 'scale(1.5)'
+        })
+        el.addEventListener('mouseleave', () => {
+          el.style.transform = 'scale(1)'
+        })
+
+        // Add click handler
+        el.addEventListener('click', () => {
+          console.log(`[MapboxMap] Flight clicked: ${flight.callsign}`)
+          onSelectFlight?.(flight)
+        })
+
+        marker = new mapboxgl.Marker({
+          element: el,
+          anchor: 'center',
+        })
+          .setLngLat([lng, lat])
+          .addTo(map.current!)
+
+        // Add popup with flight info
+        const popup = new mapboxgl.Popup({
+          offset: 25,
+          closeButton: false,
+        }).setHTML(`
+          <div style="padding: 8px;">
+            <strong>${flight.callsign || flight.icao24}</strong><br/>
+            ${flight.airline || flight.origin_country}<br/>
+            Alt: ${flight.baro_altitude ? Math.round(flight.baro_altitude * 3.28084).toLocaleString() : 'N/A'} ft<br/>
+            Speed: ${flight.velocity ? Math.round(flight.velocity * 2.23694) : 'N/A'} mph
+          </div>
+        `)
+        
+        marker.setPopup(popup)
+        markers.current.set(markerId, marker)
+      } else {
+        // Update existing marker position smoothly with GSAP
+        const markerEl = marker.getElement()
+        const iconEl = markerEl.querySelector('div') as HTMLElement
+        
+        if (iconEl) {
+          // Update rotation
+          gsap.to(iconEl, {
+            rotation: flight.true_track || 0,
+            duration: 0.5,
+            ease: "power2.inOut"
+          })
+          
+          // Update ground status
+          iconEl.style.filter = flight.on_ground ? 'grayscale(1)' : 'none'
+        }
+
+        // Animate marker position
+        const currentPos = marker.getLngLat()
+        const newPos = { lng, lat }
+
+        // Kill existing animation for this marker
+        const existingAnim = animationRefs.current.get(markerId)
+        if (existingAnim) {
+          existingAnim.kill()
+        }
+
+        // Create smooth animation to new position
+        const posProxy = { lng: currentPos.lng, lat: currentPos.lat }
+        const anim = gsap.to(posProxy, {
+          lng: newPos.lng,
+          lat: newPos.lat,
+          duration: 2,
+          ease: "none",
+          onUpdate: () => {
+            marker?.setLngLat([posProxy.lng, posProxy.lat])
+          }
+        })
+
+        animationRefs.current.set(markerId, anim)
+      }
+
+      // Highlight selected flight
+      if (marker && selectedFlight && flight.icao24 === selectedFlight.icao24) {
+        const el = marker.getElement()
+        el.style.zIndex = '1000'
+        el.style.transform = 'scale(1.5)'
+        selectedMarkerRef.current = marker
+      } else if (marker && selectedMarkerRef.current === marker) {
+        const el = marker.getElement()
+        el.style.zIndex = 'auto'
+        el.style.transform = 'scale(1)'
+        selectedMarkerRef.current = null
+      }
+    })
+
+    // Remove markers for flights that are no longer in the data
+    markers.current.forEach((marker, id) => {
+      if (!currentFlightIds.has(id)) {
+        // Kill animation for this marker
+        const anim = animationRefs.current.get(id)
+        if (anim) {
+          anim.kill()
+          animationRefs.current.delete(id)
+        }
+        
+        marker.remove()
+        markers.current.delete(id)
+      }
+    })
+  }, [flights, selectedFlight, isMapReady, onSelectFlight])
 
   return (
-    <div ref={mapContainer} style={{ width: '100%', height: '100%' }}>
-      <style jsx global>{`
-        @keyframes pulse {
-          0% {
-            box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.4);
-          }
-          70% {
-            box-shadow: 0 0 0 10px rgba(96, 165, 250, 0);
-          }
-          100% {
-            box-shadow: 0 0 0 0 rgba(96, 165, 250, 0);
-          }
-        }
-        
-        .mapboxgl-popup {
-          max-width: 200px;
-        }
-        
-        .mapboxgl-popup-content {
-          background: white;
-          border-radius: 8px;
-          padding: 10px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        }
-      `}</style>
-    </div>
+    <div 
+      ref={mapContainer} 
+      className="flight-map"
+      style={{ width: '100%', height: '100%' }}
+    />
   )
 }
 

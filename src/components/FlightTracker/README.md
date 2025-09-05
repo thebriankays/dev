@@ -1,157 +1,55 @@
-# Flight Tracker Component - Complete Implementation Guide
+# Flight Tracker Component
 
-## Overview
+A real-time flight tracking component for Payload CMS that displays live aircraft data using the OpenSky Network API with OAuth2 authentication, IP-based geolocation, FlightAware data enrichment, and smooth GSAP animations.
 
-The Flight Tracker is a comprehensive real-time flight tracking system that provides live flight data visualization on an interactive map. It combines multiple data sources and APIs to deliver accurate, up-to-date flight information with detailed flight cards and smooth animations.
-
-## What It Does
+## Features
 
 ### Core Functionality
-- **Real-time Flight Tracking**: Displays live aircraft positions using OpenSky Network API
-- **Interactive Map Visualization**: Shows flights on a 2D Mapbox map with smooth animations
-- **Detailed Flight Information**: Provides comprehensive flight details including:
-  - Aircraft type, registration, and images
-  - Airline information with logos
-  - Departure/arrival airports with gates
-  - Flight status, altitude, speed, and heading
-  - Route information and progress tracking
-  - Real-time position updates with interpolation
+- **Real-time Flight Tracking**: Live aircraft positions updated every 30-60 seconds
+- **Smooth Animations**: GSAP-powered animations for fluid aircraft movement (60fps)
+- **IP-Based Geolocation**: Automatic map centering without browser permission prompts
+- **OAuth2 Authentication**: Higher rate limits with OpenSky Network API
+- **Weather Integration**: Real-time weather data for origin and destination airports
+- **FlightAware Scraping**: Enhanced flight details including gates, times, and progress
 
-### Advanced Features
-- **FlightAware Integration**: Enhanced flight data through web scraping
-- **Smart Caching**: Multi-layer caching (memory + database) for optimal performance
-- **Geolocation Support**: Automatically centers map on user's location
-- **Flight Search**: Search for specific flights by callsign or flight number
-- **Rate Limiting Compliance**: Respects API rate limits with intelligent backoff
-- **Progressive Enhancement**: Works with both authenticated and anonymous API access
+### User Interface
+- **Interactive Map**: Mapbox GL JS with 2D view
+- **Flight Selection**: Click any aircraft to view detailed information
+- **Flight Routes**: Display great circle routes for selected flights only
+- **Flight Search**: Search for specific flights by callsign
+- **Responsive Design**: Mobile-friendly layout with overlay controls
+- **Progress Indicators**: Real-time flight progress with distance and time remaining
 
-## Architecture
+### Data Sources
+1. **OpenSky Network API**: Real-time aircraft positions with OAuth2
+2. **FlightAware Scraper**: Detailed flight information with 5-minute cache
+3. **OpenWeatherMap API**: Current weather conditions at airports
+4. **IP-API**: IP-based geolocation for initial map positioning
+5. **Seeded Database**: Airlines, airports, and routes data
 
-### Component Structure
-```
-FlightTracker/
-├── FlightTracker.tsx          # Main component with state management
-├── FlightMap2D.tsx           # 2D Mapbox map implementation
-├── FlightCard.tsx            # Detailed flight information display
-├── FlightSearch.tsx          # Flight search functionality
-├── Glass.tsx                 # Glass morphism UI components
-├── MapboxMap.tsx             # Core Mapbox map wrapper
-├── types.ts                  # TypeScript type definitions
-├── utils/                    # Utility functions
-└── README.md                 # This documentation
-```
+## Installation
 
-### API Integration
-```
-/api/flights/                 # Main flight data API
-├── /enrich/                 # Flight data enrichment
-├── /search/                 # Flight search endpoint
-├── /flightaware/           # FlightAware scraping
-└── /photo/                 # Aircraft image lookup
+### Prerequisites
+```bash
+# Required environment variables in .env
+OPENSKY_CLIENT_ID=your-client-id
+OPENSKY_CLIENT_SECRET=your-client-secret
+OPENWEATHERMAP_API_KEY=your-api-key
+NEXT_PUBLIC_MAPBOX_TOKEN=your-mapbox-token  # Optional, has fallback
 ```
 
-## Data Sources
-
-### 1. OpenSky Network API
-- **Purpose**: Primary source for real-time flight positions
-- **Data**: Aircraft coordinates, altitude, speed, heading, callsign
-- **Rate Limits**: 
-  - Anonymous: 400 calls/day, 10 calls/minute
-  - Authenticated: 4000 calls/day, 100 calls/minute
-- **Coverage**: Global flight tracking
-
-### 2. FlightAware Web Scraping
-- **Purpose**: Enhanced flight details and schedule information
-- **Data**: Flight schedules, gates, aircraft type, route details
-- **Method**: HTML parsing with Cheerio.js
-- **Caching**: Aggressive caching to minimize requests
-- **Fallback**: Mock data when scraping fails
-
-### 3. Payload CMS Database
-- **Collections**:
-  - `airlines`: Airline information (IATA/ICAO codes, names, logos)
-  - `airports`: Airport data (coordinates, names, codes)
-  - `flight-cache`: Cached flight data for performance
-- **Purpose**: Static reference data and caching layer
-
-## How It Works
-
-### 1. Initial Load
-```typescript
-// User location detection
-navigator.geolocation.getCurrentPosition()
-
-// Fetch flights in area
-const flights = await fetch(`/api/flights?lat=${lat}&lng=${lng}&radius=${radius}`)
-
-// Enrich with airline data
-const enriched = await fetch('/api/flights/enrich', { flights })
+### Dependencies
+```bash
+pnpm add mapbox-gl @types/mapbox-gl gsap @gsap/react @turf/turf cheerio got-scraping node-cache
 ```
 
-### 2. Real-time Updates
-- **Update Intervals**:
-  - Authenticated users: 30 seconds
-  - Anonymous users: 60 seconds
-- **Animation**: Smooth interpolation between updates (100ms intervals)
-- **Position prediction**: Uses velocity and heading for smooth movement
-
-### 3. Flight Search
-```typescript
-// Search by callsign or flight number
-const result = await fetch('/api/flights/search', {
-  body: JSON.stringify({ query: 'DAL123' })
-})
+### Database Setup
+```bash
+# Seed the database with airlines, airports, and routes
+pnpm seed
 ```
 
-### 4. Detailed Flight Information
-When a flight is selected:
-- Fetches additional data from FlightAware
-- Loads aircraft images and airline logos
-- Displays comprehensive flight card with:
-  - Route visualization
-  - Real-time status updates
-  - Technical aircraft information
-
-## Performance Optimizations
-
-### Caching Strategy
-1. **Memory Cache**: In-component caching for API responses
-2. **Database Cache**: Persistent caching in Payload CMS
-3. **Browser Cache**: Next.js automatic caching for static assets
-
-### Rate Limiting
-- Intelligent backoff when rate limits are hit
-- Different update intervals based on authentication status
-- Queue management for API requests
-
-### Rendering Optimizations
-- Dynamic imports for map components
-- Memoization of flight cards to prevent unnecessary re-renders
-- Virtualization for large flight lists
-
-## Configuration
-
-### Environment Variables
-```env
-# OpenSky Network API (optional for authentication)
-OPENSKY_USERNAME=your_username
-OPENSKY_PASSWORD=your_password
-
-# Mapbox for map rendering
-NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=your_mapbox_token
-```
-
-### Component Props
-```typescript
-interface FlightTrackerProps {
-  enableSearch?: boolean        // Enable flight search (default: true)
-  enableGeolocation?: boolean   // Auto-detect user location (default: true)
-  defaultLocation?: Coordinates // Fallback location (default: NYC)
-  searchRadius?: number         // Search radius in degrees (default: 2)
-}
-```
-
-## Usage Examples
+## Usage
 
 ### Basic Implementation
 ```tsx
@@ -159,200 +57,179 @@ import FlightTracker from '@/components/FlightTracker'
 
 export default function FlightPage() {
   return (
-    <div>
-      <h1>Live Flight Tracking</h1>
-      <FlightTracker />
-    </div>
+    <FlightTracker
+      enableSearch={true}
+      defaultLocation={{ lat: 40.7128, lng: -74.0060 }}
+      searchRadius={2}
+    />
   )
 }
 ```
 
-### Custom Configuration
-```tsx
-<FlightTracker
-  enableSearch={true}
-  enableGeolocation={false}
-  defaultLocation={{ lat: 40.7128, lng: -74.0060 }}
-  searchRadius={1.5}
-/>
-```
-
-### As a Block (Alternative)
-```tsx
-// Can also be implemented as a Payload CMS block
-// for content management integration
-```
-
-## Error Handling
-
-### Network Issues
-- Automatic retry with exponential backoff
-- Graceful degradation when APIs are unavailable
-- User-friendly error messages
-
-### Rate Limiting
-- Automatic detection and handling of rate limits
-- Countdown timers for user feedback
-- Fallback to cached data when available
-
-### Geolocation Failures
-- Fallback to default location (NYC)
-- Clear error messaging for permission denied
-- Manual location selection option
-
-## Browser Compatibility
-
-### Supported Browsers
-- Chrome 90+
-- Firefox 88+
-- Safari 14+
-- Edge 90+
-
-### Required Features
-- WebGL for map rendering
-- Geolocation API (optional)
-- Fetch API for network requests
-- ES2018+ JavaScript features
-
-## Development
-
-### Adding New Data Sources
-1. Create new API route in `/api/flights/`
-2. Implement data normalization to match `Flight` type
-3. Add caching layer for performance
-4. Update enrichment pipeline
-
-### Extending Flight Information
-1. Update `Flight` type in `types.ts`
-2. Modify FlightCard component to display new data
-3. Update API responses to include new fields
-4. Test with various flight types
-
-### Custom Map Styles
+### Component Props
 ```typescript
-// Modify MapboxMap.tsx
-const mapStyle = {
-  version: 8,
-  sources: { /* custom sources */ },
-  layers: [ /* custom layers */ ]
+interface FlightTrackerProps {
+  enableSearch?: boolean       // Show search input (default: true)
+  enableGeolocation?: boolean   // Use IP geolocation (default: true) 
+  defaultLocation?: {           // Fallback coordinates (default: NYC)
+    lat: number
+    lng: number
+  }
+  searchRadius?: number        // Search area in degrees (default: 2)
 }
 ```
 
-## API Reference
+## Architecture
 
-### GET /api/flights
-Fetch flights in a geographic area.
+### Client-Side
+- **FlightTracker.tsx**: Main component with state management
+- **MapboxMap.tsx**: Mapbox GL integration with GSAP animations
+- **FlightCard.tsx**: Detailed flight information display
+- **FlightSearch.tsx**: Search input component
+- **types.ts**: TypeScript interfaces
 
-**Parameters:**
-- `lat`: Latitude (required)
-- `lng`: Longitude (required)
-- `radius`: Search radius in degrees (default: 2)
+### Server-Side API Routes
+- `/api/flights`: OpenSky Network API with OAuth2 (cached)
+- `/api/flights/flightaware`: FlightAware scraper (5-min cache)
+- `/api/geolocation`: IP-based geolocation service
+- `/api/weather`: OpenWeatherMap integration
+- `/api/flights/search`: Flight search endpoint
 
-**Response:**
-```json
-{
-  "flights": [/* Flight objects */],
-  "authenticated": boolean,
-  "timestamp": number,
-  "cached": boolean
-}
-```
+### Animation System
+The component uses GSAP for smooth animations:
+1. **Position Prediction**: Calculates future position based on velocity
+2. **Interpolation**: Smooth movement between API updates
+3. **Frame Rate**: 60fps animation independent of API polling
+4. **Marker Management**: Efficient DOM updates with refs
 
-### POST /api/flights/search
-Search for a specific flight.
+### Caching Strategy
+- **OpenSky API**: 30-45 second cache based on auth status
+- **FlightAware**: 5-minute cache for scraped data
+- **Weather Data**: 5-minute cache
+- **Database**: Persistent storage for enriched data
 
-**Body:**
-```json
-{
-  "query": "DAL123"
-}
-```
+## Recent Updates (2024)
 
-**Response:**
-```json
-{
-  "flight": {/* Flight object */},
-  "found": boolean
-}
-```
+### Fixed Issues
+1. ✅ **No More Geolocation Prompts**: IP-based location detection
+2. ✅ **Instant Flight Loading**: Fixed 2-3 minute delay
+3. ✅ **Smooth Plane Movement**: GSAP animations instead of jumping
+4. ✅ **Route Display**: Only shows for selected flight
+5. ✅ **Weather Integration**: Real-time weather at airports
+6. ✅ **Complete Flight Details**: All times, gates, and progress
+7. ✅ **Removed Aircraft Photos**: Using airline logos instead
 
-### GET /api/flights/flightaware
-Get detailed flight information from FlightAware.
+### Technical Improvements
+- Proper TypeScript types with strict checking
+- React hooks best practices
+- Memory leak prevention
+- Error boundaries for stability
+- Performance optimizations
 
-**Parameters:**
-- `callsign`: Flight callsign or code
+## Flight Card Display
 
-**Response:**
-```json
-{
-  "flightCode": "DAL123",
-  "airline": "Delta Air Lines",
-  "departureAirport": "Los Angeles, CA",
-  "destinationAirport": "New York, NY",
-  /* ... extensive flight details ... */
-}
-```
+The flight card shows comprehensive information:
+
+### Flight Summary
+- Airline logo and name
+- Flight callsign
+- Route (origin → destination)
+- Current status
+
+### Departure & Arrival Times
+- Gate departure/arrival times
+- Takeoff/landing times
+- Scheduled vs actual times
+- Taxi times
+- Average delays
+
+### Flight Progress
+- Distance flown and remaining
+- Time elapsed and remaining
+- Visual progress bar with plane icon
+- Total travel time
+
+### Weather Information
+- Origin and destination weather
+- Temperature and conditions
+- Weather icons
+
+### Technical Data
+- Altitude, speed, heading
+- Vertical rate
+- ICAO24 and squawk codes
+- Aircraft type and registration
+
+## API Rate Limits
+
+### OpenSky Network
+- **Anonymous**: 400 credits/day, 10-second resolution
+- **Authenticated**: 4000-8000 credits/day, 5-second resolution
+- **Credit Usage**: Based on search area (1-4 credits per request)
+
+### FlightAware
+- Web scraping with 5-minute cache
+- Falls back to mock data if blocked
+
+### OpenWeatherMap
+- 60 calls/minute (free tier)
+- 1000 calls/day
+
+## Performance Optimizations
+
+1. **Dynamic Imports**: Code splitting for map components
+2. **Memoization**: React.memo for expensive components
+3. **Batch Updates**: Grouped state updates
+4. **Efficient Markers**: Reuse DOM elements
+5. **Smart Polling**: Adaptive intervals based on auth
+6. **Local Lookups**: Database queries for static data
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Map Not Loading**
-   - Check Mapbox token in environment variables
-   - Verify browser WebGL support
-   - Check network connectivity
+1. **Flights not appearing**
+   - Check OpenSky credentials in .env
+   - Verify API rate limits not exceeded
+   - Check browser console for errors
 
-2. **No Flights Displayed**
-   - Verify OpenSky API is accessible
-   - Check geographic location (ocean areas have no flights)
-   - Confirm API rate limits not exceeded
+2. **Jerky animations**
+   - Ensure GSAP is properly installed
+   - Check browser performance
+   - Verify no conflicting CSS animations
 
-3. **Search Not Working**
-   - Ensure flight is currently airborne
-   - Try different search formats (DAL123 vs DL123)
-   - Check if flight exists in coverage area
+3. **FlightAware data missing**
+   - Normal for many flights
+   - Check if scraper is being blocked
+   - Falls back to mock data automatically
 
-4. **Performance Issues**
-   - Reduce search radius
-   - Check browser memory usage
-   - Verify caching is working properly
+4. **Map not loading**
+   - Verify Mapbox token (or use default)
+   - Check internet connection
+   - Clear browser cache
 
-### Debug Mode
-Enable detailed logging by setting:
-```javascript
-localStorage.setItem('flight-tracker-debug', 'true')
-```
-
-## Security Considerations
-
-- All external API calls are proxied through Next.js API routes
-- FlightAware scraping uses appropriate headers and rate limiting
-- No sensitive data is stored in browser storage
-- CORS policies properly configured for map tiles and APIs
+## Browser Support
+- Chrome (recommended)
+- Firefox
+- Safari
+- Edge
+- Requires WebGL support
 
 ## Future Enhancements
+- [ ] WebSocket for real-time updates
+- [ ] Flight history and replay
+- [ ] Airport detail overlays
+- [ ] Multiple map providers
+- [ ] 3D globe view at low zoom
+- [ ] Flight path predictions
+- [ ] Airline statistics
 
-### Planned Features
-- 3D flight path visualization
-- Historical flight tracking
-- Flight alerts and notifications
-- Multiple map providers support
-- Mobile app integration
-- Weather overlay integration
+## License
+Proprietary - All rights reserved
 
-### Performance Improvements
-- WebWorker for heavy calculations
-- More aggressive caching strategies
-- Real-time WebSocket connections
-- CDN optimization for static assets
-
----
-
-## License & Credits
-
-This component integrates with multiple external services:
-- OpenSky Network (Creative Commons)
-- Mapbox (Commercial license required)
-- FlightAware (Educational/research use)
-
-Built with Next.js, React, TypeScript, and Payload CMS.
+## Credits
+- OpenSky Network - Real-time flight data
+- FlightAware - Flight details and tracking
+- Mapbox - Interactive maps
+- GSAP - Animation engine
+- OpenWeatherMap - Weather data

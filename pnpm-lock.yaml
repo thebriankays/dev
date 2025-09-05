@@ -146,6 +146,9 @@ importers:
       leva:
         specifier: ^0.10.0
         version: 0.10.0(@types/react@19.1.8)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      lru-cache:
+        specifier: ^10.2.0
+        version: 10.4.3
       lucide-react:
         specifier: ^0.378.0
         version: 0.378.0(react@19.1.0)

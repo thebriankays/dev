@@ -1,6 +1,28 @@
+/**
+ * Core types for the Flight Tracker application
+ */
+
+export interface Coordinates {
+  lat: number
+  lng: number
+}
+
+export interface AirportData {
+  id?: string
+  name: string
+  city?: string
+  country?: string
+  iata: string
+  icao: string
+  latitude: number
+  longitude: number
+  altitude?: number
+  timezone?: string
+}
+
 export interface Flight {
   icao24: string
-  callsign: string
+  callsign: string | null
   origin_country: string
   time_position: number | null
   last_contact: number
@@ -16,7 +38,45 @@ export interface Flight {
   squawk: string | null
   spi: boolean
   position_source: number
-  // Extended fields for prediction and visualization
+  
+  // Enhanced fields
+  airline?: string
+  airline_iata?: string
+  airline_icao?: string
+  aircraft?: string
+  registration?: string
+  departureAirport?: string | AirportData
+  arrivalAirport?: string | AirportData
+  destinationAirport?: string | AirportData
+  originAirport?: AirportData
+  departureGate?: string
+  arrivalGate?: string
+  scheduled_departure?: string
+  scheduled_arrival?: string
+  status?: string
+  distance?: number
+  
+  // FlightAware data
+  gateDepartureTime?: string
+  takeoffTime?: string
+  landingTime?: string
+  gateArrivalTime?: string
+  elapsedTime?: string
+  remainingTime?: string
+  totalTravelTime?: string
+  flownDistance?: number
+  remainingDistance?: number
+  taxiOut?: string
+  taxiIn?: string
+  averageDelay?: string
+  plannedSpeed?: string
+  plannedAltitude?: string
+  
+  // Weather data
+  weatherOrigin?: any
+  weatherDestination?: any
+  
+  // Animation/prediction fields
   predicted_position?: {
     longitude: number
     latitude: number
@@ -26,61 +86,27 @@ export interface Flight {
     latitude: number
   }
   trajectory?: Array<[number, number]>
-  // Additional fields for detailed flight info
-  departureAirport?: string
-  destinationAirport?: string
-  // HexDB enriched data
-  registration?: string
-  aircraft?: string
-  aircraft_type?: string
-  operator?: string
-  airline?: string
-  airline_iata?: string
-  airline_icao?: string
-  photo_url?: string
-  // Schedule data (if available from other sources)
-  scheduled_departure?: string
-  actual_departure?: string
-  scheduled_arrival?: string
-  estimated_arrival?: string
-  // FlightAware enhanced data
-  departure_delay?: number
-  arrival_delay?: number
-  departureGate?: string
-  arrivalGate?: string
-  route?: string
-  flightDuration?: {
-    hours: number
-    minutes: number
-  }
-  flightDistance?: number
-  flightStatus?: string
-  aircraftImage?: string
-  // Additional properties from FlightAware
-  distance?: string | number
-  duration?: {
-    hours: number
-    minutes: number
-  }
-  altitude?: number | null  // Note: different from baro_altitude
-  speed?: number | string
-}
-
-export interface Coordinates {
-  lat: number
-  lng: number
+  display_longitude?: number
+  display_latitude?: number
 }
 
 export interface FlightMapProps {
   flights: Flight[]
   selectedFlight: Flight | null
-  onSelectFlight: (flight: Flight) => void
-  userLocation: Coordinates | null
+  selectedFlightRoute?: any
+  onSelectFlight?: (flight: Flight | null) => void
+  onMapMove?: (center: Coordinates, zoom: number) => void
+  center?: Coordinates
+  zoom?: number
+  userLocation?: Coordinates | null
+  loading?: boolean
+  error?: string | null
+  onRefresh?: () => void
+  weatherData?: any
 }
 
-export interface FlightTrackerProps {
-  enableSearch?: boolean
-  enableGeolocation?: boolean
-  defaultLocation?: Coordinates
-  searchRadius?: number
+export interface MapProvider {
+  name: string
+  component: React.ComponentType<FlightMapProps>
+  available: boolean
 }

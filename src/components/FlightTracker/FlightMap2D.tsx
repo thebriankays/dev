@@ -1,48 +1,23 @@
-'use client'
-
-import React, { useEffect, useRef } from 'react'
-import { FlightMapProps } from './types'
-import { gsap } from 'gsap'
+import React, { useState } from 'react'
 import dynamic from 'next/dynamic'
+import { FlightMapProps } from './types'
 
-// Dynamic import of Mapbox component - simplified loading
-const MapComponent = dynamic(
-  () => import('./MapboxMap').then((mod) => mod.default || mod.MapboxMap || mod), 
-  { 
-    ssr: false,
-    loading: () => null // Remove loading spinner to prevent delays
-  }
-)
+// Dynamic import for map providers to reduce initial bundle size
+const MapboxMap = dynamic(() => import('./MapboxMap'), {
+  ssr: false,
+  loading: () => <div className="map-loading">Loading map...</div>,
+})
 
-export const FlightMap2D: React.FC<FlightMapProps> = (props) => {
-  const containerRef = useRef<HTMLDivElement>(null)
-  
-  // Simple container animation without delays
-  useEffect(() => {
-    if (containerRef.current) {
-      const tween = gsap.fromTo(
-        containerRef.current,
-        { opacity: 0 },
-        { opacity: 1, duration: 0.3, ease: 'power2.out' }
-      )
-      
-      return () => {
-        tween.kill()
-      }
-    }
-  }, [])
+interface ExtendedFlightMapProps extends FlightMapProps {
+  selectedFlightRoute?: any
+  weatherData?: any
+}
 
-  return (
-    <div ref={containerRef} className="flight-tracker__map-container" style={{ 
-      width: '100%', 
-      height: '100%', 
-      position: 'relative',
-      background: '#1a1a1a',
-      isolation: 'isolate'
-    }}>
-      <MapComponent {...props} />
-    </div>
-  )
+const FlightMap2D: React.FC<ExtendedFlightMapProps> = (props) => {
+  const [mapProvider] = useState<'mapbox'>('mapbox')
+
+  // Use Mapbox as the primary map provider
+  return <MapboxMap {...props} />
 }
 
 export default FlightMap2D

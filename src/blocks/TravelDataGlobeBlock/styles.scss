@@ -21,34 +21,31 @@
 
 // WebGL container
 .travel-data-globe-block {
-  position: fixed !important;
-  top: 0;
-  left: 0;
+  position: relative;
   width: 100%;
   height: 100vh;
-  background: transparent !important;
-  overflow: hidden !important;
+  background: transparent;
+  overflow: hidden;
   pointer-events: auto;
   
   .block-wrapper {
-    position: fixed !important;
-    top: 0;
-    left: 0;
+    position: relative;
     width: 100%;
-    height: 100vh;
-    background: transparent !important;
-    overflow: hidden !important;
+    height: 100%;
+    background: transparent;
+    overflow: hidden;
     pointer-events: auto;
   }
   
-  // Ensure the WebGL view is fixed
+  // Ensure the WebGL view tracks the container
   .webgl-view {
-    position: fixed !important;
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    height: 100vh;
+    height: 100%;
     z-index: 1;
+    pointer-events: auto;
   }
 }
 
@@ -1335,21 +1332,26 @@
 .tdg-globe-section {
   position: relative;
   width: 100%;
-  height: 100vh;
+  height: 100%;
   overflow: hidden;
   background: transparent;
+  display: flex;
+  flex-direction: column;
 }
 
 // Content wrapper
 .tdg-content-wrapper {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   display: flex;
   align-items: flex-start;
   padding: 2rem 1rem 1rem 1rem;
-  gap: 0; // Remove gap between elements
+  gap: 0;
   pointer-events: none;
+  z-index: 10;
   
   > * {
     pointer-events: auto;

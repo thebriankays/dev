@@ -57,10 +57,9 @@ const FlightMap2D = dynamic(() => import('./FlightMap2D'), {
   ),
 })
 
-// API rate limit compliant intervals - using position prediction between calls
+// API rate limit compliant intervals
 const UPDATE_INTERVAL_AUTHENTICATED = 30000 // 30 seconds for authenticated users
 const UPDATE_INTERVAL_ANONYMOUS = 60000 // 60 seconds for anonymous users
-const ANIMATION_INTERVAL = 5000 // Update positions every 5 seconds using prediction (reduced for performance)
 
 interface FlightTrackerProps {
   enableSearch?: boolean
@@ -87,666 +86,456 @@ interface FlightWithPrediction extends Flight {
   display_latitude?: number
 }
 
+interface GeoJSONLineString {
+  type: 'Feature'
+  geometry: {
+    type: 'LineString'
+    coordinates: number[][]
+  }
+  properties: {
+    flight: string
+  }
+}
+
+interface WeatherData {
+  origin?: unknown
+  destination?: unknown
+}
+
 export const FlightTracker: React.FC<FlightTrackerProps> = ({
   enableSearch = true,
-  enableGeolocation = true,
   defaultLocation = { lat: 40.7128, lng: -74.0060 }, // NYC default
   searchRadius = 2,
 }) => {
-  const instanceId = useRef(Math.random().toString(36).substring(2, 11)).current
-  
   const [flights, setFlights] = useState<FlightWithPrediction[]>([])
   const [displayFlights, setDisplayFlights] = useState<FlightWithPrediction[]>([])
   const [selectedFlight, setSelectedFlight] = useState<FlightWithPrediction | null>(null)
-  const [userLocation, setUserLocation] = useState<Coordinates>(defaultLocation)
-  const [initialLoading, setInitialLoading] = useState(true)
-  const [loading, setLoading] = useState(false)
+  const [selectedFlightRoute, setSelectedFlightRoute] = useState<GeoJSONLineString | null>(null)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [, setLastUpdateTime] = useState<number>(Date.now())
-  const [authenticated, setAuthenticated] = useState<boolean>(false)
-  const [isRateLimited, setIsRateLimited] = useState<boolean>(false)
-  const [retryAfter, setRetryAfter] = useState<number>(0)
-  
-  const containerRef = useRef<HTMLDivElement>(null)
+  const [mapCenter, setMapCenter] = useState<Coordinates>(defaultLocation)
+  const [mapZoom, setMapZoom] = useState(9)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [weatherData, setWeatherData] = useState<WeatherData>({})
+
   const updateIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const animationIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  const animationFrameRef = useRef<number>(0)
-  const previousFlightsRef = useRef<Map<string, FlightWithPrediction>>(new Map())
-  const lastFetchRef = useRef<{ location: string; timestamp: number } | null>(null)
-  const displayFlightsRef = useRef<FlightWithPrediction[]>([])
-  const MIN_FETCH_INTERVAL = 25000 // Minimum 25 seconds between fetches
-  const fetchInProgressRef = useRef<boolean>(false)
-  const geolocationRequestedRef = useRef<boolean>(false)
+  const lastUpdateRef = useRef<number>(Date.now())
+  const flightAnimationRefs = useRef<Map<string, gsap.core.Tween>>(new Map())
 
-  // Get user location (only once)
-  useEffect(() => {
-    if (enableGeolocation && navigator.geolocation && !geolocationRequestedRef.current) {
-      geolocationRequestedRef.current = true
-      console.log('📍 Requesting location access...')
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          console.log(`📍 Location found: ${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`)
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          })
-        },
-        (error) => {
-          console.error('Geolocation error:', error)
-          
-          let errorMessage = 'Location access denied'
-          switch(error.code) {
-            case error.PERMISSION_DENIED:
-              errorMessage = 'Location permission denied. Using default location.'
-              break
-            case error.POSITION_UNAVAILABLE:
-              errorMessage = 'Location information unavailable. Using default location.'
-              break
-            case error.TIMEOUT:
-              errorMessage = 'Location request timed out. Using default location.'
-              break
-          }
-          
-          setError(errorMessage)
-          setTimeout(() => setError(null), 5000)
-          
-          console.log('Using default location')
-          setUserLocation(defaultLocation)
-        },
-        {
-          enableHighAccuracy: false,
-          timeout: 10000,
-          maximumAge: 300000
-        }
-      )
-    } else if (!enableGeolocation) {
-      setUserLocation(defaultLocation)
-    }
-  }, [enableGeolocation, defaultLocation]) // Dependencies for geolocation effect
-
-  // Enrich flight data with airline info
-  const enrichFlightData = async (flights: FlightWithPrediction[]): Promise<FlightWithPrediction[]> => {
-    const processedFlights = flights.map(flight => flight)
-    
-    // Update previous flights reference for smooth animation
-    const currentFlightIds = new Set(processedFlights.map(f => f.icao24))
-    
-    // Remove flights that are no longer present
-    Array.from(previousFlightsRef.current.keys()).forEach(icao24 => {
-      if (!currentFlightIds.has(icao24)) {
-        previousFlightsRef.current.delete(icao24)
-      }
-    })
-    
-    // Store current flights for next animation cycle
-    processedFlights.forEach(flight => {
-      previousFlightsRef.current.set(flight.icao24, flight)
-    })
-    
-    // Enrich with airline data in the background
+  /**
+   * Get user location via IP-based geolocation (no browser permission needed)
+   */
+  const getIPLocation = useCallback(async () => {
     try {
-      const response = await fetch('/api/flights/enrich', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ flights: processedFlights })
-      })
-      
+      console.log('[FlightTracker] Getting IP-based location...')
+      const response = await fetch('/api/geolocation')
       if (response.ok) {
         const data = await response.json()
-        return data.flights
+        console.log('[FlightTracker] IP location:', data)
+        setMapCenter({ lat: data.lat, lng: data.lng })
+        return { lat: data.lat, lng: data.lng }
       }
     } catch (error) {
-      console.error('Error enriching flights:', error)
+      console.error('[FlightTracker] IP geolocation failed:', error)
     }
-    
-    return processedFlights
-  }
+    return defaultLocation
+  }, [defaultLocation])
 
-  // Fetch flights from server API
-  const fetchFlights = useCallback(async () => {
-    if (isRateLimited && retryAfter > Date.now()) {
-      return
-    }
-    
-    if (!userLocation || userLocation.lat === null || userLocation.lng === null) {
-      console.log('Skipping fetch - no user location')
-      return
-    }
+  /**
+   * Animate flights using GSAP for smooth movement
+   */
+  const animateFlights = useCallback((flightList: FlightWithPrediction[]) => {
+    flightList.forEach(flight => {
+      if (!flight.predicted_position || !flight.velocity || flight.on_ground) {
+        return
+      }
 
-    // Prevent concurrent fetches (but allow if it's been more than 30 seconds)
-    if (fetchInProgressRef.current) {
-      console.log(`[FlightTracker ${instanceId}] Skipping fetch - already in progress`)
-      return
-    }
+      // Kill existing animation for this flight
+      const existingAnim = flightAnimationRefs.current.get(flight.icao24)
+      if (existingAnim) {
+        existingAnim.kill()
+      }
 
-    // Prevent excessive API calls
-    const locationKey = `${userLocation.lat.toFixed(2)}_${userLocation.lng.toFixed(2)}_${searchRadius}`
-    const now = Date.now()
-    
-    if (lastFetchRef.current && 
-        lastFetchRef.current.location === locationKey && 
-        now - lastFetchRef.current.timestamp < MIN_FETCH_INTERVAL) {
-      console.log(`[FlightTracker ${instanceId}] Skipping fetch - too recent (${Math.round((now - lastFetchRef.current.timestamp) / 1000)}s ago)`)
-      return
-    }
+      // Create proxy object for animation
+      const animatedPos = {
+        lat: flight.display_latitude || flight.latitude,
+        lng: flight.display_longitude || flight.longitude,
+        rotation: flight.true_track || 0
+      }
 
-    fetchInProgressRef.current = true
-    
-    console.log(`🌐 Fetching flights near ${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)} (${searchRadius}° radius)`)
-    
-    try {
-      const params = new URLSearchParams({
-        lat: userLocation.lat.toString(),
-        lng: userLocation.lng.toString(),
-        radius: searchRadius.toString(),
+      // Calculate animation duration based on update interval
+      const duration = (isAuthenticated ? UPDATE_INTERVAL_AUTHENTICATED : UPDATE_INTERVAL_ANONYMOUS) / 1000
+
+      // Animate to predicted position
+      const anim = gsap.to(animatedPos, {
+        lat: flight.predicted_position.latitude,
+        lng: flight.predicted_position.longitude,
+        rotation: flight.true_track || 0,
+        duration: duration,
+        ease: "none", // Linear interpolation for constant velocity
+        onUpdate: () => {
+          // Update the flight's display position
+          setFlights(prev => prev.map(f => {
+            if (f.icao24 === flight.icao24) {
+              return {
+                ...f,
+                display_latitude: animatedPos.lat,
+                display_longitude: animatedPos.lng
+              }
+            }
+            return f
+          }))
+          
+          setDisplayFlights(prev => prev.map(f => {
+            if (f.icao24 === flight.icao24) {
+              return {
+                ...f,
+                display_latitude: animatedPos.lat,
+                display_longitude: animatedPos.lng
+              }
+            }
+            return f
+          }))
+        }
       })
+
+      flightAnimationRefs.current.set(flight.icao24, anim)
+    })
+  }, [isAuthenticated])
+
+  /**
+   * Fetch flights from OpenSky API
+   */
+  const fetchFlights = useCallback(async (center?: Coordinates, radius?: number) => {
+    try {
+      const actualCenter = center || mapCenter
+      const actualRadius = radius || searchRadius
       
-      const response = await fetch(`/api/flights?${params}`)
+      console.log(`[FlightTracker] Fetching flights for center:`, actualCenter, 'radius:', actualRadius)
       
+      const response = await fetch(
+        `/api/flights?lat=${actualCenter.lat}&lng=${actualCenter.lng}&radius=${actualRadius}`
+      )
+
       if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`)
+        throw new Error(`Failed to fetch flights: ${response.statusText}`)
       }
 
       const data = await response.json()
       
-      setAuthenticated(data.authenticated || false)
-      
-      if (data.error) {
-        setError(data.error)
-        
-        if (data.error.includes('rate limit')) {
-          setIsRateLimited(true)
-          setRetryAfter(Date.now() + 60000)
-          
-          if (updateIntervalRef.current) {
-            clearInterval(updateIntervalRef.current)
-            updateIntervalRef.current = null
-          }
-        }
-        
-        if (data.flights.length === 0) {
-          return
-        }
-      }
+      console.log(`[FlightTracker] Received ${data.flights?.length || 0} flights`)
       
       if (data.flights && Array.isArray(data.flights)) {
-        const newFlights: FlightWithPrediction[] = data.flights
+        setIsAuthenticated(data.authenticated || false)
         
-        console.log(`✈️ Loaded ${newFlights.length} flights`)
+        const validFlights = data.flights.filter((f: Flight) => 
+          f.latitude !== null && 
+          f.longitude !== null &&
+          !isNaN(f.latitude) &&
+          !isNaN(f.longitude)
+        )
+
+        console.log(`[FlightTracker] Valid flights after filtering: ${validFlights.length}`)
         
-        // Update fetch cache
-        lastFetchRef.current = {
-          location: locationKey,
-          timestamp: now
-        }
-        
-        // Merge new flights with existing predicted positions to avoid jumping
-        const mergedFlights = newFlights.map(newFlight => {
-          const existingFlight = displayFlightsRef.current.find(f => f.icao24 === newFlight.icao24)
-          if (existingFlight && existingFlight.interpolated_position) {
-            // Keep the predicted position, but update the actual position for next prediction cycle
-            return {
-              ...newFlight,
-              interpolated_position: existingFlight.interpolated_position,
-              // Store the new actual position for future predictions
-              actual_position: {
+        // Update flight positions
+        setFlights(prevFlights => {
+          // Merge with existing flights to maintain animations
+          const flightMap = new Map(prevFlights.map(f => [f.icao24, f]))
+          
+          validFlights.forEach((newFlight: FlightWithPrediction) => {
+            const existingFlight = flightMap.get(newFlight.icao24)
+            
+            if (existingFlight) {
+              // Update existing flight with new data
+              newFlight.actual_position = {
                 longitude: newFlight.longitude,
                 latitude: newFlight.latitude
               }
-            }
-          }
-          return {
-            ...newFlight,
-            interpolated_position: {
-              longitude: newFlight.longitude,
-              latitude: newFlight.latitude
-            },
-            actual_position: {
-              longitude: newFlight.longitude,
-              latitude: newFlight.latitude
-            }
-          }
-        })
-
-        // Set flights for API data, but use merged flights for display to prevent jumping
-        setFlights(newFlights)
-        setDisplayFlights(mergedFlights)
-        setLastUpdateTime(data.timestamp || Date.now())
-        setError(null)
-        // Don't reset animation frame - let prediction continue smoothly
-        setInitialLoading(false)
-        
-        // Enrich flight data in the background without affecting display positions
-        enrichFlightData(newFlights).then(enrichedFlights => {
-          if (enrichedFlights && enrichedFlights.length > 0) {
-            // Update flights data for future use, but don't reset display positions
-            setFlights(enrichedFlights)
-            
-            // Merge enrichment data with current display flights without losing positions
-            setDisplayFlights(prevDisplay => 
-              prevDisplay.map(displayFlight => {
-                const enriched = enrichedFlights.find(ef => ef.icao24 === displayFlight.icao24)
-                if (enriched) {
-                  return {
-                    ...enriched,
-                    interpolated_position: displayFlight.interpolated_position,
-                    actual_position: displayFlight.actual_position || {
-                      longitude: enriched.longitude,
-                      latitude: enriched.latitude
-                    }
-                  }
-                }
-                return displayFlight
-              })
-            )
-            console.log(`🔍 Enhanced ${enrichedFlights.length} flights with airline data`)
-          }
-        }).catch(error => {
-          console.error('Error enriching flight data:', error)
-          // Keep the original flights if enrichment fails
-        })
-      }
-    } catch (err) {
-      console.error('Error fetching flights:', err)
-      setError('Failed to load flight data. Please check your connection.')
-    } finally {
-      setInitialLoading(false)
-      fetchInProgressRef.current = false
-    }
-  }, [userLocation, searchRadius, isRateLimited, retryAfter, instanceId])
-
-  // Keep displayFlightsRef synchronized with displayFlights state
-  useEffect(() => {
-    displayFlightsRef.current = displayFlights
-  }, [displayFlights])
-
-  // Animation system that uses position prediction without API calls
-  useEffect(() => {
-    const predictPositions = () => {
-      const now = Date.now()
-      const elapsedSinceLastFetch = lastFetchRef.current ? now - lastFetchRef.current.timestamp : 0
-      
-      const currentFlights = displayFlightsRef.current
-      if (!currentFlights || currentFlights.length === 0) return
-      
-      const predictedFlights = currentFlights.map(flight => {
-        if (flight.on_ground || !flight.velocity || !flight.true_track) {
-          return {
-            ...flight,
-            interpolated_position: flight.interpolated_position || {
-              longitude: flight.longitude,
-              latitude: flight.latitude
-            }
-          }
-        }
-        
-        // Use actual_position as base for prediction, or fall back to current longitude/latitude
-        const basePosition = flight.actual_position || {
-          longitude: flight.longitude,
-          latitude: flight.latitude
-        }
-        
-        // Predict position based on velocity and heading from the actual position
-        const velocityMs = flight.velocity // m/s
-        const headingDeg = flight.true_track // degrees
-        const timeElapsedSec = elapsedSinceLastFetch / 1000
-        
-        // Convert to km/h and calculate distance
-        const velocityKmh = velocityMs * 3.6
-        const distanceKm = velocityKmh * (timeElapsedSec / 3600)
-        
-        // Simple prediction using bearing and distance
-        const earthRadius = 6371 // km
-        const bearingRad = (headingDeg * Math.PI) / 180
-        const latRad = (basePosition.latitude * Math.PI) / 180
-        const lonRad = (basePosition.longitude * Math.PI) / 180
-        const distRad = distanceKm / earthRadius
-        
-        const newLatRad = Math.asin(
-          Math.sin(latRad) * Math.cos(distRad) +
-          Math.cos(latRad) * Math.sin(distRad) * Math.cos(bearingRad)
-        )
-        
-        const newLonRad = lonRad + Math.atan2(
-          Math.sin(bearingRad) * Math.sin(distRad) * Math.cos(latRad),
-          Math.cos(distRad) - Math.sin(latRad) * Math.sin(newLatRad)
-        )
-        
-        return {
-          ...flight,
-          interpolated_position: {
-            longitude: (newLonRad * 180) / Math.PI,
-            latitude: (newLatRad * 180) / Math.PI
-          }
-        }
-      })
-      
-      setDisplayFlights(predictedFlights)
-      
-      // Update selected flight if it exists
-      if (selectedFlight) {
-        const updatedSelectedFlight = predictedFlights.find(f => f.icao24 === selectedFlight.icao24)
-        if (updatedSelectedFlight) {
-          setSelectedFlight(updatedSelectedFlight)
-        }
-      }
-    }
-    
-    if (animationIntervalRef.current) {
-      clearInterval(animationIntervalRef.current)
-    }
-    
-    // Only animate if we have flights and they're not loading
-    if (flights.length > 0 && !initialLoading) {
-      animationIntervalRef.current = setInterval(predictPositions, ANIMATION_INTERVAL)
-    }
-    
-    return () => {
-      if (animationIntervalRef.current) {
-        clearInterval(animationIntervalRef.current)
-      }
-    }
-  }, [flights.length, selectedFlight, initialLoading]) // Remove displayFlights to prevent excessive re-renders
-
-  // Update rate limit countdown
-  useEffect(() => {
-    if (isRateLimited && retryAfter > Date.now()) {
-      const interval = setInterval(() => {
-        if (Date.now() >= retryAfter) {
-          setIsRateLimited(false)
-          setRetryAfter(0)
-          clearInterval(interval)
-        }
-        setError(prev => prev)
-      }, 1000)
-      
-      return () => clearInterval(interval)
-    }
-  }, [isRateLimited, retryAfter])
-
-  // Initial fetch - only when userLocation changes and we're not already fetching
-  useEffect(() => {
-    if (userLocation && userLocation.lat !== null && userLocation.lng !== null && !fetchInProgressRef.current) {
-      console.log(`[FlightTracker ${instanceId}] Initial fetch for location: ${userLocation.lat}, ${userLocation.lng}`)
-      fetchFlights()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userLocation.lat, userLocation.lng])
-  
-  const fetchFlightsRef = useRef(fetchFlights)
-  fetchFlightsRef.current = fetchFlights
-  
-  // Set up periodic updates with proper caching
-  useEffect(() => {
-    if (updateIntervalRef.current) {
-      clearInterval(updateIntervalRef.current)
-      updateIntervalRef.current = null
-    }
-    
-    if (isRateLimited) {
-      return
-    }
-    
-    const interval = authenticated ? UPDATE_INTERVAL_AUTHENTICATED : UPDATE_INTERVAL_ANONYMOUS
-    console.log(`[FlightTracker ${instanceId}] Setting up flight update interval: ${interval/1000}s (${authenticated ? 'authenticated' : 'anonymous'})`)
-    
-    updateIntervalRef.current = setInterval(() => {
-      console.log(`[FlightTracker ${instanceId}] Interval triggered - checking if fetch needed...`)
-      // Only fetch if minimum interval has passed
-      const now = Date.now()
-      if (!lastFetchRef.current || now - lastFetchRef.current.timestamp >= MIN_FETCH_INTERVAL) {
-        console.log(`[FlightTracker ${instanceId}] Fetching updates...`)
-        fetchFlightsRef.current()
-      } else {
-        console.log(`[FlightTracker ${instanceId}] Skipping fetch - using prediction (${Math.round((now - lastFetchRef.current.timestamp) / 1000)}s since last fetch)`)
-      }
-    }, interval)
-    
-    return () => {
-      if (updateIntervalRef.current) {
-        clearInterval(updateIntervalRef.current)
-        updateIntervalRef.current = null
-      }
-    }
-  }, [authenticated, isRateLimited, instanceId])
-
-  // Search for specific flight
-  const handleSearch = useCallback(async (query: string) => {
-    if (!query.trim()) {
-      setSelectedFlight(null)
-      return
-    }
-
-    const searchQuery = query.trim().toUpperCase()
-    
-    let found = displayFlights.find(flight => {
-      const callsign = (flight.callsign || '').trim().toUpperCase()
-      const icao = flight.icao24.toUpperCase()
-      
-      return callsign === searchQuery || 
-             icao === searchQuery ||
-             callsign.includes(searchQuery) || 
-             icao.includes(searchQuery)
-    })
-    
-    if (!found) {
-      setLoading(true)
-      try {
-        const response = await fetch('/api/flights/search', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: searchQuery })
-        })
-        
-        if (response.ok) {
-          const data = await response.json()
-          if (data.flight) {
-            const flightFromSearch = data.flight as FlightWithPrediction
-            found = flightFromSearch
-            
-            if (flightFromSearch.longitude && flightFromSearch.latitude) {
-              setDisplayFlights(prev => {
-                const filtered = prev.filter(f => f.icao24 !== flightFromSearch.icao24)
-                return [...filtered, flightFromSearch]
-              })
               
-              const distance = Math.sqrt(
-                Math.pow(flightFromSearch.latitude - userLocation.lat, 2) + 
-                Math.pow(flightFromSearch.longitude - userLocation.lng, 2)
-              )
-              
-              // Only change location if flight is very far away (more than 4x radius)
-              // and ask user confirmation to prevent unwanted location jumps
-              if (distance > searchRadius * 4) {
-                console.log(`Flight found ${distance.toFixed(2)} degrees away. Consider manually adjusting map view.`)
-                // Don't automatically change location - let user decide
-                // This prevents unexpected location jumps that clear the map
+              // Keep the animated position from the existing flight
+              if (existingFlight.display_longitude !== undefined) {
+                newFlight.display_longitude = existingFlight.display_longitude
+                newFlight.display_latitude = existingFlight.display_latitude
+              } else {
+                newFlight.display_longitude = newFlight.longitude
+                newFlight.display_latitude = newFlight.latitude
               }
+            } else {
+              // New flight - set initial display position
+              newFlight.display_longitude = newFlight.longitude
+              newFlight.display_latitude = newFlight.latitude
             }
-          } else {
-            setError(`Flight "${query}" not found. It may not be airborne or the flight number may be incorrect.`)
-            setTimeout(() => setError(null), 5000)
+            
+            flightMap.set(newFlight.icao24, newFlight)
+          })
+          
+          // Remove flights that are no longer in the data
+          const currentIds = new Set(validFlights.map((f: Flight) => f.icao24))
+          for (const [id] of flightMap.entries()) {
+            if (!currentIds.has(id)) {
+              // Clean up GSAP animation for removed flight
+              const anim = flightAnimationRefs.current.get(id)
+              if (anim) {
+                anim.kill()
+                flightAnimationRefs.current.delete(id)
+              }
+              flightMap.delete(id)
+            }
+          }
+          
+          const updatedFlights = Array.from(flightMap.values())
+          setDisplayFlights(updatedFlights)
+          
+          // Start animations for new flights
+          animateFlights(updatedFlights)
+          
+          return updatedFlights
+        })
+        
+        lastUpdateRef.current = data.timestamp || Date.now()
+        setError(null)
+      }
+    } catch (error) {
+      console.error('[FlightTracker] Error fetching flights:', error)
+      setError(error instanceof Error ? error.message : 'Failed to fetch flight data')
+    } finally {
+      setLoading(false)
+    }
+  }, [mapCenter, searchRadius, animateFlights])
+
+  /**
+   * Handle flight selection - fetch additional details and show route
+   */
+  const handleSelectFlight = useCallback(async (flight: Flight | null) => {
+    console.log('[FlightTracker] Flight selected:', flight?.callsign)
+    setSelectedFlight(flight as FlightWithPrediction)
+    
+    if (flight) {
+      // Only show route for selected flight
+      if (flight.originAirport && flight.destinationAirport) {
+        // Type guards to check if airports are objects
+        const origin = flight.originAirport
+        const destination = flight.destinationAirport
+        
+        if (typeof origin === 'object' && typeof destination === 'object') {
+          setSelectedFlightRoute({
+            type: 'Feature',
+            geometry: {
+              type: 'LineString',
+              coordinates: [
+                [origin.longitude, origin.latitude],
+                [destination.longitude, destination.latitude]
+              ]
+            },
+            properties: {
+              flight: flight.callsign || flight.icao24
+            }
+          })
+        } else {
+          setSelectedFlightRoute(null)
+        }
+      } else {
+        setSelectedFlightRoute(null)
+      }
+
+      // Fetch weather data for origin and destination
+      if (flight.originAirport && flight.destinationAirport) {
+        const origin = flight.originAirport
+        const destination = flight.destinationAirport
+        
+        if (typeof origin === 'object' && typeof destination === 'object') {
+          try {
+            const [originWeather, destWeather] = await Promise.all([
+              fetch(`/api/weather?lat=${origin.latitude}&lng=${origin.longitude}`)
+                .then(r => r.json())
+                .catch(() => null),
+              fetch(`/api/weather?lat=${destination.latitude}&lng=${destination.longitude}`)
+                .then(r => r.json())
+                .catch(() => null)
+            ])
+            
+            setWeatherData({
+              origin: originWeather,
+              destination: destWeather
+            })
+          } catch (error) {
+            console.error('[FlightTracker] Error fetching weather:', error)
           }
         }
-      } catch (error) {
-        console.error('Search error:', error)
-        setError('Failed to search for flight. Please try again.')
-        setTimeout(() => setError(null), 5000)
-      } finally {
-        setLoading(false)
       }
-    }
-    
-    if (found) {
-      setSelectedFlight(found)
-    }
-  }, [displayFlights, userLocation, searchRadius])
-
-  // GSAP animation for container
-  useEffect(() => {
-    if (containerRef.current) {
-      const tween = gsap.fromTo(
-        containerRef.current,
-        { opacity: 0, y: 20 },
-        { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out' }
-      )
-      
-      return () => {
-        tween.kill()
-      }
+    } else {
+      // Clear route when no flight selected
+      setSelectedFlightRoute(null)
+      setWeatherData({})
     }
   }, [])
 
-  const handleRefresh = async () => {
-    if (isRateLimited && retryAfter > Date.now()) {
-      const secondsLeft = Math.ceil((retryAfter - Date.now()) / 1000)
-      setError(`Rate limited. Please wait ${secondsLeft} seconds before trying again.`)
-      return
-    }
+  /**
+   * Handle flight search
+   */
+  const handleSearchFlight = useCallback(async (query: string) => {
+    if (!query) return
     
-    console.log('Manual refresh triggered')
+    console.log('[FlightTracker] Searching for flight:', query)
     setLoading(true)
-    setError(null)
-    setIsRateLimited(false)
-    animationFrameRef.current = 0
     
     try {
-      await fetchFlights()
+      const response = await fetch(`/api/flights/search?query=${encodeURIComponent(query)}`)
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.flights && data.flights.length > 0) {
+          const flight = data.flights[0]
+          
+          // Center map on found flight
+          if (flight.latitude && flight.longitude) {
+            setMapCenter({ lat: flight.latitude, lng: flight.longitude })
+            setMapZoom(12)
+            
+            // Select the flight
+            handleSelectFlight(flight)
+            
+            // Fetch flights in that area
+            await fetchFlights({ lat: flight.latitude, lng: flight.longitude }, searchRadius)
+          }
+        } else {
+          setError('Flight not found')
+        }
+      }
     } catch (error) {
-      console.error('Manual refresh error:', error)
+      console.error('[FlightTracker] Search error:', error)
+      setError('Search failed')
     } finally {
-      setTimeout(() => setLoading(false), 1000) // Ensure loading state is cleared
+      setLoading(false)
     }
-  }
+  }, [fetchFlights, handleSelectFlight, searchRadius])
 
+  /**
+   * Initialize map and start data fetching
+   */
+  useEffect(() => {
+    let mounted = true
+
+    const initialize = async () => {
+      console.log('[FlightTracker] Initializing...')
+      
+      // Get IP-based location (no browser permission needed)
+      const location = await getIPLocation()
+      
+      if (!mounted) return
+      
+      // Immediately fetch flights at that location
+      await fetchFlights(location, searchRadius)
+    }
+
+    initialize()
+
+    return () => {
+      mounted = false
+      
+      // Clean up GSAP animations
+      flightAnimationRefs.current.forEach(anim => anim.kill())
+      flightAnimationRefs.current.clear()
+    }
+  }, [fetchFlights, getIPLocation, searchRadius]) // Include necessary dependencies
+
+  // Update intervals when authentication status changes
+  useEffect(() => {
+    if (updateIntervalRef.current) {
+      clearInterval(updateIntervalRef.current)
+    }
+    
+    const updateInterval = isAuthenticated ? UPDATE_INTERVAL_AUTHENTICATED : UPDATE_INTERVAL_ANONYMOUS
+    
+    updateIntervalRef.current = setInterval(() => {
+      fetchFlights()
+    }, updateInterval)
+
+    return () => {
+      if (updateIntervalRef.current) {
+        clearInterval(updateIntervalRef.current)
+      }
+    }
+  }, [isAuthenticated, fetchFlights])
+
+  const handleMapMove = useCallback((center: Coordinates, zoom: number) => {
+    setMapCenter(center)
+    setMapZoom(zoom)
+  }, [])
+
+  const handleRefresh = useCallback(() => {
+    console.log('[FlightTracker] Manual refresh triggered')
+    fetchFlights()
+  }, [fetchFlights])
 
   return (
-    <div className={`flight-tracker ${selectedFlight ? 'flight-tracker--has-selection' : ''}`} ref={containerRef}>
-      <div className="flight-tracker__main">
-        <div className="flight-tracker__view">
-          {initialLoading ? (
-            <Glass className="flight-tracker__message" variant="card" rounded="md">
-              <div className="flight-tracker__loading">
-                <div className="flight-tracker__loading-spinner" />
-                <p>Loading flights...</p>
-              </div>
-            </Glass>
-          ) : isRateLimited && retryAfter > Date.now() ? (
-            <Glass className="flight-tracker__message flight-tracker__message--error" variant="card" rounded="md">
-              <p>{error}</p>
-              <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', opacity: 0.7 }}>
-                Rate limit reached. Waiting {Math.ceil((retryAfter - Date.now()) / 1000)} seconds...
-              </p>
-            </Glass>
-          ) : displayFlights.length === 0 && !error ? (
-            <Glass className="flight-tracker__message" variant="card" rounded="md">
-              <p>No flights detected in your area.</p>
-              <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', opacity: 0.7 }}>
-                Try adjusting your search radius or location.
-              </p>
-            </Glass>
-          ) : (
-            <MapErrorBoundary>
-              <FlightMap2D
-                key="flight-map-2d"
-                flights={displayFlights}
-                selectedFlight={selectedFlight}
-                onSelectFlight={setSelectedFlight}
-                userLocation={userLocation}
-              />
-            </MapErrorBoundary>
-          )}
-          
-          {/* Error message overlay */}
-          {error && !isRateLimited && (
-            <Glass className="flight-tracker__message flight-tracker__message--error flight-tracker__message--overlay" variant="card" rounded="md">
-              <p>{error}</p>
-              <button onClick={() => setError(null)} className="flight-tracker__dismiss-btn">&times;</button>
-            </Glass>
-          )}
-          
-          {/* Overlay controls */}
-          <div className="flight-tracker__controls-overlay">
-            <Glass variant="panel" rounded="lg" blur={10} style={{ width: 'auto', display: 'inline-block' }}>
-              <div className="flight-tracker__controls">
-                {enableSearch && <FlightSearch onSearch={handleSearch} />}
-              </div>
-            </Glass>
-          </div>
-          
-          {/* Stats overlay */}
-          {!loading && (
-            <div className="flight-tracker__stats-overlay">
-              <Glass variant="panel" rounded="md" blur={8} style={{ display: 'inline-flex' }}>
-                <div style={{ display: 'flex', gap: '1rem', padding: '0.75rem 1rem' }}>
-                  <div className="flight-tracker__stat">
-                    <span className="flight-tracker__stat-value">{displayFlights.length}</span>
-                    <span className="flight-tracker__stat-label">Flights</span>
-                  </div>
-                  {displayFlights.length > 0 ? (
-                    <>
-                      <div className="flight-tracker__stat">
-                        <span className="flight-tracker__stat-value">
-                          {displayFlights.filter(f => !f.on_ground).length}
-                        </span>
-                        <span className="flight-tracker__stat-label">In Air</span>
-                      </div>
-                      <div className="flight-tracker__stat">
-                        <span className="flight-tracker__stat-value">
-                          {displayFlights.filter(f => f.on_ground).length}
-                        </span>
-                        <span className="flight-tracker__stat-label">Ground</span>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flight-tracker__stat">
-                      <span className="flight-tracker__stat-value" style={{ fontSize: '0.75rem' }}>
-                        {userLocation.lat.toFixed(2)}, {userLocation.lng.toFixed(2)}
-                      </span>
-                      <span className="flight-tracker__stat-label">Location</span>
-                    </div>
-                  )}
-                  <div className="flight-tracker__stat">
-                {authenticated && (
-                  <span className="flight-tracker__auth-badge" title="Using authenticated API access">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </span>
-                )}
-                <button
-                  className="flight-tracker__refresh-btn"
-                  onClick={handleRefresh}
-                  title="Refresh flight data"
-                  disabled={isRateLimited}
-                  style={{
-                    opacity: isRateLimited ? 0.5 : 1,
-                    cursor: isRateLimited ? 'not-allowed' : 'pointer'
-                  }}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M2.5 2v6h6M21.5 22v-6h-6"/>
-                    <path d="M22 11.5A10 10 0 0 0 2.5 8M2 12.5A10 10 0 0 0 21.5 16"/>
-                  </svg>
-                </button>
-                  </div>
-                </div>
-              </Glass>
-            </div>
-          )}
+    <div className="flight-tracker">
+      {enableSearch && (
+        <div className="flight-tracker__search">
+          <FlightSearch onSearch={handleSearchFlight} />
         </div>
-
+      )}
+      
+      <div className="flight-tracker__main">
+        <MapErrorBoundary>
+          <FlightMap2D
+            flights={displayFlights}
+            selectedFlight={selectedFlight}
+            selectedFlightRoute={selectedFlightRoute}
+            onSelectFlight={handleSelectFlight}
+            onMapMove={handleMapMove}
+            center={mapCenter}
+            zoom={mapZoom}
+            loading={loading}
+            error={error}
+            onRefresh={handleRefresh}
+            weatherData={weatherData}
+          />
+        </MapErrorBoundary>
+        
         {selectedFlight && (
-          <div className="flight-card" style={{ zIndex: 1000 }}>
-            <FlightCard
-              key={selectedFlight.icao24}
-              flight={selectedFlight}
-              onClose={() => {
-                setSelectedFlight(null)
-              }}
-            />
-          </div>
+          <FlightCard
+            flight={{
+              ...selectedFlight,
+              weatherOrigin: weatherData.origin,
+              weatherDestination: weatherData.destination
+            }}
+            onClose={() => handleSelectFlight(null)}
+          />
         )}
+        
+        {loading && !flights.length && (
+          <Glass className="flight-tracker__message flight-tracker__message--loading" variant="card" rounded="md">
+            <div className="flight-tracker__loading-spinner" />
+            <p>Loading flights...</p>
+          </Glass>
+        )}
+        
+        {error && !loading && (
+          <Glass className="flight-tracker__message flight-tracker__message--error" variant="card" rounded="md">
+            <p>{error}</p>
+            <button onClick={handleRefresh}>
+              Retry
+            </button>
+          </Glass>
+        )}
+        
+        {!loading && !error && flights.length === 0 && (
+          <Glass className="flight-tracker__message flight-tracker__message--empty" variant="card" rounded="md">
+            <p>No flights in this area. Try zooming out or searching for a specific flight.</p>
+          </Glass>
+        )}
+        
+        <div className="flight-tracker__stats">
+          <Glass variant="panel" rounded="sm" className="flight-tracker__stats-panel">
+            <span>{flights.length} aircraft</span>
+            <span className="flight-tracker__stats-divider">|</span>
+            <span>Mode: {isAuthenticated ? 'Authenticated' : 'Anonymous'}</span>
+            <span className="flight-tracker__stats-divider">|</span>
+            <span>Updated: {new Date(lastUpdateRef.current).toLocaleTimeString()}</span>
+          </Glass>
+        </div>
       </div>
     </div>
   )

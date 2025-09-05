@@ -356,6 +356,11 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
       setSelectedRestaurant(null)
       setSelectedAirport(null)
       setFocusTarget(null)
+      
+      // Force Three.js to invalidate and re-render
+      if ((window as any).__r3f) {
+        (window as any).__r3f.invalidate()
+      }
     },
     []
   )
@@ -475,8 +480,8 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
     }
   }, [currentView, enabledViews])
 
-  // 3D content
-  const webglContent = (
+  // 3D content - memoized to prevent unnecessary re-renders
+  const webglContent = useMemo(() => (
     <>
       <Suspense
         fallback={
@@ -490,6 +495,7 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
         }
       >
         <TravelDataGlobe
+        key={currentView} // Key only on view type, not timestamp
         currentView={currentView}
         polygons={currentPolygons}
         borders={borders}
@@ -522,7 +528,7 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
         />
       </Suspense>
     </>
-  )
+  ), [currentView, currentPolygons, borders, filteredAirports, restaurants, blockConfig, selectedAdvisory, selectedVisaCountry, hoveredCountry, visaArcs, focusTarget, resolveByName, handleAdvisoryClick, handleVisaCountryClick, handleAirportClick, handleRestaurantClick])
 
   return (
     <BlockWrapper
@@ -530,6 +536,7 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
       interactive={true}
       webglContent={webglContent}
       disableDefaultCamera={true}
+      id="travel-data-globe"
     >
       <div className="tdg-globe-section">
         {/* Main content container */}
