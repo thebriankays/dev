@@ -449,10 +449,6 @@ export async function TravelDataGlobeBlock(props: TravelDataGlobeBlockProps) {
   }
 
   const { TravelDataGlobeWrapper } = await import('./Component.wrapper')
-  // Wrap in a fixed height container to prevent scrolling issues
-  return (
-    <div className="w-full h-screen relative overflow-hidden">
-      <TravelDataGlobeWrapper data={preparedData} />
-    </div>
-  )
+  
+  return <TravelDataGlobeWrapper data={preparedData} />
 }

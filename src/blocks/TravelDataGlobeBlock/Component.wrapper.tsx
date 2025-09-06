@@ -495,7 +495,6 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
         }
       >
         <TravelDataGlobe
-        key={currentView} // Key only on view type, not timestamp
         currentView={currentView}
         polygons={currentPolygons}
         borders={borders}
@@ -536,6 +535,7 @@ export function TravelDataGlobeWrapper({ data }: TravelDataGlobeWrapperProps) {
       interactive={true}
       webglContent={webglContent}
       disableDefaultCamera={true}
+      disableScrollTracking={true}
       id="travel-data-globe"
     >
       <div className="tdg-globe-section">

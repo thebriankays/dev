@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, ReactNode, useEffect } from 'react'
+import React, { useRef, ReactNode, useEffect, useMemo } from 'react'
 import { View, PerspectiveCamera } from '@react-three/drei'
 import { useGlass } from '@/providers/Glass'
 import { useView } from '@/providers/Canvas'
@@ -25,6 +25,7 @@ interface BlockWrapperProps {
   interactive?: boolean
   id?: string
   disableDefaultCamera?: boolean
+  disableScrollTracking?: boolean
 }
 
 export function BlockWrapper({
@@ -36,8 +37,10 @@ export function BlockWrapper({
   interactive = false,
   id,
   disableDefaultCamera = false,
+  disableScrollTracking = false,
 }: BlockWrapperProps) {
   const ref = useRef<HTMLDivElement>(null)
+  const viewRef = useRef<HTMLDivElement>(null)
   useView(ref)
   const glass = useGlass()
 
@@ -73,10 +76,25 @@ export function BlockWrapper({
         {children}
       </div>
 
+      {disableScrollTracking && webglContent && (
+        <div
+          ref={viewRef}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            pointerEvents: 'none',
+            zIndex: -1,
+          }}
+        />
+      )}
+
       {webglContent && (
         <WebGLTunnel>
           <View
-            track={ref as React.RefObject<HTMLElement>}
+            track={(disableScrollTracking ? viewRef : ref) as React.RefObject<HTMLElement>}
             className="webgl-view"
             style={{
               pointerEvents: interactive ? 'auto' : 'none',
@@ -85,7 +103,7 @@ export function BlockWrapper({
               width: '100%',
               height: '100%',
             }}
-            frames={Infinity} // Force continuous rendering
+            frames={Infinity}
           >
             {/* Ensure depth clearing for this view */}
             <group

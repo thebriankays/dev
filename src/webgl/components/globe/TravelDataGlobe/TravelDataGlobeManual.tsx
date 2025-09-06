@@ -433,10 +433,9 @@ const TravelDataGlobeManual: React.FC<TravelDataGlobeManualProps> = ({
     }
   }, [currentView])
 
-  // Setup scene for transparency - but don't override clearing settings
+  // Setup scene for transparency
   useEffect(() => {
     scene.background = null
-    // Don't change gl settings here - let PreserveBackgroundRenderer handle it
   }, [scene])
 
   // Auto-rotation and depth clearing
