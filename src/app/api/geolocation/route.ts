@@ -2,15 +2,19 @@ import { NextResponse } from 'next/server'
 
 /**
  * API Route for IP-based Geolocation.
- * This endpoint determines the user's approximate location based on their IP address
- * using the free ip-api.com service. This provides a better user experience than
- * requesting browser location permissions on page load.
+ * This version is updated to gracefully handle local development environments.
  */
 export async function GET(request: Request) {
   // In production (e.g., Vercel), 'x-forwarded-for' contains the client's IP.
-  // For local development, we fall back to a default IP (Google's DNS) for testing.
-  const forwardedFor = request.headers.get('x-forwarded-for')
-  const ip = forwardedFor ? forwardedFor.split(',')[0] : '8.8.8.8'
+  let ip = request.headers.get('x-forwarded-for')
+
+  // CORRECTED: This logic now correctly uses the logical OR (||) operator
+  // to check for localhost addresses.
+  if (!ip || ip === '::1' || ip === '127.0.0.1') {
+    // The ip-api.com service cannot geolocate a local address.
+    // Instead of making a failing API call, we use a default public IP for testing.
+    ip = '8.8.8.8' // Google's public DNS
+  }
 
   try {
     const response = await fetch(`http://ip-api.com/json/${ip}`)
@@ -20,20 +24,13 @@ export async function GET(request: Request) {
     const data = await response.json()
 
     if (data.status === 'success') {
-      return NextResponse.json({ 
-        lat: data.lat, 
-        lng: data.lon,
-        city: data.city,
-        country: data.country
-      })
+      return NextResponse.json({ lat: data.lat, lng: data.lon })
     } else {
-      // If the API call fails, return a default location (New York City).
       console.warn(`IP geolocation failed for IP ${ip}: ${data.message}`)
       return NextResponse.json({ lat: 40.7128, lng: -74.006 }, { status: 200 })
     }
   } catch (error) {
     console.error('Error in geolocation API route:', error)
-    // Return a default location on any exception.
     return NextResponse.json(
       { lat: 40.7128, lng: -74.006 },
       { status: 500, statusText: 'Internal Server Error' },
